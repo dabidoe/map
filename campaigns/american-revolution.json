@@ -178,6 +178,54 @@
     }
   },
   "characters": {
+    "washington": {
+      "id": "washington",
+      "name": "George Washington",
+      "title": "Commander-in-Chief",
+      "faction": "Continental",
+      "location": "washington-camp",
+      "profileUrl": null,
+      "type": "player",
+      "speed": 30,
+      "description": "Commander-in-Chief of the Continental Army. Led the daring Christmas night attack on Trenton.",
+      "bio": "George Washington (1732-1799) - Virginia planter turned military commander. By December 1776, his army was in desperate straits after months of defeats."
+    },
+    "greene": {
+      "id": "greene",
+      "name": "Nathanael Greene",
+      "title": "Major General (#2)",
+      "faction": "Continental",
+      "location": "washington-camp",
+      "profileUrl": null,
+      "type": "player",
+      "speed": 30,
+      "description": "Washington's most trusted general. Commanded the southern division during the attack.",
+      "bio": "Nathanael Greene (1742-1786) - Former Quaker from Rhode Island. Despite no military training, became one of Washington's best generals."
+    },
+    "sullivan": {
+      "id": "sullivan",
+      "name": "John Sullivan",
+      "title": "Major General (#3)",
+      "faction": "Continental",
+      "location": "washington-camp",
+      "profileUrl": null,
+      "type": "player",
+      "speed": 30,
+      "description": "Led the northern division during the Trenton attack.",
+      "bio": "John Sullivan (1740-1795) - New Hampshire lawyer turned general. Commanded the right wing at Trenton."
+    },
+    "knox": {
+      "id": "knox",
+      "name": "Henry Knox",
+      "title": "Colonel, Chief of Artillery",
+      "faction": "Continental",
+      "location": "washington-camp",
+      "profileUrl": null,
+      "type": "player",
+      "speed": 30,
+      "description": "Former bookseller who became Washington's artillery chief.",
+      "bio": "Henry Knox (1750-1806) - Boston bookseller who learned artillery from books. Led the famous transport of cannon from Fort Ticonderoga."
+    },
     "achilles": {
       "id": "achilles",
       "name": "A.G. Achilles",
@@ -185,7 +233,66 @@
       "faction": "Continental",
       "location": "old-barracks",
       "profileUrl": null,
-      "description": "Continental soldier imprisoned in Cell #4 of the Old Barracks"
+      "type": "player",
+      "speed": 30,
+      "description": "Continental soldier imprisoned in Cell #4 of the Old Barracks",
+      "bio": "Captured Continental soldier held in the Old Barracks. Rescue objective."
+    },
+    "rall": {
+      "id": "rall",
+      "name": "Johann Rall",
+      "title": "Colonel, Hessian Commander",
+      "faction": "Hessian",
+      "location": "old-barracks",
+      "profileUrl": null,
+      "type": "enemy",
+      "speed": 30,
+      "description": "Commander of Hessian forces at Trenton. Overconfident and dismissive of warnings.",
+      "bio": "Colonel Johann Gottlieb Rall (1726-1776) - Experienced Hessian officer. Mortally wounded in the battle, died December 27."
+    },
+    "hessian_guard_1": {
+      "id": "hessian_guard_1",
+      "name": "Hessian Guard (Exterior)",
+      "title": "Guard",
+      "faction": "Hessian",
+      "location": "old-barracks",
+      "profileUrl": null,
+      "type": "enemy",
+      "speed": 30,
+      "description": "Hessian guard stationed outside the Old Barracks main entrance."
+    },
+    "hessian_guard_2": {
+      "id": "hessian_guard_2",
+      "name": "Hessian Guard (Exterior)",
+      "title": "Guard",
+      "faction": "Hessian",
+      "location": "old-barracks",
+      "profileUrl": null,
+      "type": "enemy",
+      "speed": 30,
+      "description": "Hessian guard stationed outside the Old Barracks."
+    },
+    "hessian_guard_3": {
+      "id": "hessian_guard_3",
+      "name": "Hessian Guard (Interior)",
+      "title": "Guard",
+      "faction": "Hessian",
+      "location": "old-barracks",
+      "profileUrl": null,
+      "type": "enemy",
+      "speed": 30,
+      "description": "Hessian guard stationed inside near Cell #4."
+    },
+    "hessian_guard_4": {
+      "id": "hessian_guard_4",
+      "name": "Hessian Guard (Interior)",
+      "title": "Guard",
+      "faction": "Hessian",
+      "location": "old-barracks",
+      "profileUrl": null,
+      "type": "enemy",
+      "speed": 30,
+      "description": "Hessian guard stationed inside near Cell #4."
     }
   }
 }
