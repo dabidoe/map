@@ -1258,6 +1258,16 @@
             .then(data => {
                 CHARACTERS = data.characters || {};
                 console.log('Loaded characters:', Object.keys(CHARACTERS).length);
+
+                // Re-render character library after loading
+                if (window.app) {
+                    app.renderCharacters();
+                }
+
+                // Re-render tactical character library if in tactical view
+                if (window.tactical && tactical.currentLocation) {
+                    tactical.renderCharacterLibrary(tactical.currentLocation);
+                }
             })
             .catch(err => console.error('Failed to load characters:', err));
 
