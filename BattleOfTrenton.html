@@ -448,7 +448,7 @@
             z-index: 5000;
         }
 
-        .tactical-overlay.active { display: flex; }
+        .tactical-overlay.active { display: block; }
 
         .tactical-close {
             position: fixed;
@@ -1001,25 +1001,29 @@
 
                 document.getElementById('tactical-overlay').classList.add('active');
 
-                // Setup tactical map
-                if (this.tacticalMap) {
-                    this.tacticalMap.remove();
-                }
+                // Small delay to let overlay render before initializing map
+                setTimeout(() => {
+                    // Setup tactical map
+                    if (this.tacticalMap) {
+                        this.tacticalMap.remove();
+                        this.tacticalMap = null;
+                    }
 
-                this.tacticalMap = L.map('tactical-map', {
-                    center: loc.coords,
-                    zoom: 20,
-                    maxZoom: 22,
-                    zoomControl: false
-                });
+                    this.tacticalMap = L.map('tactical-map', {
+                        center: loc.coords,
+                        zoom: 20,
+                        maxZoom: 22,
+                        zoomControl: false
+                    });
 
-                // Add zoom control in bottom-right to avoid overlap
-                L.control.zoom({ position: 'bottomright' }).addTo(this.tacticalMap);
+                    // Add zoom control in bottom-right to avoid overlap
+                    L.control.zoom({ position: 'bottomright' }).addTo(this.tacticalMap);
 
-                this.layers.satellite.addTo(this.tacticalMap);
+                    this.layers.satellite.addTo(this.tacticalMap);
 
-                // Try to load background image
-                this.loadTacticalBackground(key);
+                    // Try to load background image
+                    this.loadTacticalBackground(key);
+                }, 100);
             }
 
             loadTacticalBackground(key) {
@@ -1155,11 +1159,26 @@
         }
 
         function closeTactical() {
-            document.getElementById('tactical-overlay').classList.remove('active');
+            // Clean up tactical map first
             if (app.tacticalMap) {
                 app.tacticalMap.remove();
                 app.tacticalMap = null;
             }
+
+            // Remove background layer if exists
+            if (app.backgroundLayer) {
+                app.backgroundLayer = null;
+            }
+
+            // Hide overlay
+            document.getElementById('tactical-overlay').classList.remove('active');
+
+            // Force main map to refresh/resize
+            setTimeout(() => {
+                if (app.map) {
+                    app.map.invalidateSize();
+                }
+            }, 50);
         }
 
         if (document.readyState === 'loading') {
