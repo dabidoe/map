@@ -1296,60 +1296,60 @@
                 "name": "A.G. Achilles",
                 "title": "Prisoner of War",
                 "faction": "Continental",
-                "location": "old-barracks",
+                "location": "old-barracks-floor2",
                 "type": "player",
                 "speed": 30,
-                "description": "Continental soldier imprisoned in Cell #4 of the Old Barracks"
+                "description": "Continental soldier imprisoned in Cell #4 on the second floor"
             },
             "rall": {
                 "id": "rall",
                 "name": "Johann Rall",
                 "title": "Colonel, Hessian Commander",
                 "faction": "Hessian",
-                "location": "old-barracks",
+                "location": "old-barracks-floor3",
                 "type": "enemy",
                 "speed": 30,
-                "description": "Commander of Hessian forces at Trenton. Overconfident and dismissive of warnings."
+                "description": "Commander of Hessian forces. In the officers' quarters on third floor."
             },
             "hessian_guard_1": {
                 "id": "hessian_guard_1",
                 "name": "Hessian Guard (Exterior)",
                 "title": "Guard",
                 "faction": "Hessian",
-                "location": "old-barracks",
+                "location": "old-barracks-floor1",
                 "type": "enemy",
                 "speed": 30,
                 "description": "Hessian guard stationed outside the Old Barracks main entrance."
             },
             "hessian_guard_2": {
                 "id": "hessian_guard_2",
-                "name": "Hessian Guard (Exterior)",
+                "name": "Hessian Guard (Patrol)",
                 "title": "Guard",
                 "faction": "Hessian",
-                "location": "old-barracks",
+                "location": "old-barracks-floor1",
                 "type": "enemy",
                 "speed": 30,
-                "description": "Hessian guard stationed outside the Old Barracks."
+                "description": "Hessian guard on patrol duty, first floor."
             },
             "hessian_guard_3": {
                 "id": "hessian_guard_3",
-                "name": "Hessian Guard (Interior)",
+                "name": "Hessian Guard (Cell Block)",
                 "title": "Guard",
                 "faction": "Hessian",
-                "location": "old-barracks",
+                "location": "old-barracks-floor2",
                 "type": "enemy",
                 "speed": 30,
-                "description": "Hessian guard stationed inside near Cell #4."
+                "description": "Hessian guard stationed near Cell #4, second floor."
             },
             "hessian_guard_4": {
                 "id": "hessian_guard_4",
-                "name": "Hessian Guard (Interior)",
-                "title": "Guard",
+                "name": "Hessian Sergeant",
+                "title": "Sergeant",
                 "faction": "Hessian",
-                "location": "old-barracks",
+                "location": "old-barracks-floor3",
                 "type": "enemy",
                 "speed": 30,
-                "description": "Hessian guard stationed inside near Cell #4."
+                "description": "Hessian sergeant in the officers' quarters, third floor."
             }
         };
 
@@ -1401,6 +1401,9 @@
 
                 // Update INFO tab with location details
                 this.updateLocationInfo(location);
+
+                // Auto-load all characters for this location
+                this.loadLocationCharacters(locationKey);
 
                 // Update PARTY tab to show character library
                 this.renderCharacterLibrary(locationKey);
@@ -1715,8 +1718,59 @@
                 this.ctx.textBaseline = 'middle';
                 this.ctx.fillText(token.type === 'player' ? '●' : '▲', token.x, token.y);
 
-                // Character name label (if character token or hovered)
-                if (token.character && (isHovered || isSelected)) {
+                // Character info tooltip (if character token)
+                if (token.character && isHovered) {
+                    this.ctx.save();
+
+                    // Build stat text
+                    const char = token.character;
+                    const lines = [
+                        char.name,
+                        char.title || '',
+                        `${char.faction} • Speed ${char.speed}ft`,
+                        char.description || ''
+                    ].filter(l => l);
+
+                    // Measure and draw background
+                    this.ctx.font = 'bold 12px Arial';
+                    const nameWidth = this.ctx.measureText(char.name).width;
+                    this.ctx.font = '10px Arial';
+                    const maxWidth = Math.max(
+                        nameWidth,
+                        ...lines.slice(1).map(l => this.ctx.measureText(l).width)
+                    );
+
+                    const padding = 8;
+                    const lineHeight = 14;
+                    const boxWidth = maxWidth + padding * 2;
+                    const boxHeight = lines.length * lineHeight + padding;
+                    const boxX = token.x - boxWidth / 2;
+                    const boxY = token.y - this.gridSize - boxHeight - 5;
+
+                    // Draw tooltip box
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
+                    this.ctx.strokeStyle = token.type === 'player' ? '#3b82f6' : '#dc2626';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+                    this.ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+
+                    // Draw text
+                    this.ctx.textAlign = 'left';
+                    this.ctx.textBaseline = 'top';
+                    lines.forEach((line, i) => {
+                        if (i === 0) {
+                            this.ctx.font = 'bold 12px Arial';
+                            this.ctx.fillStyle = token.type === 'player' ? '#3b82f6' : '#dc2626';
+                        } else {
+                            this.ctx.font = '10px Arial';
+                            this.ctx.fillStyle = '#ffffff';
+                        }
+                        this.ctx.fillText(line, boxX + padding, boxY + padding + i * lineHeight);
+                    });
+
+                    this.ctx.restore();
+                } else if (token.character && isSelected) {
+                    // Just show name when selected
                     this.ctx.save();
                     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
                     this.ctx.font = 'bold 11px Arial';
@@ -1725,6 +1779,7 @@
                     this.ctx.fillRect(token.x - nameWidth/2 - 4, labelY, nameWidth + 8, 16);
 
                     this.ctx.fillStyle = token.type === 'player' ? '#3b82f6' : '#dc2626';
+                    this.ctx.textAlign = 'center';
                     this.ctx.fillText(token.character.name, token.x, labelY + 11);
                     this.ctx.restore();
                 }
@@ -2043,6 +2098,12 @@
                 const loc = CAMPAIGN[key];
                 this.currentTactical = key;
 
+                // Special handling for multi-floor locations
+                if (key === 'old-barracks') {
+                    this.showFloorSelection();
+                    return;
+                }
+
                 document.getElementById('tactical-location-name').textContent = `${loc.icon} ${loc.name}`;
                 document.getElementById('tactical-overlay').classList.add('active');
 
@@ -2052,6 +2113,73 @@
                         window.tactical = new TacticalGrid();
                     }
                     tactical.init(key, loc);
+                }, 50);
+            }
+
+            showFloorSelection() {
+                // Create floor selection modal
+                const modal = document.getElementById('info-modal');
+                const title = document.getElementById('info-title');
+                const subtitle = document.getElementById('info-subtitle');
+                const body = document.getElementById('info-body');
+
+                title.textContent = '⚔️ The Old Barracks';
+                subtitle.textContent = 'Select Floor';
+
+                // Count characters per floor
+                const floor1Chars = Object.values(CHARACTERS).filter(c => c.location === 'old-barracks-floor1');
+                const floor2Chars = Object.values(CHARACTERS).filter(c => c.location === 'old-barracks-floor2');
+                const floor3Chars = Object.values(CHARACTERS).filter(c => c.location === 'old-barracks-floor3');
+
+                body.innerHTML = `
+                    <div class="info-section">
+                        <div class="section-title">Choose which floor to enter</div>
+                        <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+                            <button class="btn" onclick="app.openFloor('old-barracks-floor1')" style="padding: 1rem; text-align: left;">
+                                <strong style="font-size: 1.1rem;">🏛️ First Floor - Main Entrance</strong>
+                                <div style="margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.8;">
+                                    ${floor1Chars.length} guards stationed • Entrance hall & barracks
+                                </div>
+                            </button>
+                            <button class="btn" onclick="app.openFloor('old-barracks-floor2')" style="padding: 1rem; text-align: left;">
+                                <strong style="font-size: 1.1rem;">⛓️ Second Floor - Cell Block</strong>
+                                <div style="margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.8;">
+                                    ${floor2Chars.length} occupants • Prison cells including Cell #4
+                                </div>
+                            </button>
+                            <button class="btn" onclick="app.openFloor('old-barracks-floor3')" style="padding: 1rem; text-align: left;">
+                                <strong style="font-size: 1.1rem;">👑 Third Floor - Officers' Quarters</strong>
+                                <div style="margin-top: 0.5rem; font-size: 0.85rem; opacity: 0.8;">
+                                    ${floor3Chars.length} officers • Colonel Rall's command post
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                modal.classList.add('active');
+            }
+
+            openFloor(floorKey) {
+                // Close the floor selection modal
+                document.getElementById('info-modal').classList.remove('active');
+
+                const floorNames = {
+                    'old-barracks-floor1': 'Old Barracks - First Floor',
+                    'old-barracks-floor2': 'Old Barracks - Second Floor (Cell Block)',
+                    'old-barracks-floor3': 'Old Barracks - Third Floor (Officers\' Quarters)'
+                };
+
+                // Show tactical overlay
+                document.getElementById('tactical-overlay').classList.add('active');
+                document.getElementById('tactical-location-name').textContent = `⚔️ ${floorNames[floorKey]}`;
+
+                // Initialize tactical grid with floor data
+                setTimeout(() => {
+                    if (!window.tactical) {
+                        window.tactical = new TacticalGrid();
+                    }
+                    tactical.init(floorKey, { name: floorNames[floorKey] });
                 }, 50);
             }
 
