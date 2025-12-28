@@ -448,7 +448,9 @@
             z-index: 5000;
         }
 
-        .tactical-overlay.active { display: block; }
+        .tactical-overlay.active {
+            display: block;
+        }
 
         .tactical-close {
             position: fixed;
@@ -473,8 +475,12 @@
         }
 
         #tactical-map {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
+            background: #2a2a2a;
         }
 
         /* Markers */
@@ -665,7 +671,7 @@
         <div class="tab-content" id="tab-images">
             <div class="save-label">🖼️ Add Background Images</div>
             <p style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 1rem; line-height: 1.5;">
-                Drop images into <code>campaign-images/tactical/</code> folder and name them after locations (e.g., <code>old-barracks.jpg</code>)
+                Create a folder for each location and drop any image named <code>background.jpg</code> inside. Placeholder images are shown until you add your own.
             </p>
             <div id="image-settings"></div>
         </div>
@@ -708,10 +714,10 @@
             <div class="info-section">
                 <div class="section-title">🖼️ Adding Images</div>
                 <ul class="info-list">
-                    <li>Put images in <code>campaign-images/tactical/</code></li>
-                    <li>Name them: <code>location-name.jpg</code></li>
+                    <li>Create folder: <code>campaign-images/location-name/</code></li>
+                    <li>Drop any image named <code>background.jpg</code> inside</li>
                     <li>Supported: .jpg, .png, .webp</li>
-                    <li>Images show automatically in tactical view</li>
+                    <li>Placeholders show until you add your own</li>
                 </ul>
             </div>
 
@@ -769,7 +775,8 @@
                 faction: "Continental Army",
                 desc: "General Washington's command tent on the Pennsylvania side.",
                 info: "On Christmas night 1776, approximately 2,400 Continental Army troops assembled here. The password: 'Victory or Death'.",
-                dmOnly: "Cell #4 holds prisoner A.G. Achilles - rescued during the Old Barracks raid."
+                dmOnly: "Cell #4 holds prisoner A.G. Achilles - rescued during the Old Barracks raid.",
+                placeholderImage: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Continental_Army_camp_-_Valley_Forge.jpg/1280px-Continental_Army_camp_-_Valley_Forge.jpg"
             },
             "river-crossing": {
                 name: "Delaware River Crossing",
@@ -779,7 +786,8 @@
                 faction: "Continental Army",
                 desc: "McConkey's Ferry. 2,400 troops crossed Christmas night.",
                 info: "Durham boats ferried troops across ice floes for 9 hours. One of the most iconic moments in American history.",
-                dmOnly: null
+                dmOnly: null,
+                placeholderImage: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/Washington_Crossing_the_Delaware_by_Emanuel_Leutze%2C_MMA-NYC%2C_1851.jpg/1280px-Washington_Crossing_the_Delaware_by_Emanuel_Leutze%2C_MMA-NYC%2C_1851.jpg"
             },
             "old-barracks": {
                 name: "The Old Barracks",
@@ -790,7 +798,8 @@
                 desc: "Hessian garrison.",
                 playerDesc: "Hessian garrison. Important objective.",
                 info: "Built in 1758, still standing today! Approximately 40-50 Hessian soldiers were quartered here. Some were captured in their bunks.",
-                dmOnly: "A.G. Achilles imprisoned in Cell #4. Rescue mission objective. 4 guards outside, 2 inside near cell."
+                dmOnly: "A.G. Achilles imprisoned in Cell #4. Rescue mission objective. 4 guards outside, 2 inside near cell.",
+                placeholderImage: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Old_Barracks_Trenton_NJ.jpg/1280px-Old_Barracks_Trenton_NJ.jpg"
             },
             "rall-hq": {
                 name: "Rall's Headquarters",
@@ -800,7 +809,8 @@
                 faction: "Hessian / British",
                 desc: "Colonel Rall's command at Stacy's Tavern.",
                 info: "Colonel Rall was playing cards when the attack began. An unread warning note was found in his pocket after he died.",
-                dmOnly: "Contains intelligence documents about troop movements."
+                dmOnly: "Contains intelligence documents about troop movements.",
+                placeholderImage: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Colonial_tavern_interior.jpg/1024px-Colonial_tavern_interior.jpg"
             },
             "king-street": {
                 name: "King Street Battery",
@@ -810,7 +820,8 @@
                 faction: "Hessian / British",
                 desc: "Northern artillery with 6-pounder cannon.",
                 info: "Main northern defense. Artillery pieces were captured early in the battle when crews were caught off-guard.",
-                dmOnly: null
+                dmOnly: null,
+                placeholderImage: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Revolutionary_War_Cannon.jpg/1280px-Revolutionary_War_Cannon.jpg"
             },
             "queen-street": {
                 name: "Queen Street Battery",
@@ -820,7 +831,8 @@
                 faction: "Hessian / British",
                 desc: "Southern artillery position.",
                 info: "Crews struggled to serve their pieces in the sleet and snow. Position was abandoned as Hessians attempted to retreat.",
-                dmOnly: null
+                dmOnly: null,
+                placeholderImage: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/18th_century_artillery_position.jpg/1280px-18th_century_artillery_position.jpg"
             },
             "assunpink": {
                 name: "Assunpink Creek Bridge",
@@ -830,7 +842,8 @@
                 faction: "Continental Army",
                 desc: "Continental fallback position.",
                 info: "Washington's planned escape route became a trap for the Hessians. Americans blocked the bridge, forcing surrender.",
-                dmOnly: null
+                dmOnly: null,
+                placeholderImage: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Old_stone_bridge_winter.jpg/1280px-Old_stone_bridge_winter.jpg"
             }
         };
 
@@ -1019,7 +1032,11 @@
                     // Add zoom control in bottom-right to avoid overlap
                     L.control.zoom({ position: 'bottomright' }).addTo(this.tacticalMap);
 
-                    this.layers.satellite.addTo(this.tacticalMap);
+                    // Create NEW satellite layer for tactical map (don't reuse main map's layer!)
+                    const tacticalLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        maxZoom: 22
+                    });
+                    tacticalLayer.addTo(this.tacticalMap);
 
                     // Try to load background image
                     this.loadTacticalBackground(key);
@@ -1027,22 +1044,43 @@
             }
 
             loadTacticalBackground(key) {
-                const imagePath = `campaign-images/tactical/${key}.jpg`;
-                const img = new Image();
-                img.onload = () => {
-                    if (this.backgroundLayer) {
-                        this.tacticalMap.removeLayer(this.backgroundLayer);
+                const loc = CAMPAIGN[key];
+
+                // Try multiple possible image paths in order
+                const possiblePaths = [
+                    `campaign-images/${key}/background.jpg`,
+                    `campaign-images/${key}/background.png`,
+                    `campaign-images/${key}/background.webp`
+                ];
+
+                // Function to try loading an image
+                const tryLoadImage = (paths, index = 0) => {
+                    if (index >= paths.length) {
+                        // All local paths failed, try placeholder URL if available
+                        if (loc.placeholderImage) {
+                            this.addBackgroundImage(loc.placeholderImage);
+                        }
+                        return;
                     }
-                    const bounds = this.tacticalMap.getBounds();
-                    this.backgroundLayer = L.imageOverlay(imagePath, bounds, {
-                        opacity: 0.7,
-                        interactive: false
-                    }).addTo(this.tacticalMap);
+
+                    const img = new Image();
+                    img.onload = () => this.addBackgroundImage(paths[index]);
+                    img.onerror = () => tryLoadImage(paths, index + 1);
+                    img.src = paths[index];
                 };
-                img.onerror = () => {
-                    console.log(`No background image found at ${imagePath}`);
-                };
-                img.src = imagePath;
+
+                tryLoadImage(possiblePaths);
+            }
+
+            addBackgroundImage(imagePath) {
+                if (this.backgroundLayer) {
+                    this.tacticalMap.removeLayer(this.backgroundLayer);
+                }
+                const bounds = this.tacticalMap.getBounds();
+                this.backgroundLayer = L.imageOverlay(imagePath, bounds, {
+                    opacity: 0.7,
+                    interactive: false
+                }).addTo(this.tacticalMap);
             }
 
             render() {
@@ -1074,13 +1112,13 @@
             }
 
             renderImageSettings() {
-                let html = '<p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 1rem;">Image files to add for tactical maps:</p>';
+                let html = '<p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 1rem;">Just create these folders and drop <code>background.jpg</code> inside:</p>';
                 Object.keys(CAMPAIGN).forEach(key => {
                     const loc = CAMPAIGN[key];
                     html += `
                         <div class="stat-row" style="flex-direction: column; align-items: flex-start;">
                             <strong>${loc.icon} ${loc.name}</strong>
-                            <code style="font-size: 0.75rem; opacity: 0.7; margin-top: 0.3rem;">campaign-images/tactical/${key}.jpg</code>
+                            <code style="font-size: 0.75rem; opacity: 0.7; margin-top: 0.3rem;">campaign-images/${key}/background.jpg</code>
                         </div>
                     `;
                 });
