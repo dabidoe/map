@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campaign Map - Battle of Trenton 1776</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #1e3a5f;
+            --secondary: #d4af37;
+            --accent: #dc2626;
+            --bg-dark: #0a0a0a;
+            --bg-light: #1a1410;
+            --text: #f4e8d0;
+        }
+        
+        body {
+            font-family: Georgia, serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            overflow: hidden;
+        }
+        
+        #map {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 320px;
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-light) 0%, var(--bg-dark) 100%);
+            border-right: 3px solid var(--secondary);
+            transition: transform 0.3s ease;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+        }
+        
+        .sidebar.hidden { transform: translateX(-320px); }
+        
+        /* Toggle button in top-left corner when sidebar is hidden */
+        .toggle-btn {
+            position: fixed;
+            left: 10px;
+            top: 10px;
+            background: linear-gradient(135deg, var(--primary) 0%, #0f1f3a 100%);
+            color: var(--secondary);
+            border: 2px solid var(--secondary);
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            z-index: 2001;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            transition: all 0.3s;
+            display: none;
+        }
+        
+        .sidebar.hidden ~ .toggle-btn { display: block; }
+        
+        .toggle-btn:hover {
+            background: linear-gradient(135deg, var(--secondary) 0%, #b8941f 100%);
+            color: var(--primary);
+            transform: scale(1.05);
+        }
+        
+        .sidebar-header {
+            background: linear-gradient(135deg, var(--primary) 0%, #0f1f3a 100%);
+            padding: 1.2rem;
+            border-bottom: 3px solid var(--secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left {
+            flex: 1;
+        }
+        
+        .campaign-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 0.3rem;
+        }
+        
+        .campaign-meta {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+        
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: var(--secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            line-height: 1;
+            transition: all 0.2s;
+        }
+        
+        .close-btn:hover {
+            color: var(--accent);
+            transform: scale(1.2);
+        }
+        
+        .sidebar-tabs {
+            display: flex;
+            background: rgba(30, 58, 95, 0.3);
+            border-bottom: 2px solid var(--secondary);
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 0.7rem;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+            border-right: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        
+        .tab:last-child { border-right: none; }
+        .tab:hover { background: rgba(212, 175, 55, 0.2); }
+        .tab.active { background: rgba(212, 175, 55, 0.3); color: var(--secondary); }
+        
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: none;
+        }
+        
+        .tab-content.active { display: block; }
+        
+        .grid-control {
+            background: rgba(30, 58, 95, 0.3);
+            border: 2px solid rgba(212, 175, 55, 0.5);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .grid-control-title {
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 0.8rem;
+            font-size: 0.9rem;
+        }
+        
+        .input-group {
+            margin-bottom: 0.8rem;
+        }
+        
+        .input-label {
+            display: block;
+            font-size: 0.8rem;
+            margin-bottom: 0.3rem;
+            opacity: 0.8;
+        }
+        
+        .input-field {
+            width: 100%;
+            background: rgba(26, 20, 16, 0.5);
+            border: 1px solid var(--secondary);
+            color: var(--text);
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-family: Georgia, serif;
+            font-size: 0.85rem;
+        }
+        
+        .btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, #0f1f3a 100%);
+            color: var(--secondary);
+            border: 2px solid var(--secondary);
+            padding: 0.7rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            font-family: Georgia, serif;
+            transition: all 0.3s;
+            margin-top: 0.5rem;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(135deg, var(--secondary) 0%, #b8941f 100%);
+            color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+        }
+        
+        .btn-small {
+            width: auto;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+        
+        .location-card {
+            background: rgba(30, 58, 95, 0.2);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-left: 4px solid var(--primary);
+            border-radius: 6px;
+            padding: 0.9rem;
+            margin-bottom: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .location-card:hover {
+            background: rgba(30, 58, 95, 0.4);
+            border-left-color: var(--secondary);
+            transform: translateX(5px);
+        }
+        
+        .location-card.active {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: var(--secondary);
+        }
+        
+        .location-card.quest { border-left-color: var(--accent); }
+        .location-card.continental { border-left-color: #3b82f6; }
+        .location-card.hessian { border-left-color: #f59e0b; }
+        
+        .location-name {
+            font-weight: bold;
+            font-size: 1rem;
+            margin-bottom: 0.4rem;
+        }
+        
+        .location-desc {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        
+        .grid-settings {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .grid-stat {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 4px;
+            padding: 0.5rem;
+            text-align: center;
+        }
+        
+        .grid-stat-value {
+            font-weight: bold;
+            color: var(--secondary);
+            font-size: 1.1rem;
+        }
+        
+        .grid-stat-label {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 0.2rem;
+        }
+        
+        .info-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            background: linear-gradient(180deg, var(--bg-light) 0%, var(--bg-dark) 100%);
+            border: 3px solid var(--secondary);
+            border-radius: 12px;
+            z-index: 3000;
+            display: none;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.8);
+        }
+        
+        .info-modal.active { display: block; }
+        
+        .info-modal-header {
+            background: linear-gradient(135deg, var(--primary) 0%, #0f1f3a 100%);
+            padding: 1.2rem;
+            border-bottom: 3px solid var(--secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 9px 9px 0 0;
+        }
+        
+        .info-modal-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--secondary);
+        }
+        
+        .info-modal-close {
+            background: transparent;
+            border: none;
+            color: var(--secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            line-height: 1;
+        }
+        
+        .info-modal-close:hover { color: var(--accent); }
+        
+        .info-modal-body {
+            padding: 1.2rem;
+            overflow-y: auto;
+            max-height: calc(80vh - 120px);
+        }
+        
+        .info-section {
+            margin-bottom: 1.2rem;
+        }
+        
+        .section-title {
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .info-text {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+        
+        .info-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .info-list li {
+            padding: 0.4rem 0 0.4rem 1.3rem;
+            position: relative;
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+        
+        .info-list li:before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: var(--secondary);
+        }
+        
+        .historical-fact {
+            background: rgba(212, 175, 55, 0.1);
+            border-left: 4px solid var(--secondary);
+            padding: 0.9rem;
+            margin: 0.8rem 0;
+            font-style: italic;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.7);
+            z-index: 2999;
+            display: none;
+        }
+        
+        .overlay.active { display: block; }
+
+        /* Grid overlay styles */
+        .grid-overlay {
+            pointer-events: none;
+            z-index: 600;
+        }
+        
+        .grid-line {
+            fill: none;
+            stroke: rgba(212, 175, 55, 0.3);
+            stroke-width: 1;
+        }
+        
+        .grid-label {
+            fill: var(--secondary);
+            font-size: 12px;
+            font-weight: bold;
+            text-anchor: middle;
+            paint-order: stroke;
+            stroke: rgba(0, 0, 0, 0.8);
+            stroke-width: 3px;
+        }
+        
+        .preset-bg {
+            background: rgba(30, 58, 95, 0.2);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 4px;
+            padding: 0.6rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+        }
+        
+        .preset-bg:hover {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: var(--secondary);
+        }
+        
+        .layer-control {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, var(--primary) 0%, #0f1f3a 100%);
+            border: 2px solid var(--secondary);
+            border-radius: 6px;
+            padding: 0.5rem;
+            z-index: 1500;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+        
+        .layer-btn {
+            background: rgba(26, 20, 16, 0.5);
+            border: 1px solid var(--secondary);
+            color: var(--text);
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.75rem;
+            font-family: Georgia, serif;
+            transition: all 0.2s;
+            display: block;
+            width: 100%;
+            margin-bottom: 0.3rem;
+        }
+        
+        .layer-btn:last-child { margin-bottom: 0; }
+        
+        .layer-btn:hover {
+            background: var(--secondary);
+            color: var(--primary);
+        }
+        
+        .layer-btn.active {
+            background: var(--secondary);
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <div class="layer-control">
+        <button class="layer-btn" id="layer-street" onclick="app.setLayer('street')">Street</button>
+        <button class="layer-btn active" id="layer-satellite" onclick="app.setLayer('satellite')">Satellite</button>
+        <button class="layer-btn" id="layer-terrain" onclick="app.setLayer('terrain')">Terrain</button>
+    </div>
+    
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="header-left">
+                <div class="campaign-title">⚔️ Battle of Trenton</div>
+                <div class="campaign-meta">
+                    <span>📅 Dec 25-26, 1776</span>
+                    <span>🌡️ 28°F</span>
+                </div>
+            </div>
+            <button class="close-btn" onclick="toggleSidebar()">×</button>
+        </div>
+        
+        <div class="sidebar-tabs">
+            <div class="tab active" onclick="showTab('locations')">📍 Map</div>
+            <div class="tab" onclick="showTab('grid')">⬜ Grid</div>
+            <div class="tab" onclick="showTab('background')">🖼️ Image</div>
+        </div>
+        
+        <div class="tab-content active" id="tab-locations">
+            <div id="locations-list"></div>
+        </div>
+        
+        <div class="tab-content" id="tab-grid">
+            <div class="grid-control">
+                <div class="grid-control-title">⬜ Grid Settings</div>
+                
+                <div class="input-group">
+                    <label class="input-label">Grid Size (feet per square)</label>
+                    <input type="number" class="input-field" id="grid-size" value="5" min="1" max="100">
+                </div>
+                
+                <div class="grid-settings">
+                    <div class="grid-stat">
+                        <div class="grid-stat-value" id="grid-columns">20</div>
+                        <div class="grid-stat-label">Columns</div>
+                    </div>
+                    <div class="grid-stat">
+                        <div class="grid-stat-value" id="grid-rows">20</div>
+                        <div class="grid-stat-label">Rows</div>
+                    </div>
+                </div>
+                
+                <button class="btn" onclick="app.toggleGrid()">
+                    <span id="grid-btn-text">Show Grid</span>
+                </button>
+                
+                <div style="margin-top: 0.8rem;">
+                    <button class="btn-small btn" onclick="app.setGridSize(5)">5ft</button>
+                    <button class="btn-small btn" onclick="app.setGridSize(10)">10ft</button>
+                    <button class="btn-small btn" onclick="app.setGridSize(30)">30ft</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="tab-background">
+            <div class="grid-control">
+                <div class="grid-control-title">🖼️ Background Image</div>
+                
+                <div class="input-group">
+                    <label class="input-label">Image URL</label>
+                    <input type="text" class="input-field" id="bg-url" placeholder="https://...">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label">Opacity</label>
+                    <input type="range" class="input-field" id="bg-opacity" min="0" max="100" value="70">
+                    <div style="text-align: center; margin-top: 0.3rem;">
+                        <span id="opacity-value">70</span>%
+                    </div>
+                </div>
+                
+                <button class="btn" onclick="app.setBackground()">Apply Background</button>
+                <button class="btn" onclick="app.clearBackground()">Clear Background</button>
+                
+                <div style="margin-top: 1rem;">
+                    <div class="input-label">Quick Presets:</div>
+                    <div class="preset-bg" onclick="app.loadPreset('washington-camp')">
+                        ⛺ Washington's Encampment
+                    </div>
+                    <div class="preset-bg" onclick="app.loadPreset('old-barracks')">
+                        ⚔️ Old Barracks
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <button class="toggle-btn" onclick="toggleSidebar()">🗺️ Map</button>
+    
+    <div class="overlay" id="overlay" onclick="closeInfo()"></div>
+    
+    <div class="info-modal" id="info-modal">
+        <div class="info-modal-header">
+            <div class="info-modal-title" id="info-title"></div>
+            <button class="info-modal-close" onclick="closeInfo()">×</button>
+        </div>
+        <div class="info-modal-body" id="info-body"></div>
+    </div>
+
+    <script>
+        // EMBEDDED DATA FROM ORIGINAL FILE
+        const CAMPAIGN_DATA = {
+            metadata: {
+                id: "trenton_1776",
+                title: "Battle of Trenton",
+                subtitle: "December 25-26, 1776"
+            },
+            map: {
+                center: [40.2190, -74.7608],
+                zoom: 13
+            },
+            locations: {
+                "washington-camp": {
+                    name: "Washington's Encampment",
+                    coords: [40.2976, -74.8709],
+                    elevation: 120,
+                    type: "continental",
+                    icon: "⛺",
+                    description: "General Washington's command tent.",
+                    tactical: null,
+                    historical: {
+                        overview: "On Christmas night 1776, General George Washington assembled approximately 2,400 Continental Army troops here.",
+                        facts: ["Assembly began at 3:00 PM, December 25", "Password: 'Victory or Death'", "Three divisions under Greene, Sullivan, Stirling"],
+                        significance: "Staging ground for the famous Delaware River crossing.",
+                        forces: "~2,400 troops, 18 cannons"
+                    }
+                },
+                "river-crossing": {
+                    name: "Delaware River Crossing",
+                    coords: [40.2950, -74.8650],
+                    elevation: 80,
+                    type: "crossing",
+                    icon: "🚣",
+                    description: "McConkey's Ferry crossing point.",
+                    tactical: null,
+                    historical: {
+                        overview: "The Delaware River crossing is one of the most iconic moments in American history.",
+                        facts: ["Started 6:00 PM December 25", "Durham boats 40-60 feet long", "Took 9 hours to complete", "Ice floes threatened boats"],
+                        significance: "Despite freezing conditions, Washington's army successfully crossed.",
+                        forces: "Three divisions crossed successfully"
+                    }
+                },
+                "old-barracks": {
+                    name: "The Old Barracks",
+                    coords: [40.2190, -74.7608],
+                    elevation: 50,
+                    type: "quest",
+                    icon: "⚔️",
+                    description: "Hessian garrison. A.G. Achilles imprisoned in Cell #4.",
+                    tactical: "old_barracks_ultimate.html",
+                    historical: {
+                        overview: "Built in 1758, still standing today as a museum!",
+                        facts: ["Originally housed 300 British soldiers", "40-50 Hessians quartered here", "Some captured in their bunks"],
+                        significance: "Crucial to securing Trenton.",
+                        forces: "~40-50 Hessian soldiers"
+                    }
+                },
+                "rall-hq": {
+                    name: "Rall's Headquarters",
+                    coords: [40.2195, -74.7592],
+                    elevation: 52,
+                    type: "hessian",
+                    icon: "🏛️",
+                    description: "Colonel Rall's command post.",
+                    tactical: null,
+                    historical: {
+                        overview: "Stacy's Tavern served as Hessian command center.",
+                        facts: ["Rall playing cards when attack began", "Warning note left unread in pocket", "Refused to build fortifications"],
+                        significance: "Rall's overconfidence proved fatal.",
+                        forces: "Command staff and guard"
+                    }
+                },
+                "king-street": {
+                    name: "King Street Battery",
+                    coords: [40.2210, -74.7615],
+                    elevation: 55,
+                    type: "hessian",
+                    icon: "🛡️",
+                    description: "Northern artillery position.",
+                    tactical: null,
+                    historical: {
+                        overview: "Main northern artillery defense with 6-pounder cannon.",
+                        facts: ["Defended Princeton approach", "Captured early in battle", "Wet powder from weather"],
+                        significance: "Capture prevented artillery defense.",
+                        forces: "~20-30 Hessian gunners"
+                    }
+                },
+                "queen-street": {
+                    name: "Queen Street Battery",
+                    coords: [40.2175, -74.7600],
+                    elevation: 48,
+                    type: "hessian",
+                    icon: "🛡️",
+                    description: "Southern artillery position.",
+                    tactical: null,
+                    historical: {
+                        overview: "Southern defense battery, quickly overrun.",
+                        facts: ["6-pounder cannon", "Crews struggled in sleet", "Abandoned during retreat"],
+                        significance: "Loss forced reliance on muskets only.",
+                        forces: "~20-30 Hessian gunners"
+                    }
+                },
+                "assunpink": {
+                    name: "Assunpink Creek Bridge",
+                    coords: [40.2145, -74.7598],
+                    elevation: 42,
+                    type: "continental",
+                    icon: "🌉",
+                    description: "Continental fallback position.",
+                    tactical: null,
+                    historical: {
+                        overview: "Washington's planned escape route became Hessian trap.",
+                        facts: ["Americans blocked the bridge", "Some Hessians drowned", "Second Battle here Jan 2, 1777"],
+                        significance: "Blocking this forced Hessian surrender.",
+                        forces: "American rear guard"
+                    }
+                }
+            }
+        };
+        
+        class CampaignMap {
+            constructor() {
+                this.map = null;
+                this.markers = {};
+                this.gridLayer = null;
+                this.backgroundLayer = null;
+                this.gridVisible = false;
+                this.gridSize = 5;
+                this.bgOpacity = 0.7;
+                this.campaign = CAMPAIGN_DATA;
+                
+                // Layer tiles
+                this.layers = {
+                    street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors',
+                        maxZoom: 19
+                    }),
+                    satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: 'Tiles © Esri',
+                        maxZoom: 19
+                    }),
+                    terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenTopoMap contributors',
+                        maxZoom: 17
+                    })
+                };
+                
+                this.currentLayer = 'satellite';
+            }
+            
+            init() {
+                this.map = L.map('map').setView(this.campaign.map.center, this.campaign.map.zoom);
+                
+                // Start with satellite view
+                this.layers.satellite.addTo(this.map);
+                
+                this.createMarkers();
+                this.renderLocations();
+                this.setupEventListeners();
+            }
+            
+            setLayer(type) {
+                // Remove current layer
+                this.map.removeLayer(this.layers[this.currentLayer]);
+                
+                // Add new layer
+                this.layers[type].addTo(this.map);
+                this.currentLayer = type;
+                
+                // Update button states
+                document.querySelectorAll('.layer-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(`layer-${type}`).classList.add('active');
+            }
+            
+            createMarkers() {
+                Object.keys(this.campaign.locations).forEach(key => {
+                    const loc = this.campaign.locations[key];
+                    
+                    const marker = L.marker(loc.coords, {
+                        title: loc.name
+                    }).addTo(this.map);
+                    
+                    marker.bindPopup(`
+                        <div style="font-family: Georgia, serif;">
+                            <strong style="font-size: 1.1rem;">${loc.icon} ${loc.name}</strong>
+                            <p style="margin-top: 0.5rem; font-size: 0.9rem;">${loc.description}</p>
+                            <button onclick="app.showInfo('${key}')" 
+                                    style="margin-top: 0.5rem; padding: 0.4rem 0.8rem; 
+                                           background: #1e3a5f; color: #d4af37; border: none; 
+                                           border-radius: 4px; cursor: pointer; font-family: Georgia, serif;">
+                                View Details
+                            </button>
+                        </div>
+                    `);
+                    
+                    this.markers[key] = marker;
+                });
+            }
+            
+            renderLocations() {
+                let html = '';
+                Object.keys(this.campaign.locations).forEach(key => {
+                    const loc = this.campaign.locations[key];
+                    html += `
+                        <div class="location-card ${loc.type}" onclick="app.select('${key}')">
+                            <div class="location-name">${loc.icon} ${loc.name}</div>
+                            <div class="location-desc">${loc.description}</div>
+                        </div>
+                    `;
+                });
+                document.getElementById('locations-list').innerHTML = html;
+            }
+            
+            select(key) {
+                const loc = this.campaign.locations[key];
+                this.map.flyTo(loc.coords, 17, { duration: 1.5 });
+                this.markers[key].openPopup();
+            }
+            
+            showInfo(key) {
+                const loc = this.campaign.locations[key];
+                const hist = loc.historical;
+                
+                document.getElementById('info-title').textContent = `${loc.icon} ${loc.name}`;
+                document.getElementById('info-body').innerHTML = `
+                    <div class="info-section">
+                        <div class="section-title">📜 Overview</div>
+                        <div class="info-text">${hist.overview}</div>
+                    </div>
+                    <div class="info-section">
+                        <div class="section-title">📚 Facts</div>
+                        <ul class="info-list">
+                            ${hist.facts.map(f => `<li>${f}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="info-section">
+                        <div class="section-title">⭐ Significance</div>
+                        <div class="info-text">${hist.significance}</div>
+                        <div class="historical-fact"><strong>Forces:</strong> ${hist.forces}</div>
+                    </div>
+                `;
+                document.getElementById('info-modal').classList.add('active');
+                document.getElementById('overlay').classList.add('active');
+            }
+            
+            toggleGrid() {
+                this.gridVisible = !this.gridVisible;
+                
+                if (this.gridVisible) {
+                    this.showGrid();
+                    document.getElementById('grid-btn-text').textContent = 'Hide Grid';
+                } else {
+                    this.hideGrid();
+                    document.getElementById('grid-btn-text').textContent = 'Show Grid';
+                }
+            }
+            
+            setGridSize(size) {
+                this.gridSize = size;
+                document.getElementById('grid-size').value = size;
+                if (this.gridVisible) {
+                    this.hideGrid();
+                    this.showGrid();
+                }
+            }
+            
+            showGrid() {
+                const bounds = this.map.getBounds();
+                const feetPerDegree = 364000;
+                const gridSpacing = this.gridSize / feetPerDegree;
+                
+                const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svgElement.setAttribute('xmlns', "http://www.w3.org/2000/svg");
+                svgElement.setAttribute('class', 'grid-overlay');
+                
+                const topLeft = this.map.latLngToLayerPoint(bounds.getNorthWest());
+                const bottomRight = this.map.latLngToLayerPoint(bounds.getSouthEast());
+                
+                let col = 0;
+                for (let lng = bounds.getWest(); lng <= bounds.getEast(); lng += gridSpacing) {
+                    const point = this.map.latLngToLayerPoint([bounds.getNorth(), lng]);
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute('class', 'grid-line');
+                    line.setAttribute('x1', point.x);
+                    line.setAttribute('y1', topLeft.y);
+                    line.setAttribute('x2', point.x);
+                    line.setAttribute('y2', bottomRight.y);
+                    svgElement.appendChild(line);
+                    
+                    if (col % 5 === 0) {
+                        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        text.setAttribute('class', 'grid-label');
+                        text.setAttribute('x', point.x);
+                        text.setAttribute('y', topLeft.y + 15);
+                        text.textContent = col;
+                        svgElement.appendChild(text);
+                    }
+                    col++;
+                }
+                
+                let row = 0;
+                for (let lat = bounds.getNorth(); lat >= bounds.getSouth(); lat -= gridSpacing) {
+                    const point = this.map.latLngToLayerPoint([lat, bounds.getWest()]);
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute('class', 'grid-line');
+                    line.setAttribute('x1', topLeft.x);
+                    line.setAttribute('y1', point.y);
+                    line.setAttribute('x2', bottomRight.x);
+                    line.setAttribute('y2', point.y);
+                    svgElement.appendChild(line);
+                    
+                    if (row % 5 === 0) {
+                        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        text.setAttribute('class', 'grid-label');
+                        text.setAttribute('x', topLeft.x + 15);
+                        text.setAttribute('y', point.y);
+                        text.textContent = row;
+                        svgElement.appendChild(text);
+                    }
+                    row++;
+                }
+                
+                document.getElementById('grid-columns').textContent = col;
+                document.getElementById('grid-rows').textContent = row;
+                
+                this.gridLayer = L.svgOverlay(svgElement, bounds, {
+                    interactive: false,
+                    bubblingMouseEvents: true
+                }).addTo(this.map);
+            }
+            
+            hideGrid() {
+                if (this.gridLayer) {
+                    this.map.removeLayer(this.gridLayer);
+                    this.gridLayer = null;
+                }
+            }
+            
+            setBackground() {
+                const url = document.getElementById('bg-url').value;
+                const opacity = document.getElementById('bg-opacity').value / 100;
+                
+                if (!url) {
+                    alert('Please enter an image URL');
+                    return;
+                }
+                
+                this.clearBackground();
+                
+                const bounds = this.map.getBounds();
+                this.backgroundLayer = L.imageOverlay(url, bounds, {
+                    opacity: opacity,
+                    interactive: false
+                }).addTo(this.map);
+                
+                this.bgOpacity = opacity;
+            }
+            
+            clearBackground() {
+                if (this.backgroundLayer) {
+                    this.map.removeLayer(this.backgroundLayer);
+                    this.backgroundLayer = null;
+                }
+            }
+            
+            loadPreset(key) {
+                const loc = this.campaign.locations[key];
+                if (!loc) return;
+                
+                this.map.flyTo(loc.coords, 18, { duration: 1.5 });
+                
+                this.setGridSize(5);
+                if (!this.gridVisible) {
+                    this.toggleGrid();
+                }
+                
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('tab-grid').classList.add('active');
+            }
+            
+            setupEventListeners() {
+                document.getElementById('grid-size').addEventListener('input', (e) => {
+                    this.gridSize = parseInt(e.target.value);
+                    if (this.gridVisible) {
+                        this.hideGrid();
+                        this.showGrid();
+                    }
+                });
+                
+                document.getElementById('bg-opacity').addEventListener('input', (e) => {
+                    const opacity = e.target.value;
+                    document.getElementById('opacity-value').textContent = opacity;
+                    if (this.backgroundLayer) {
+                        this.backgroundLayer.setOpacity(opacity / 100);
+                    }
+                });
+                
+                this.map.on('moveend', () => {
+                    if (this.gridVisible) {
+                        this.hideGrid();
+                        this.showGrid();
+                    }
+                });
+            }
+        }
+        
+        const app = new CampaignMap();
+        
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('hidden');
+        }
+        
+        function showTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + name).classList.add('active');
+        }
+        
+        function closeInfo() {
+            document.getElementById('info-modal').classList.remove('active');
+            document.getElementById('overlay').classList.remove('active');
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🗺️ Starting Campaign Map...');
+            app.init();
+        });
+    </script>
+</body>
+</html>
