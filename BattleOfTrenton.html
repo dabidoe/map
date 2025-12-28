@@ -1320,6 +1320,15 @@
 
                 // Update PARTY tab to show character library
                 this.renderCharacterLibrary(locationKey);
+
+                // If characters aren't loaded yet, retry after a short delay
+                if (Object.keys(CHARACTERS).length === 0) {
+                    console.log('Characters not loaded yet, will retry in 500ms...');
+                    setTimeout(() => {
+                        console.log('Retrying character library render...');
+                        this.renderCharacterLibrary(locationKey);
+                    }, 500);
+                }
             }
 
             loadBackground(key, location) {
@@ -1684,13 +1693,18 @@
                 const container = document.getElementById('party-list');
                 if (!container) return;
 
+                console.log('Rendering character library for:', locationKey);
+                console.log('Total characters available:', Object.keys(CHARACTERS).length);
+
                 const locationCharacters = Object.values(CHARACTERS).filter(c => c.location === locationKey);
+                console.log('Characters at this location:', locationCharacters.length, locationCharacters.map(c => c.name));
 
                 if (locationCharacters.length === 0) {
+                    const totalChars = Object.keys(CHARACTERS).length;
                     container.innerHTML = `
                         <div class="character-card">
                             <div class="character-name">No characters at this location</div>
-                            <div class="character-info">Use the main Characters tab to view all characters</div>
+                            <div class="character-info">${totalChars > 0 ? 'Characters loaded but none assigned to this location' : '⏳ Loading characters... Please wait a moment and try reopening this location.'}</div>
                         </div>
                     `;
                     return;
