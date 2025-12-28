@@ -1249,27 +1249,111 @@
             }
         };
 
-        // CHARACTER LIBRARY
-        let CHARACTERS = {};
+        // CHARACTER LIBRARY - Embedded directly for file:// compatibility
+        const CHARACTERS = {
+            "washington": {
+                "id": "washington",
+                "name": "George Washington",
+                "title": "Commander-in-Chief",
+                "faction": "Continental",
+                "location": "washington-camp",
+                "type": "player",
+                "speed": 30,
+                "description": "Commander-in-Chief of the Continental Army. Led the daring Christmas night attack on Trenton."
+            },
+            "greene": {
+                "id": "greene",
+                "name": "Nathanael Greene",
+                "title": "Major General (#2)",
+                "faction": "Continental",
+                "location": "washington-camp",
+                "type": "player",
+                "speed": 30,
+                "description": "Washington's most trusted general. Commanded the southern division during the attack."
+            },
+            "sullivan": {
+                "id": "sullivan",
+                "name": "John Sullivan",
+                "title": "Major General (#3)",
+                "faction": "Continental",
+                "location": "washington-camp",
+                "type": "player",
+                "speed": 30,
+                "description": "Led the northern division during the Trenton attack."
+            },
+            "knox": {
+                "id": "knox",
+                "name": "Henry Knox",
+                "title": "Colonel, Chief of Artillery",
+                "faction": "Continental",
+                "location": "washington-camp",
+                "type": "player",
+                "speed": 30,
+                "description": "Former bookseller who became Washington's artillery chief."
+            },
+            "achilles": {
+                "id": "achilles",
+                "name": "A.G. Achilles",
+                "title": "Prisoner of War",
+                "faction": "Continental",
+                "location": "old-barracks",
+                "type": "player",
+                "speed": 30,
+                "description": "Continental soldier imprisoned in Cell #4 of the Old Barracks"
+            },
+            "rall": {
+                "id": "rall",
+                "name": "Johann Rall",
+                "title": "Colonel, Hessian Commander",
+                "faction": "Hessian",
+                "location": "old-barracks",
+                "type": "enemy",
+                "speed": 30,
+                "description": "Commander of Hessian forces at Trenton. Overconfident and dismissive of warnings."
+            },
+            "hessian_guard_1": {
+                "id": "hessian_guard_1",
+                "name": "Hessian Guard (Exterior)",
+                "title": "Guard",
+                "faction": "Hessian",
+                "location": "old-barracks",
+                "type": "enemy",
+                "speed": 30,
+                "description": "Hessian guard stationed outside the Old Barracks main entrance."
+            },
+            "hessian_guard_2": {
+                "id": "hessian_guard_2",
+                "name": "Hessian Guard (Exterior)",
+                "title": "Guard",
+                "faction": "Hessian",
+                "location": "old-barracks",
+                "type": "enemy",
+                "speed": 30,
+                "description": "Hessian guard stationed outside the Old Barracks."
+            },
+            "hessian_guard_3": {
+                "id": "hessian_guard_3",
+                "name": "Hessian Guard (Interior)",
+                "title": "Guard",
+                "faction": "Hessian",
+                "location": "old-barracks",
+                "type": "enemy",
+                "speed": 30,
+                "description": "Hessian guard stationed inside near Cell #4."
+            },
+            "hessian_guard_4": {
+                "id": "hessian_guard_4",
+                "name": "Hessian Guard (Interior)",
+                "title": "Guard",
+                "faction": "Hessian",
+                "location": "old-barracks",
+                "type": "enemy",
+                "speed": 30,
+                "description": "Hessian guard stationed inside near Cell #4."
+            }
+        };
 
-        // Load characters from JSON
-        fetch('campaigns/american-revolution.json')
-            .then(res => res.json())
-            .then(data => {
-                CHARACTERS = data.characters || {};
-                console.log('Loaded characters:', Object.keys(CHARACTERS).length);
-
-                // Re-render character library after loading
-                if (window.app) {
-                    app.renderCharacters();
-                }
-
-                // Re-render tactical character library if in tactical view
-                if (window.tactical && tactical.currentLocation) {
-                    tactical.renderCharacterLibrary(tactical.currentLocation);
-                }
-            })
-            .catch(err => console.error('Failed to load characters:', err));
+        console.log('Characters loaded:', Object.keys(CHARACTERS).length);
 
         // TACTICAL GRID SYSTEM
         class TacticalGrid {
@@ -1320,15 +1404,6 @@
 
                 // Update PARTY tab to show character library
                 this.renderCharacterLibrary(locationKey);
-
-                // If characters aren't loaded yet, retry after a short delay
-                if (Object.keys(CHARACTERS).length === 0) {
-                    console.log('Characters not loaded yet, will retry in 500ms...');
-                    setTimeout(() => {
-                        console.log('Retrying character library render...');
-                        this.renderCharacterLibrary(locationKey);
-                    }, 500);
-                }
             }
 
             loadBackground(key, location) {
