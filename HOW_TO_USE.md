@@ -1,0 +1,161 @@
+# How to Use Your Campaign Map
+
+## Super Simple Setup
+
+### 1. Open the Map
+**Just double-click `BattleOfTrenton.html`** - that's it! Everything works.
+
+### 2. Folder Structure
+```
+map/
+├── BattleOfTrenton.html          ← DOUBLE-CLICK THIS!
+└── campaign-images/
+    ├── tactical/                 ← Put location background images here
+    │   ├── old-barracks.jpg
+    │   ├── washington-camp.jpg
+    │   └── ...
+    └── characters/               ← Put character portraits here
+        └── achilles.jpg
+```
+
+## Adding Background Images for Tactical Maps
+
+### Simple 3 Steps:
+
+1. **Find or create** a floor plan, battle map, or building image
+2. **Name it** after the location (use the folder guide below)
+3. **Drop it** into `campaign-images/tactical/`
+
+### Location Image Names:
+```
+washington-camp.jpg          ← Washington's Encampment
+river-crossing.jpg           ← Delaware River Crossing
+old-barracks.jpg             ← The Old Barracks ⭐ (main quest)
+rall-hq.jpg                  ← Rall's Headquarters
+king-street.jpg              ← King Street Battery
+queen-street.jpg             ← Queen Street Battery
+assunpink.jpg                ← Assunpink Creek Bridge
+```
+
+### Supported formats:
+- `.jpg` (recommended)
+- `.png`
+- `.webp`
+
+## How It Works
+
+### Exploring the Campaign Map
+1. Click any **location marker** (the colorful pins)
+2. Or click **location cards** in the sidebar
+3. View info with **📖 Info** button
+4. Enter tactical view with **⚔️ Tactical Map** button
+
+### Using Tactical Maps
+1. Click **⚔️ Tactical Map** on any location
+2. **Toggle Grid** for D&D-style combat
+3. Adjust **grid size** (5ft, 10ft, 30ft)
+4. **Zoom in** to see building details
+5. If you added a background image, it shows automatically!
+
+### Saving Your Progress
+- **Auto-saves** every 30 seconds
+- **Export** to backup your save
+- **Import** to restore or share
+- **Reset** to start fresh
+
+## Tips & Tricks
+
+### Where to Find Background Images
+1. **Google Images**: Search "old barracks floor plan" or "tavern battle map"
+2. **Pinterest**: Tons of historical building layouts
+3. **DnD Resources**: r/battlemaps, dungeondraft.net
+4. **Historical Sites**: Many museums have floor plans online
+5. **Draw Your Own**: Use any image editor
+
+### Image Best Practices
+- Higher resolution = better quality when zoomed
+- Transparent PNGs work great for floor plans
+- Don't worry about perfect sizing - the map auto-fits
+
+### Making It Cool Together
+**Tell me what you want and I'll build it:**
+- "Add a tavern interior for Rall's HQ"
+- "Make the Old Barracks have multiple floors"
+- "Add enemy markers to tactical maps"
+- "Create a character for each location"
+
+## Working Together
+
+### You do:
+✅ Find/add images to folders
+✅ Tell me what locations need
+✅ Describe what you envision
+
+### I do:
+✅ Code new features
+✅ Add tactical details
+✅ Create special effects
+✅ Build new campaigns
+
+## Quick Reference
+
+### Tabs in Sidebar
+- **📍 Locations**: All 7 locations in the campaign
+- **🖼️ Images**: Guide for naming image files
+- **💾 Save**: Save, export, import, reset
+- **❓ Help**: Built-in tutorial
+
+### Map Layers
+- **Satellite**: Aerial photo view (default)
+- **Street**: Road map view
+- **Terrain**: Topographic view
+
+### Location Types (Color Coded)
+- 🔴 **Red** = Quest objectives (Old Barracks)
+- 🔵 **Blue** = Continental/friendly (Washington's Camp)
+- 🟠 **Orange** = Hessian/enemy (Rall's HQ)
+- 🔷 **Cyan** = Crossings/travel (River)
+
+## What's Next?
+
+### Easy Improvements We Can Add:
+1. **Enemy tokens** on tactical maps
+2. **Multiple floor levels** for buildings
+3. **Character portraits** that pop up
+4. **Custom markers** for important items
+5. **Notes system** for each location
+6. **Timeline** of events
+7. **Weather effects** (snow overlay)
+8. **Sound effects** (musket fire, drums)
+
+### New Campaigns We Can Build:
+- Different historical battles
+- D&D adventures
+- Star Wars locations
+- Any setting you want!
+
+## Troubleshooting
+
+### Images not showing?
+- Check the filename exactly matches (e.g., `old-barracks.jpg` not `Old Barracks.jpg`)
+- Make sure it's in the `campaign-images/tactical/` folder
+- Try `.jpg` format first
+
+### Map not loading?
+- Make sure you're opening `BattleOfTrenton.html`
+- Try a different browser (Chrome, Firefox, Edge)
+- Check your internet connection (needed for map tiles)
+
+### Save not working?
+- Browser localStorage might be disabled
+- Try Export/Import instead
+- Private/Incognito mode won't persist saves
+
+## Let's Build!
+
+Just tell me:
+- What images you have
+- What you want to add
+- What would make it cooler
+
+I'll do the coding, you do the creative direction! 🎲⚔️🗺️

@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle of Trenton - Campaign Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #1e3a5f;
+            --secondary: #d4af37;
+            --accent: #dc2626;
+            --success: #16a34a;
+            --bg-dark: #0a0a0a;
+            --bg-light: #1a1410;
+            --text: #f4e8d0;
+        }
+
+        body {
+            font-family: Georgia, serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        /* Map */
+        #map {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        /* Quick Help Banner */
+        .help-banner {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--primary), #0f1f3a);
+            border: 2px solid var(--secondary);
+            border-radius: 8px;
+            padding: 0.8rem 1.5rem;
+            z-index: 3000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            display: none;
+        }
+
+        .help-banner.show { display: block; }
+
+        .help-text {
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        /* Layer Control */
+        .layer-control {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, var(--primary), #0f1f3a);
+            border: 2px solid var(--secondary);
+            border-radius: 6px;
+            padding: 0.5rem;
+            z-index: 1500;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+
+        .layer-btn {
+            background: rgba(26, 20, 16, 0.5);
+            border: 1px solid var(--secondary);
+            color: var(--text);
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.75rem;
+            font-family: Georgia, serif;
+            transition: all 0.2s;
+            display: block;
+            width: 100%;
+            margin-bottom: 0.3rem;
+        }
+
+        .layer-btn:last-child { margin-bottom: 0; }
+        .layer-btn:hover, .layer-btn.active {
+            background: var(--secondary);
+            color: var(--primary);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 350px;
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-light), var(--bg-dark));
+            border-right: 3px solid var(--secondary);
+            transition: transform 0.3s ease;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+        }
+
+        .sidebar.hidden { transform: translateX(-350px); }
+
+        .toggle-btn {
+            position: fixed;
+            left: 10px;
+            top: 10px;
+            background: linear-gradient(135deg, var(--primary), #0f1f3a);
+            color: var(--secondary);
+            border: 2px solid var(--secondary);
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            z-index: 2001;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            transition: all 0.3s;
+            display: none;
+        }
+
+        .sidebar.hidden ~ .toggle-btn { display: block; }
+        .toggle-btn:hover {
+            background: linear-gradient(135deg, var(--secondary), #b8941f);
+            color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        .sidebar-header {
+            background: linear-gradient(135deg, var(--primary), #0f1f3a);
+            padding: 1.2rem;
+            border-bottom: 3px solid var(--secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .campaign-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 0.3rem;
+        }
+
+        .campaign-meta {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: var(--secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            line-height: 1;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            color: var(--accent);
+            transform: scale(1.2);
+        }
+
+        /* Tabs */
+        .sidebar-tabs {
+            display: flex;
+            background: rgba(30, 58, 95, 0.3);
+            border-bottom: 2px solid var(--secondary);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 0.7rem 0.3rem;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.75rem;
+            transition: all 0.3s;
+            border-right: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .tab:last-child { border-right: none; }
+        .tab:hover { background: rgba(212, 175, 55, 0.2); }
+        .tab.active { background: rgba(212, 175, 55, 0.3); color: var(--secondary); }
+
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: none;
+        }
+
+        .tab-content.active { display: block; }
+
+        /* Location Cards */
+        .location-card {
+            background: rgba(30, 58, 95, 0.2);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-left: 4px solid var(--primary);
+            border-radius: 6px;
+            padding: 0.9rem;
+            margin-bottom: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .location-card:hover {
+            background: rgba(30, 58, 95, 0.4);
+            border-left-color: var(--secondary);
+            transform: translateX(5px);
+        }
+
+        .location-card.active {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: var(--secondary);
+        }
+
+        .location-card.quest { border-left-color: var(--accent); }
+        .location-card.continental { border-left-color: #3b82f6; }
+        .location-card.hessian { border-left-color: #f59e0b; }
+        .location-card.crossing { border-left-color: #06b6d4; }
+
+        .location-name {
+            font-weight: bold;
+            font-size: 1rem;
+            margin-bottom: 0.4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .location-desc {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            line-height: 1.4;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-left: 0.3rem;
+        }
+
+        .badge.visited { background: var(--success); color: white; }
+        .badge.tactical { background: var(--accent); color: white; }
+        .badge.has-image { background: #3b82f6; color: white; }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), #0f1f3a);
+            color: var(--secondary);
+            border: 2px solid var(--secondary);
+            padding: 0.7rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            font-family: Georgia, serif;
+            transition: all 0.3s;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, var(--secondary), #b8941f);
+            color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn.danger {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        .btn.danger:hover {
+            background: #b91c1c;
+            border-color: #b91c1c;
+        }
+
+        /* Stats */
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.6rem;
+            background: rgba(30, 58, 95, 0.2);
+            border-radius: 4px;
+            margin-bottom: 0.4rem;
+            font-size: 0.85rem;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: var(--secondary);
+        }
+
+        .save-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .save-label {
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        /* Info Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 4000;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal-content {
+            background: linear-gradient(135deg, var(--bg-light), var(--bg-dark));
+            border: 4px solid var(--secondary);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 700px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid var(--secondary);
+        }
+
+        .modal-title {
+            font-size: 1.7rem;
+            color: var(--secondary);
+            font-weight: bold;
+        }
+
+        .modal-subtitle {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-top: 0.3rem;
+        }
+
+        .modal-close {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: Georgia, serif;
+        }
+
+        .modal-close:hover { background: #b91c1c; }
+
+        .info-section {
+            background: rgba(30, 58, 95, 0.2);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 8px;
+            padding: 1.3rem;
+            margin-bottom: 1.3rem;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            color: var(--secondary);
+            font-weight: bold;
+            margin-bottom: 0.8rem;
+        }
+
+        .info-text {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            margin-bottom: 0.8rem;
+        }
+
+        .info-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .info-list li {
+            padding: 0.4rem 0 0.4rem 1.3rem;
+            position: relative;
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+
+        .info-list li:before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: var(--secondary);
+        }
+
+        .historical-fact {
+            background: rgba(212, 175, 55, 0.1);
+            border-left: 4px solid var(--secondary);
+            padding: 0.9rem;
+            margin: 0.8rem 0;
+            font-style: italic;
+        }
+
+        /* Tactical Overlay */
+        .tactical-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-dark);
+            z-index: 5000;
+        }
+
+        .tactical-overlay.active { display: block; }
+
+        .tactical-close {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: Georgia, serif;
+            z-index: 5001;
+            font-size: 1rem;
+        }
+
+        .tactical-close:hover { background: #b91c1c; }
+
+        #tactical-map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .tactical-controls {
+            position: fixed;
+            right: 15px;
+            top: 80px;
+            background: linear-gradient(135deg, var(--primary), #0f1f3a);
+            border: 2px solid var(--secondary);
+            border-radius: 8px;
+            padding: 1rem;
+            z-index: 5001;
+            max-width: 280px;
+        }
+
+        .control-title {
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 0.8rem;
+            font-size: 1rem;
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 0.5rem;
+        }
+
+        .btn-small {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+            display: inline-block;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Markers */
+        .custom-marker {
+            background: none;
+            border: none;
+        }
+
+        .marker-pin {
+            width: 40px;
+            height: 40px;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            border: 3px solid #fff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .marker-pin:hover {
+            transform: rotate(-45deg) scale(1.4);
+            z-index: 1000;
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.6);
+        }
+
+        .marker-pin.quest {
+            background: radial-gradient(circle, var(--accent), #991b1b);
+            animation: pulse 2s infinite;
+        }
+
+        .marker-pin.hessian { background: radial-gradient(circle, #f59e0b, #d97706); }
+        .marker-pin.continental { background: radial-gradient(circle, #3b82f6, #1e40af); }
+        .marker-pin.crossing { background: radial-gradient(circle, #06b6d4, #0891b2); }
+
+        @keyframes pulse {
+            0%, 100% { transform: rotate(-45deg) scale(1); }
+            50% { transform: rotate(-45deg) scale(1.2); }
+        }
+
+        .marker-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            font-size: 1.2rem;
+        }
+
+        /* Leaflet Popup */
+        .leaflet-popup-content-wrapper {
+            background: rgba(26, 20, 16, 0.98);
+            color: var(--text);
+            border: 3px solid var(--secondary);
+            border-radius: 8px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+        }
+
+        .leaflet-popup-content {
+            font-family: Georgia, serif;
+            margin: 1.2rem;
+            min-width: 220px;
+        }
+
+        .leaflet-popup-tip { background: rgba(26, 20, 16, 0.98); }
+
+        .popup-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .popup-desc {
+            font-size: 0.9rem;
+            margin-bottom: 0.8rem;
+            line-height: 1.5;
+        }
+
+        .popup-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .popup-btn {
+            background: var(--primary);
+            color: var(--secondary);
+            border: 1px solid var(--secondary);
+            padding: 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: Georgia, serif;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+
+        .popup-btn:hover {
+            background: var(--secondary);
+            color: var(--primary);
+        }
+
+        .popup-btn.tactical {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+            grid-column: 1 / -1;
+        }
+
+        .popup-btn.tactical:hover { background: #b91c1c; }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+        }
+
+        .grid-overlay {
+            pointer-events: none;
+            z-index: 600;
+        }
+
+        .grid-line {
+            fill: none;
+            stroke: rgba(212, 175, 55, 0.4);
+            stroke-width: 1.5;
+        }
+
+        .grid-line.major {
+            stroke: rgba(212, 175, 55, 0.6);
+            stroke-width: 2;
+        }
+
+        .grid-label {
+            fill: var(--secondary);
+            font-size: 12px;
+            font-weight: bold;
+            text-anchor: middle;
+            paint-order: stroke;
+            stroke: rgba(0, 0, 0, 0.9);
+            stroke-width: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <!-- Map -->
+    <div id="map"></div>
+
+    <!-- Help Banner -->
+    <div class="help-banner" id="help-banner">
+        <div class="help-text">💡 Click any location on the map or sidebar to explore!</div>
+    </div>
+
+    <!-- Layer Control -->
+    <div class="layer-control">
+        <button class="layer-btn" id="layer-street" onclick="app.setLayer('street')">Street</button>
+        <button class="layer-btn active" id="layer-satellite" onclick="app.setLayer('satellite')">Satellite</button>
+        <button class="layer-btn" id="layer-terrain" onclick="app.setLayer('terrain')">Terrain</button>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div>
+                <div class="campaign-title">⚔️ Battle of Trenton</div>
+                <div class="campaign-meta">
+                    <span>📅 Dec 25-26, 1776</span>
+                    <span>🌡️ 28°F</span>
+                </div>
+            </div>
+            <button class="close-btn" onclick="toggleSidebar()">×</button>
+        </div>
+
+        <div class="sidebar-tabs">
+            <div class="tab active" onclick="showTab('locations')">📍 Locations</div>
+            <div class="tab" onclick="showTab('images')">🖼️ Images</div>
+            <div class="tab" onclick="showTab('save')">💾 Save</div>
+            <div class="tab" onclick="showTab('help')">❓ Help</div>
+        </div>
+
+        <div class="tab-content active" id="tab-locations">
+            <div id="locations-list"></div>
+        </div>
+
+        <div class="tab-content" id="tab-images">
+            <div class="save-label">🖼️ Add Background Images</div>
+            <p style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 1rem; line-height: 1.5;">
+                Drop images into <code>campaign-images/tactical/</code> folder and name them after locations (e.g., <code>old-barracks.jpg</code>)
+            </p>
+            <div id="image-settings"></div>
+        </div>
+
+        <div class="tab-content" id="tab-save">
+            <div class="save-section">
+                <div class="save-label">💾 Save Game</div>
+                <button class="btn" onclick="app.save()">Save Progress Now</button>
+                <button class="btn" onclick="app.exportSave()">📤 Export Save</button>
+                <button class="btn" onclick="document.getElementById('import-file').click()">📥 Import Save</button>
+                <input type="file" id="import-file" accept=".json" style="display:none">
+            </div>
+
+            <div class="save-section">
+                <div class="save-label">📊 Statistics</div>
+                <div class="stat-row">
+                    <span>Locations Visited</span>
+                    <span class="stat-value" id="stat-visited">0 / 7</span>
+                </div>
+            </div>
+
+            <div class="save-section">
+                <div class="save-label">⚠️ Reset</div>
+                <button class="btn danger" onclick="app.reset()">Reset Campaign</button>
+            </div>
+        </div>
+
+        <div class="tab-content" id="tab-help">
+            <div class="save-label">📖 Quick Start Guide</div>
+
+            <div class="info-section">
+                <div class="section-title">🗺️ Using the Map</div>
+                <ul class="info-list">
+                    <li>Click markers or sidebar cards to visit locations</li>
+                    <li>Click "⚔️ Tactical Map" to enter combat view</li>
+                    <li>Use layer buttons (Street/Satellite) to change view</li>
+                </ul>
+            </div>
+
+            <div class="info-section">
+                <div class="section-title">🖼️ Adding Images</div>
+                <ul class="info-list">
+                    <li>Put images in <code>campaign-images/tactical/</code></li>
+                    <li>Name them: <code>location-name.jpg</code></li>
+                    <li>Supported: .jpg, .png, .webp</li>
+                    <li>Images show automatically in tactical view</li>
+                </ul>
+            </div>
+
+            <div class="info-section">
+                <div class="section-title">⚔️ Tactical Maps</div>
+                <ul class="info-list">
+                    <li>Toggle grid for D&D-style combat</li>
+                    <li>Adjust grid size (5ft, 10ft, 30ft)</li>
+                    <li>Background images overlay automatically</li>
+                    <li>Use zoom to see building details</li>
+                </ul>
+            </div>
+
+            <div class="info-section">
+                <div class="section-title">💾 Saving</div>
+                <ul class="info-list">
+                    <li>Auto-saves every 30 seconds</li>
+                    <li>Export/Import to backup or share</li>
+                    <li>Saves track visited locations</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <button class="toggle-btn" onclick="toggleSidebar()">🗺️ Map</button>
+
+    <!-- Info Modal -->
+    <div class="modal-overlay" id="info-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title" id="info-title">Location</div>
+                    <div class="modal-subtitle" id="info-subtitle">Coordinates</div>
+                </div>
+                <button class="modal-close" onclick="closeInfo()">✕</button>
+            </div>
+            <div id="info-body"></div>
+        </div>
+    </div>
+
+    <!-- Tactical Overlay -->
+    <div class="tactical-overlay" id="tactical-overlay">
+        <button class="tactical-close" onclick="closeTactical()">← Back to Campaign Map</button>
+        <div id="tactical-map"></div>
+
+        <div class="tactical-controls">
+            <div class="control-title">⚔️ Tactical View</div>
+            <div id="tactical-location-name" style="margin-bottom: 1rem; font-size: 0.9rem; opacity: 0.9;"></div>
+            <button class="btn btn-small" id="grid-toggle" onclick="app.toggleTacticalGrid()">Show Grid</button>
+            <br>
+            <button class="btn btn-small" onclick="app.setTacticalGridSize(5)">5ft</button>
+            <button class="btn btn-small" onclick="app.setTacticalGridSize(10)">10ft</button>
+            <button class="btn btn-small" onclick="app.setTacticalGridSize(30)">30ft</button>
+        </div>
+    </div>
+
+    <script>
+        // CAMPAIGN DATA - Embedded for simplicity
+        const CAMPAIGN = {
+            "washington-camp": {
+                name: "Washington's Encampment",
+                coords: [40.2976, -74.8709],
+                type: "continental",
+                icon: "⛺",
+                desc: "General Washington's command tent on the Pennsylvania side.",
+                info: "On Christmas night 1776, approximately 2,400 Continental Army troops assembled here. The password: 'Victory or Death'."
+            },
+            "river-crossing": {
+                name: "Delaware River Crossing",
+                coords: [40.2950, -74.8650],
+                type: "crossing",
+                icon: "🚣",
+                desc: "McConkey's Ferry. 2,400 troops crossed Christmas night.",
+                info: "Durham boats ferried troops across ice floes for 9 hours. One of the most iconic moments in American history."
+            },
+            "old-barracks": {
+                name: "The Old Barracks",
+                coords: [40.2190, -74.7608],
+                type: "quest",
+                icon: "⚔️",
+                desc: "Hessian garrison. A.G. Achilles imprisoned in Cell #4.",
+                info: "Built in 1758, still standing today! Approximately 40-50 Hessian soldiers were quartered here. Some were captured in their bunks."
+            },
+            "rall-hq": {
+                name: "Rall's Headquarters",
+                coords: [40.2195, -74.7592],
+                type: "hessian",
+                icon: "🏛️",
+                desc: "Colonel Rall's command at Stacy's Tavern.",
+                info: "Colonel Rall was playing cards when the attack began. An unread warning note was found in his pocket after he died."
+            },
+            "king-street": {
+                name: "King Street Battery",
+                coords: [40.2210, -74.7615],
+                type: "hessian",
+                icon: "🛡️",
+                desc: "Northern artillery with 6-pounder cannon.",
+                info: "Main northern defense. Artillery pieces were captured early in the battle when crews were caught off-guard."
+            },
+            "queen-street": {
+                name: "Queen Street Battery",
+                coords: [40.2175, -74.7600],
+                type: "hessian",
+                icon: "🛡️",
+                desc: "Southern artillery position.",
+                info: "Crews struggled to serve their pieces in the sleet and snow. Position was abandoned as Hessians attempted to retreat."
+            },
+            "assunpink": {
+                name: "Assunpink Creek Bridge",
+                coords: [40.2145, -74.7598],
+                type: "continental",
+                icon: "🌉",
+                desc: "Continental fallback position.",
+                info: "Washington's planned escape route became a trap for the Hessians. Americans blocked the bridge, forcing surrender."
+            }
+        };
+
+        class CampaignApp {
+            constructor() {
+                this.map = null;
+                this.tacticalMap = null;
+                this.markers = {};
+                this.state = { visited: [], images: {} };
+                this.gridLayer = null;
+                this.gridVisible = false;
+                this.gridSize = 5;
+                this.backgroundLayer = null;
+                this.currentTactical = null;
+
+                this.layers = {
+                    street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19
+                    }),
+                    satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        maxZoom: 22
+                    }),
+                    terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 17
+                    })
+                };
+
+                this.currentLayer = 'satellite';
+            }
+
+            init() {
+                this.load();
+                this.setupMap();
+                this.render();
+                this.setupEventListeners();
+
+                // Show help banner for first-time users
+                if (!this.state.visited || this.state.visited.length === 0) {
+                    this.showHelpBanner();
+                }
+
+                // Auto-save every 30 seconds
+                setInterval(() => this.save(), 30000);
+            }
+
+            setupMap() {
+                this.map = L.map('map', {
+                    center: [40.2190, -74.7608],
+                    zoom: 13
+                });
+
+                this.layers.satellite.addTo(this.map);
+
+                Object.keys(CAMPAIGN).forEach(key => this.createMarker(key));
+                L.control.scale({ position: 'bottomleft', imperial: true }).addTo(this.map);
+            }
+
+            setLayer(type) {
+                this.map.removeLayer(this.layers[this.currentLayer]);
+                this.layers[type].addTo(this.map);
+                this.currentLayer = type;
+
+                document.querySelectorAll('.layer-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(`layer-${type}`).classList.add('active');
+            }
+
+            createMarker(key) {
+                const loc = CAMPAIGN[key];
+                const html = `<div class="marker-pin ${loc.type}"><div class="marker-icon">${loc.icon}</div></div>`;
+
+                const marker = L.marker(loc.coords, {
+                    icon: L.divIcon({
+                        className: 'custom-marker',
+                        html: html,
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 40]
+                    })
+                }).addTo(this.map);
+
+                const popupHTML = `
+                    <div class="popup-title">${loc.icon} ${loc.name}</div>
+                    <div class="popup-desc">${loc.desc}</div>
+                    <div class="popup-actions">
+                        <button class="popup-btn" onclick="app.showInfo('${key}')">📖 Info</button>
+                        <button class="popup-btn tactical" onclick="app.openTactical('${key}')">⚔️ Tactical Map</button>
+                    </div>
+                `;
+
+                marker.bindPopup(popupHTML);
+                marker.on('click', () => this.select(key));
+                marker.bindTooltip(`${loc.icon} ${loc.name}`, {
+                    permanent: false,
+                    direction: 'top',
+                    offset: [0, -35]
+                });
+
+                this.markers[key] = marker;
+            }
+
+            select(key) {
+                const loc = CAMPAIGN[key];
+
+                if (!this.state.visited.includes(key)) {
+                    this.state.visited.push(key);
+                    this.save();
+                }
+
+                this.map.flyTo(loc.coords, 16, { duration: 1.5 });
+                this.markers[key].openPopup();
+                this.render();
+            }
+
+            showInfo(key) {
+                const loc = CAMPAIGN[key];
+                document.getElementById('info-title').textContent = `${loc.icon} ${loc.name}`;
+                document.getElementById('info-subtitle').textContent = `${loc.coords[0].toFixed(4)}°N, ${Math.abs(loc.coords[1]).toFixed(4)}°W`;
+                document.getElementById('info-body').innerHTML = `
+                    <div class="info-section">
+                        <div class="section-title">📜 About</div>
+                        <div class="info-text">${loc.info}</div>
+                    </div>
+                `;
+                document.getElementById('info-modal').classList.add('active');
+            }
+
+            openTactical(key) {
+                const loc = CAMPAIGN[key];
+                this.currentTactical = key;
+
+                document.getElementById('tactical-location-name').textContent = `${loc.icon} ${loc.name}`;
+                document.getElementById('tactical-overlay').classList.add('active');
+
+                // Setup tactical map
+                if (this.tacticalMap) {
+                    this.tacticalMap.remove();
+                }
+
+                this.tacticalMap = L.map('tactical-map', {
+                    center: loc.coords,
+                    zoom: 20,
+                    maxZoom: 22
+                });
+
+                this.layers.satellite.addTo(this.tacticalMap);
+
+                // Try to load background image
+                this.loadTacticalBackground(key);
+            }
+
+            loadTacticalBackground(key) {
+                const imagePath = `campaign-images/tactical/${key}.jpg`;
+                const img = new Image();
+                img.onload = () => {
+                    if (this.backgroundLayer) {
+                        this.tacticalMap.removeLayer(this.backgroundLayer);
+                    }
+                    const bounds = this.tacticalMap.getBounds();
+                    this.backgroundLayer = L.imageOverlay(imagePath, bounds, {
+                        opacity: 0.7,
+                        interactive: false
+                    }).addTo(this.tacticalMap);
+                };
+                img.onerror = () => {
+                    console.log(`No background image found at ${imagePath}`);
+                };
+                img.src = imagePath;
+            }
+
+            toggleTacticalGrid() {
+                this.gridVisible = !this.gridVisible;
+
+                if (this.gridVisible) {
+                    this.showTacticalGrid();
+                    document.getElementById('grid-toggle').textContent = 'Hide Grid';
+                } else {
+                    this.hideTacticalGrid();
+                    document.getElementById('grid-toggle').textContent = 'Show Grid';
+                }
+            }
+
+            setTacticalGridSize(size) {
+                this.gridSize = size;
+                if (this.gridVisible) {
+                    this.hideTacticalGrid();
+                    this.showTacticalGrid();
+                }
+            }
+
+            showTacticalGrid() {
+                const bounds = this.tacticalMap.getBounds();
+                const zoom = this.tacticalMap.getZoom();
+                const feetPerDegree = 364000 / Math.pow(2, zoom - 13);
+                const gridSpacing = this.gridSize / feetPerDegree;
+
+                const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svgElement.setAttribute('class', 'grid-overlay');
+
+                const topLeft = this.tacticalMap.latLngToLayerPoint(bounds.getNorthWest());
+                const bottomRight = this.tacticalMap.latLngToLayerPoint(bounds.getSouthEast());
+
+                let col = 0;
+                for (let lng = bounds.getWest(); lng <= bounds.getEast(); lng += gridSpacing) {
+                    const point = this.tacticalMap.latLngToLayerPoint([bounds.getNorth(), lng]);
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute('class', col % 5 === 0 ? 'grid-line major' : 'grid-line');
+                    line.setAttribute('x1', point.x);
+                    line.setAttribute('y1', topLeft.y);
+                    line.setAttribute('x2', point.x);
+                    line.setAttribute('y2', bottomRight.y);
+                    svgElement.appendChild(line);
+
+                    if (col % 5 === 0 && col > 0) {
+                        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        text.setAttribute('class', 'grid-label');
+                        text.setAttribute('x', point.x);
+                        text.setAttribute('y', topLeft.y + 15);
+                        text.textContent = String.fromCharCode(65 + Math.floor(col / 5) - 1);
+                        svgElement.appendChild(text);
+                    }
+                    col++;
+                }
+
+                let row = 0;
+                for (let lat = bounds.getNorth(); lat >= bounds.getSouth(); lat -= gridSpacing) {
+                    const point = this.tacticalMap.latLngToLayerPoint([lat, bounds.getWest()]);
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute('class', row % 5 === 0 ? 'grid-line major' : 'grid-line');
+                    line.setAttribute('x1', topLeft.x);
+                    line.setAttribute('y1', point.y);
+                    line.setAttribute('x2', bottomRight.x);
+                    line.setAttribute('y2', point.y);
+                    svgElement.appendChild(line);
+
+                    if (row % 5 === 0 && row > 0) {
+                        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        text.setAttribute('class', 'grid-label');
+                        text.setAttribute('x', topLeft.x + 15);
+                        text.setAttribute('y', point.y + 4);
+                        text.textContent = Math.floor(row / 5);
+                        svgElement.appendChild(text);
+                    }
+                    row++;
+                }
+
+                this.gridLayer = L.svgOverlay(svgElement, bounds, {
+                    interactive: false
+                }).addTo(this.tacticalMap);
+            }
+
+            hideTacticalGrid() {
+                if (this.gridLayer) {
+                    this.tacticalMap.removeLayer(this.gridLayer);
+                    this.gridLayer = null;
+                }
+            }
+
+            render() {
+                this.renderLocations();
+                this.renderImageSettings();
+                document.getElementById('stat-visited').textContent =
+                    `${this.state.visited.length} / ${Object.keys(CAMPAIGN).length}`;
+            }
+
+            renderLocations() {
+                let html = '';
+                Object.keys(CAMPAIGN).forEach(key => {
+                    const loc = CAMPAIGN[key];
+                    const visited = this.state.visited.includes(key);
+
+                    html += `
+                        <div class="location-card ${loc.type}" onclick="app.select('${key}')">
+                            <div class="location-name">
+                                <span>${loc.icon} ${loc.name}</span>
+                                <span>
+                                    ${visited ? '<span class="badge visited">✓</span>' : ''}
+                                </span>
+                            </div>
+                            <div class="location-desc">${loc.desc}</div>
+                        </div>
+                    `;
+                });
+                document.getElementById('locations-list').innerHTML = html;
+            }
+
+            renderImageSettings() {
+                let html = '<p style="font-size: 0.85rem; opacity: 0.8; margin-bottom: 1rem;">Image files to add for tactical maps:</p>';
+                Object.keys(CAMPAIGN).forEach(key => {
+                    const loc = CAMPAIGN[key];
+                    html += `
+                        <div class="stat-row" style="flex-direction: column; align-items: flex-start;">
+                            <strong>${loc.icon} ${loc.name}</strong>
+                            <code style="font-size: 0.75rem; opacity: 0.7; margin-top: 0.3rem;">campaign-images/tactical/${key}.jpg</code>
+                        </div>
+                    `;
+                });
+                document.getElementById('image-settings').innerHTML = html;
+            }
+
+            showHelpBanner() {
+                const banner = document.getElementById('help-banner');
+                banner.classList.add('show');
+                setTimeout(() => banner.classList.remove('show'), 5000);
+            }
+
+            save() {
+                localStorage.setItem('trenton_campaign', JSON.stringify(this.state));
+            }
+
+            load() {
+                const saved = localStorage.getItem('trenton_campaign');
+                if (saved) {
+                    try { this.state = JSON.parse(saved); } catch (e) {}
+                }
+            }
+
+            exportSave() {
+                const blob = new Blob([JSON.stringify(this.state, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `trenton_save_${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+
+            reset() {
+                if (confirm('Reset campaign? All progress will be lost.')) {
+                    localStorage.removeItem('trenton_campaign');
+                    location.reload();
+                }
+            }
+
+            setupEventListeners() {
+                document.getElementById('import-file').onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        try {
+                            this.state = JSON.parse(ev.target.result);
+                            this.save();
+                            this.render();
+                            alert('Save imported successfully!');
+                        } catch (err) {
+                            alert('Import failed - invalid file');
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+            }
+        }
+
+        const app = new CampaignApp();
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('hidden');
+        }
+
+        function showTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + name).classList.add('active');
+        }
+
+        function closeInfo() {
+            document.getElementById('info-modal').classList.remove('active');
+        }
+
+        function closeTactical() {
+            document.getElementById('tactical-overlay').classList.remove('active');
+            if (app.tacticalMap) {
+                app.tacticalMap.remove();
+                app.tacticalMap = null;
+            }
+            app.gridVisible = false;
+            document.getElementById('grid-toggle').textContent = 'Show Grid';
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => app.init());
+        } else {
+            app.init();
+        }
+    </script>
+</body>
+</html>
