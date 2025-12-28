@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campaign Map Engine</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #1e3a5f;
+            --secondary: #d4af37;
+            --accent: #dc2626;
+            --bg-dark: #0a0a0a;
+            --bg-light: #1a1410;
+            --text: #f4e8d0;
+        }
+
+        body {
+            font-family: Georgia, serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        /* Map */
+        #map {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        /* Layer Control */
+        .layer-control {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, var(--primary) 0%, #0f1f3a 100%);
+            border: 2px solid var(--secondary);
+            border-radius: 6px;
+            padding: 0.5rem;
+            z-index: 1500;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+
+        .layer-btn {
+            background: rgba(26, 20, 16, 0.5);
+            border: 1px solid var(--secondary);
+            color: var(--text);
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.75rem;
+            font-family: Georgia, serif;
+            transition: all 0.2s;
+            display: block;
+            width: 100%;
+            margin-bottom: 0.3rem;
+        }
+
+        .layer-btn:last-child { margin-bottom: 0; }
+        .layer-btn:hover { background: var(--secondary); color: var(--primary); }
+        .layer-btn.active { background: var(--secondary); color: var(--primary); }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 350px;
+            height: 100vh;
+            background: linear-gradient(180deg, var(--bg-light) 0%, var(--bg-dark) 100%);
+            border-right: 3px solid var(--secondary);
+            transition: transform 0.3s ease;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+        }
+
+        .sidebar.hidden { transform: translateX(-350px); }
+
+        .toggle-btn {
+            position: fixed;
+            left: 10px;
+            top: 10px;
+            background: linear-gradient(135deg, var(--primary) 0%, #0f1f3a 100%);
+            color: var(--secondary);
+            border: 2px solid var(--secondary);
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            z-index: 2001;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            transition: all 0.3s;
+            display: none;
+        }
+
+        .sidebar.hidden ~ .toggle-btn { display: block; }
+        .toggle-btn:hover {
+            background: linear-gradient(135deg, var(--secondary) 0%, #b8941f 100%);
+            color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        .sidebar-header {
+            background: linear-gradient(135deg, var(--primary) 0%, #0f1f3a 100%);
+            padding: 1.2rem;
+            border-bottom: 3px solid var(--secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .campaign-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 0.3rem;
+        }
+
+        .campaign-meta {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: var(--secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            line-height: 1;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            color: var(--accent);
+            transform: scale(1.2);
+        }
+
+        /* Tabs */
+        .sidebar-tabs {
+            display: flex;
+            background: rgba(30, 58, 95, 0.3);
+            border-bottom: 2px solid var(--secondary);
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            flex: 1;
+            min-width: 80px;
+            padding: 0.7rem 0.5rem;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.75rem;
+            transition: all 0.3s;
+            border-right: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .tab:last-child { border-right: none; }
+        .tab:hover { background: rgba(212, 175, 55, 0.2); }
+        .tab.active { background: rgba(212, 175, 55, 0.3); color: var(--secondary); }
+
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: none;
+        }
+
+        .tab-content.active { display: block; }
+
+        /* Location Cards */
+        .location-card {
+            background: rgba(30, 58, 95, 0.2);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-left: 4px solid var(--primary);
+            border-radius: 6px;
+            padding: 0.9rem;
+            margin-bottom: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .location-card:hover {
+            background: rgba(30, 58, 95, 0.4);
+            border-left-color: var(--secondary);
+            transform: translateX(5px);
+        }
+
+        .location-card.active {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: var(--secondary);
+        }
+
+        .location-card.quest { border-left-color: var(--accent); }
+        .location-card.continental { border-left-color: #3b82f6; }
+        .location-card.hessian { border-left-color: #f59e0b; }
+        .location-card.crossing { border-left-color: #06b6d4; }
+
+        .location-name {
+            font-weight: bold;
+            font-size: 1rem;
+            margin-bottom: 0.4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .location-desc {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            line-height: 1.4;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-left: 0.3rem;
+        }
+
+        .badge.visited { background: #16a34a; color: white; }
+        .badge.tactical { background: var(--accent); color: white; }
+        .badge.characters { background: #3b82f6; color: white; }
+
+        /* Character Cards */
+        .character-card {
+            background: rgba(30, 58, 95, 0.2);
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            border-left: 4px solid #3b82f6;
+            border-radius: 6px;
+            padding: 0.9rem;
+            margin-bottom: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .character-card:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-left-color: #3b82f6;
+            transform: translateX(5px);
+        }
+
+        .character-name {
+            font-weight: bold;
+            font-size: 1rem;
+            color: #3b82f6;
+            margin-bottom: 0.3rem;
+        }
+
+        .character-title {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-bottom: 0.3rem;
+        }
+
+        .character-location {
+            font-size: 0.75rem;
+            opacity: 0.6;
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, #0f1f3a 100%);
+            color: var(--secondary);
+            border: 2px solid var(--secondary);
+            padding: 0.7rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            font-family: Georgia, serif;
+            transition: all 0.3s;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, var(--secondary) 0%, #b8941f 100%);
+            color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn.danger {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+        }
+
+        .btn.danger:hover {
+            background: #b91c1c;
+            border-color: #b91c1c;
+        }
+
+        /* Log Entries */
+        .log-entry {
+            background: rgba(30, 58, 95, 0.2);
+            border-left: 3px solid var(--secondary);
+            padding: 0.7rem;
+            margin-bottom: 0.7rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .log-time {
+            font-size: 0.7rem;
+            opacity: 0.6;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 0.2rem;
+        }
+
+        .log-entry.combat { border-left-color: var(--accent); }
+        .log-entry.travel { border-left-color: #3b82f6; }
+        .log-entry.discovery { border-left-color: #16a34a; }
+
+        /* Stats */
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.6rem;
+            background: rgba(30, 58, 95, 0.2);
+            border-radius: 4px;
+            margin-bottom: 0.4rem;
+            font-size: 0.85rem;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: var(--secondary);
+        }
+
+        /* Info Modal */
+        .info-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 4000;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .info-modal.active { display: flex; }
+
+        .info-content {
+            background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-dark) 100%);
+            border: 4px solid var(--secondary);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 700px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid var(--secondary);
+        }
+
+        .info-title {
+            font-size: 1.7rem;
+            color: var(--secondary);
+            font-weight: bold;
+        }
+
+        .info-subtitle {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-top: 0.3rem;
+        }
+
+        .info-close {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: Georgia, serif;
+        }
+
+        .info-close:hover { background: #b91c1c; }
+
+        .info-section {
+            background: rgba(30, 58, 95, 0.2);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 8px;
+            padding: 1.3rem;
+            margin-bottom: 1.3rem;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            color: var(--secondary);
+            font-weight: bold;
+            margin-bottom: 0.8rem;
+        }
+
+        .info-text {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            margin-bottom: 0.8rem;
+        }
+
+        .info-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .info-list li {
+            padding: 0.4rem 0 0.4rem 1.3rem;
+            position: relative;
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+
+        .info-list li:before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: var(--secondary);
+        }
+
+        .historical-fact {
+            background: rgba(212, 175, 55, 0.1);
+            border-left: 4px solid var(--secondary);
+            padding: 0.9rem;
+            margin: 0.8rem 0;
+            font-style: italic;
+        }
+
+        /* Tactical Overlay */
+        .tactical-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.98);
+            z-index: 5000;
+        }
+
+        .tactical-overlay.active { display: block; }
+
+        .tactical-close {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: Georgia, serif;
+            z-index: 5001;
+            font-size: 1rem;
+        }
+
+        .tactical-close:hover { background: #b91c1c; }
+
+        .tactical-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Leaflet Popup Styling */
+        .leaflet-popup-content-wrapper {
+            background: rgba(26, 20, 16, 0.98);
+            color: var(--text);
+            border: 3px solid var(--secondary);
+            border-radius: 8px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+        }
+
+        .leaflet-popup-content {
+            font-family: Georgia, serif;
+            margin: 1.2rem;
+            min-width: 220px;
+        }
+
+        .leaflet-popup-tip {
+            background: rgba(26, 20, 16, 0.98);
+        }
+
+        .popup-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .popup-desc {
+            font-size: 0.9rem;
+            margin-bottom: 0.8rem;
+            line-height: 1.5;
+        }
+
+        .popup-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .popup-btn {
+            background: var(--primary);
+            color: var(--secondary);
+            border: 1px solid var(--secondary);
+            padding: 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: Georgia, serif;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+
+        .popup-btn:hover {
+            background: var(--secondary);
+            color: var(--primary);
+        }
+
+        .popup-btn.tactical {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
+            grid-column: 1 / -1;
+        }
+
+        .popup-btn.tactical:hover { background: #b91c1c; }
+
+        /* Markers */
+        .custom-marker {
+            background: none;
+            border: none;
+        }
+
+        .marker-pin {
+            width: 40px;
+            height: 40px;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            border: 3px solid #fff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .marker-pin:hover {
+            transform: rotate(-45deg) scale(1.4);
+            z-index: 1000;
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.6);
+        }
+
+        .marker-pin.quest {
+            background: radial-gradient(circle, var(--accent), #991b1b);
+            animation: pulse 2s infinite;
+        }
+
+        .marker-pin.hessian {
+            background: radial-gradient(circle, #f59e0b, #d97706);
+        }
+
+        .marker-pin.continental {
+            background: radial-gradient(circle, #3b82f6, #1e40af);
+        }
+
+        .marker-pin.crossing {
+            background: radial-gradient(circle, #06b6d4, #0891b2);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: rotate(-45deg) scale(1); }
+            50% { transform: rotate(-45deg) scale(1.2); }
+        }
+
+        .marker-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            font-size: 1.2rem;
+        }
+
+        .save-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .save-label {
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Map -->
+    <div id="map"></div>
+
+    <!-- Layer Control -->
+    <div class="layer-control">
+        <button class="layer-btn" id="layer-street" onclick="engine.setLayer('street')">Street</button>
+        <button class="layer-btn active" id="layer-satellite" onclick="engine.setLayer('satellite')">Satellite</button>
+        <button class="layer-btn" id="layer-terrain" onclick="engine.setLayer('terrain')">Terrain</button>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div>
+                <div class="campaign-title" id="campaign-title">Campaign Map</div>
+                <div class="campaign-meta" id="campaign-meta"></div>
+            </div>
+            <button class="close-btn" onclick="toggleSidebar()">×</button>
+        </div>
+
+        <div class="sidebar-tabs">
+            <div class="tab active" onclick="showTab('locations')">📍 Map</div>
+            <div class="tab" onclick="showTab('characters')">👥 NPCs</div>
+            <div class="tab" onclick="showTab('log')">📜 Log</div>
+            <div class="tab" onclick="showTab('save')">💾 Save</div>
+        </div>
+
+        <div class="tab-content active" id="tab-locations">
+            <div id="locations-list"></div>
+        </div>
+
+        <div class="tab-content" id="tab-characters">
+            <div id="characters-list"></div>
+        </div>
+
+        <div class="tab-content" id="tab-log">
+            <div id="log-list"></div>
+        </div>
+
+        <div class="tab-content" id="tab-save">
+            <div class="save-section">
+                <div class="save-label">💾 Save Game</div>
+                <button class="btn" onclick="engine.save()">Save Progress</button>
+                <button class="btn" onclick="engine.exportSave()">📤 Export Save</button>
+                <button class="btn" onclick="document.getElementById('import-file').click()">📥 Import Save</button>
+                <input type="file" id="import-file" accept=".json" style="display:none">
+            </div>
+
+            <div class="save-section">
+                <div class="save-label">📊 Statistics</div>
+                <div class="stat-row">
+                    <span>Locations Visited</span>
+                    <span class="stat-value" id="stat-visited">0 / 0</span>
+                </div>
+                <div class="stat-row">
+                    <span>Log Entries</span>
+                    <span class="stat-value" id="stat-logs">0</span>
+                </div>
+            </div>
+
+            <div class="save-section">
+                <div class="save-label">⚠️ Reset</div>
+                <button class="btn danger" onclick="engine.reset()">Reset Campaign</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="toggle-btn" onclick="toggleSidebar()">🗺️ Map</button>
+
+    <!-- Info Modal -->
+    <div class="info-modal" id="info-modal">
+        <div class="info-content">
+            <div class="info-header">
+                <div>
+                    <div class="info-title" id="info-title">Location</div>
+                    <div class="info-subtitle" id="info-subtitle">Coordinates</div>
+                </div>
+                <button class="info-close" onclick="closeInfo()">✕</button>
+            </div>
+            <div id="info-body"></div>
+        </div>
+    </div>
+
+    <!-- Tactical Overlay -->
+    <div class="tactical-overlay" id="tactical-overlay">
+        <button class="tactical-close" onclick="closeTactical()">← Back to Campaign Map</button>
+        <iframe class="tactical-frame" id="tactical-frame"></iframe>
+    </div>
+
+    <script>
+        class CampaignEngine {
+            constructor(campaignUrl) {
+                this.campaignUrl = campaignUrl;
+                this.campaign = null;
+                this.map = null;
+                this.markers = {};
+                this.state = { visited: [], current: null, log: [] };
+
+                this.layers = {
+                    street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap',
+                        maxZoom: 19
+                    }),
+                    satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: '© Esri',
+                        maxZoom: 19
+                    }),
+                    terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenTopoMap',
+                        maxZoom: 17
+                    })
+                };
+
+                this.currentLayer = 'satellite';
+            }
+
+            async init() {
+                await this.loadCampaign();
+                this.load();
+                this.setupMap();
+                this.render();
+                this.setupEventListeners();
+                setInterval(() => this.save(), 30000);
+            }
+
+            async loadCampaign() {
+                try {
+                    const response = await fetch(this.campaignUrl);
+                    this.campaign = await response.json();
+
+                    document.getElementById('campaign-title').textContent =
+                        `${this.campaign.metadata.icon || '⚔️'} ${this.campaign.metadata.title}`;
+                    document.getElementById('campaign-meta').innerHTML = `
+                        <span>📅 ${this.campaign.metadata.date}</span>
+                        ${this.campaign.metadata.weather ? `<span>🌡️ ${this.campaign.metadata.weather}</span>` : ''}
+                    `;
+
+                    document.title = `${this.campaign.metadata.title} - Campaign Map`;
+                } catch (error) {
+                    console.error('Failed to load campaign:', error);
+                    alert('Failed to load campaign data!');
+                }
+            }
+
+            setupMap() {
+                this.map = L.map('map', {
+                    center: this.campaign.map.center,
+                    zoom: this.campaign.map.zoom
+                });
+
+                this.layers.satellite.addTo(this.map);
+
+                Object.keys(this.campaign.locations).forEach(key => this.createMarker(key));
+                L.control.scale({ position: 'bottomleft', imperial: true }).addTo(this.map);
+            }
+
+            setLayer(type) {
+                this.map.removeLayer(this.layers[this.currentLayer]);
+                this.layers[type].addTo(this.map);
+                this.currentLayer = type;
+
+                document.querySelectorAll('.layer-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(`layer-${type}`).classList.add('active');
+            }
+
+            createMarker(key) {
+                const loc = this.campaign.locations[key];
+                const html = `<div class="marker-pin ${loc.type}"><div class="marker-icon">${loc.icon}</div></div>`;
+
+                const marker = L.marker(loc.coords, {
+                    icon: L.divIcon({
+                        className: 'custom-marker',
+                        html: html,
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 40]
+                    })
+                }).addTo(this.map);
+
+                const popupHTML = `
+                    <div class="popup-title">${loc.icon} ${loc.name}</div>
+                    <div class="popup-desc">${loc.description}</div>
+                    <div class="popup-actions">
+                        <button class="popup-btn" onclick="engine.showInfo('${key}')">📖 History</button>
+                        ${loc.tactical ? `<button class="popup-btn tactical" onclick="engine.openTactical('${key}')">⚔️ Tactical Map</button>` : ''}
+                    </div>
+                `;
+
+                marker.bindPopup(popupHTML);
+                marker.on('click', () => this.select(key));
+                marker.bindTooltip(`${loc.icon} ${loc.name}`, {
+                    permanent: false,
+                    direction: 'top',
+                    offset: [0, -35]
+                });
+
+                this.markers[key] = marker;
+            }
+
+            select(key) {
+                const loc = this.campaign.locations[key];
+                this.state.current = key;
+
+                if (!this.state.visited.includes(key)) {
+                    this.state.visited.push(key);
+                    this.addLog(`📍 Discovered ${loc.name}`, 'discovery');
+                }
+
+                this.map.flyTo(loc.coords, 16, { duration: 1.5 });
+                this.markers[key].openPopup();
+
+                this.save();
+                this.render();
+            }
+
+            showInfo(key) {
+                const loc = this.campaign.locations[key];
+                const hist = loc.historical;
+
+                document.getElementById('info-title').textContent = `${loc.icon} ${loc.name}`;
+                document.getElementById('info-subtitle').textContent =
+                    `${loc.coords[0].toFixed(4)}°N, ${Math.abs(loc.coords[1]).toFixed(4)}°W • ${loc.elevation} ft`;
+
+                let charactersHTML = '';
+                if (loc.characters && loc.characters.length > 0) {
+                    const chars = loc.characters.map(cid => this.campaign.characters[cid]).filter(c => c);
+                    if (chars.length > 0) {
+                        charactersHTML = `
+                            <div class="info-section">
+                                <div class="section-title">👥 Characters Here</div>
+                                ${chars.map(c => `
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <strong>${c.name}</strong> - ${c.title}
+                                        ${c.profileUrl ? `<br><a href="${c.profileUrl}" target="_blank" style="color: var(--secondary)">View Profile</a>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    }
+                }
+
+                document.getElementById('info-body').innerHTML = `
+                    ${charactersHTML}
+                    <div class="info-section">
+                        <div class="section-title">📜 Overview</div>
+                        <div class="info-text">${hist.overview}</div>
+                    </div>
+                    <div class="info-section">
+                        <div class="section-title">📚 Historical Facts</div>
+                        <ul class="info-list">
+                            ${hist.facts.map(f => `<li>${f}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="info-section">
+                        <div class="section-title">⭐ Significance</div>
+                        <div class="info-text">${hist.significance}</div>
+                        <div class="historical-fact"><strong>Forces:</strong> ${hist.forces}</div>
+                    </div>
+                `;
+
+                document.getElementById('info-modal').classList.add('active');
+            }
+
+            openTactical(key) {
+                const loc = this.campaign.locations[key];
+                if (!loc.tactical) return;
+
+                // Build tactical map URL with params
+                let url = `assets/tactical/${loc.tactical}`;
+                if (loc.tacticalBackground) {
+                    url += `?background=${encodeURIComponent(loc.tacticalBackground)}`;
+                }
+
+                document.getElementById('tactical-frame').src = url;
+                document.getElementById('tactical-overlay').classList.add('active');
+                this.addLog(`⚔️ Entered ${loc.name} tactical map`, 'combat');
+            }
+
+            addLog(text, type = 'info') {
+                this.state.log.unshift({
+                    time: new Date().toLocaleTimeString(),
+                    text: text,
+                    type: type
+                });
+                if (this.state.log.length > 100) this.state.log.pop();
+                this.save();
+                this.renderLog();
+            }
+
+            render() {
+                this.renderLocations();
+                this.renderCharacters();
+                this.renderLog();
+
+                const totalLocs = Object.keys(this.campaign.locations).length;
+                document.getElementById('stat-visited').textContent =
+                    `${this.state.visited.length} / ${totalLocs}`;
+                document.getElementById('stat-logs').textContent = this.state.log.length;
+            }
+
+            renderLocations() {
+                let html = '';
+                Object.keys(this.campaign.locations).forEach(key => {
+                    const loc = this.campaign.locations[key];
+                    const visited = this.state.visited.includes(key);
+                    const active = this.state.current === key;
+
+                    html += `
+                        <div class="location-card ${loc.type} ${active ? 'active' : ''}" onclick="engine.select('${key}')">
+                            <div class="location-name">
+                                <span>${loc.icon} ${loc.name}</span>
+                                <span>
+                                    ${visited ? '<span class="badge visited">✓</span>' : ''}
+                                    ${loc.tactical ? '<span class="badge tactical">⚔️</span>' : ''}
+                                    ${loc.characters && loc.characters.length ? '<span class="badge characters">👥</span>' : ''}
+                                </span>
+                            </div>
+                            <div class="location-desc">${loc.description}</div>
+                        </div>
+                    `;
+                });
+                document.getElementById('locations-list').innerHTML = html;
+            }
+
+            renderCharacters() {
+                if (!this.campaign.characters) {
+                    document.getElementById('characters-list').innerHTML =
+                        '<div class="log-entry">No characters in this campaign.</div>';
+                    return;
+                }
+
+                let html = '';
+                Object.values(this.campaign.characters).forEach(char => {
+                    const loc = this.campaign.locations[char.location];
+                    html += `
+                        <div class="character-card" onclick="engine.select('${char.location}')">
+                            <div class="character-name">${char.icon || '👤'} ${char.name}</div>
+                            <div class="character-title">${char.title}</div>
+                            <div class="character-location">📍 ${loc ? loc.name : 'Unknown'}</div>
+                            ${char.profileUrl ? `<div style="margin-top: 0.5rem;"><a href="${char.profileUrl}" target="_blank" style="color: var(--secondary); font-size: 0.8rem;">View Profile →</a></div>` : ''}
+                        </div>
+                    `;
+                });
+                document.getElementById('characters-list').innerHTML = html ||
+                    '<div class="log-entry">No characters in this campaign.</div>';
+            }
+
+            renderLog() {
+                let html = '';
+                this.state.log.forEach(entry => {
+                    html += `
+                        <div class="log-entry ${entry.type}">
+                            <div class="log-time">${entry.time}</div>
+                            <div class="log-text">${entry.text}</div>
+                        </div>
+                    `;
+                });
+                document.getElementById('log-list').innerHTML = html ||
+                    '<div class="log-entry">No entries yet. Start exploring!</div>';
+            }
+
+            save() {
+                if (!this.campaign) return;
+                localStorage.setItem(this.campaign.metadata.saveKey, JSON.stringify(this.state));
+            }
+
+            load() {
+                if (!this.campaign) return;
+                const saved = localStorage.getItem(this.campaign.metadata.saveKey);
+                if (saved) {
+                    try { this.state = JSON.parse(saved); } catch (e) {}
+                }
+            }
+
+            exportSave() {
+                const blob = new Blob([JSON.stringify(this.state, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${this.campaign.metadata.id}_save_${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                this.addLog('💾 Save exported', 'info');
+            }
+
+            reset() {
+                if (confirm('Reset campaign? All progress will be lost.')) {
+                    localStorage.removeItem(this.campaign.metadata.saveKey);
+                    location.reload();
+                }
+            }
+
+            setupEventListeners() {
+                document.getElementById('import-file').onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        try {
+                            this.state = JSON.parse(ev.target.result);
+                            this.save();
+                            this.render();
+                            this.addLog('📥 Save imported', 'info');
+                        } catch (err) {
+                            alert('Import failed');
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+            }
+        }
+
+        // Initialize engine with campaign URL
+        const engine = new CampaignEngine('campaigns/american-revolution.json');
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('hidden');
+        }
+
+        function showTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + name).classList.add('active');
+        }
+
+        function closeInfo() {
+            document.getElementById('info-modal').classList.remove('active');
+        }
+
+        function closeTactical() {
+            document.getElementById('tactical-overlay').classList.remove('active');
+            document.getElementById('tactical-frame').src = '';
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => engine.init());
+        } else {
+            engine.init();
+        }
+    </script>
+</body>
+</html>
