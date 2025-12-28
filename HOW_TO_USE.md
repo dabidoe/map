@@ -10,32 +10,34 @@
 map/
 ├── BattleOfTrenton.html          ← DOUBLE-CLICK THIS!
 └── campaign-images/
-    ├── tactical/                 ← Put location background images here
-    │   ├── old-barracks.jpg
-    │   ├── washington-camp.jpg
-    │   └── ...
-    └── characters/               ← Put character portraits here
-        └── achilles.jpg
+    ├── washington-camp/          ← Each location has its own folder
+    │   └── background.jpg        ← Just drop any image named "background.jpg"
+    ├── old-barracks/
+    │   └── background.jpg
+    ├── river-crossing/
+    │   └── background.jpg
+    └── ... (one folder per location)
 ```
 
 ## Adding Background Images for Tactical Maps
 
-### Simple 3 Steps:
+### Simple 2 Steps:
 
 1. **Find or create** a floor plan, battle map, or building image
-2. **Name it** after the location (use the folder guide below)
-3. **Drop it** into `campaign-images/tactical/`
+2. **Create a folder** for the location and drop the image as `background.jpg` inside
 
-### Location Image Names:
+### Location Folders:
 ```
-washington-camp.jpg          ← Washington's Encampment
-river-crossing.jpg           ← Delaware River Crossing
-old-barracks.jpg             ← The Old Barracks ⭐ (main quest)
-rall-hq.jpg                  ← Rall's Headquarters
-king-street.jpg              ← King Street Battery
-queen-street.jpg             ← Queen Street Battery
-assunpink.jpg                ← Assunpink Creek Bridge
+campaign-images/washington-camp/background.jpg     ← Washington's Encampment
+campaign-images/river-crossing/background.jpg      ← Delaware River Crossing
+campaign-images/old-barracks/background.jpg        ← The Old Barracks ⭐ (main quest)
+campaign-images/rall-hq/background.jpg             ← Rall's Headquarters
+campaign-images/king-street/background.jpg         ← King Street Battery
+campaign-images/queen-street/background.jpg        ← Queen Street Battery
+campaign-images/assunpink/background.jpg           ← Assunpink Creek Bridge
 ```
+
+**Note:** Placeholder images from Wikipedia are shown until you add your own!
 
 ### Supported formats:
 - `.jpg` (recommended)
