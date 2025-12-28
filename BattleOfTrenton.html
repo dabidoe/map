@@ -486,10 +486,51 @@
             transform: scale(1.05);
         }
 
+        .tactical-tabs {
+            display: flex;
+            background: rgba(30, 58, 95, 0.3);
+            border-bottom: 3px solid var(--secondary);
+            padding: 0 1rem;
+        }
+
+        .tactical-tab {
+            padding: 0.8rem 1.5rem;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -3px;
+            transition: all 0.3s;
+            color: rgba(244, 232, 208, 0.7);
+        }
+
+        .tactical-tab:hover {
+            background: rgba(212, 175, 55, 0.2);
+            color: var(--text);
+        }
+
+        .tactical-tab.active {
+            background: rgba(212, 175, 55, 0.3);
+            border-bottom-color: var(--secondary);
+            color: var(--secondary);
+        }
+
         .tactical-body {
             flex: 1;
             position: relative;
             overflow: hidden;
+            display: flex;
+        }
+
+        .tactical-content {
+            display: none;
+            flex: 1;
+            position: relative;
+        }
+
+        .tactical-content.active {
+            display: flex;
+            flex-direction: column;
         }
 
         #tactical-canvas {
@@ -579,6 +620,121 @@
             background: var(--accent);
             border-color: var(--accent);
             color: white;
+        }
+
+        /* Battle Log */
+        .battle-log {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 350px;
+            max-height: 300px;
+            background: rgba(26, 20, 16, 0.95);
+            border: 2px solid var(--secondary);
+            border-radius: 8px;
+            padding: 1rem;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--secondary);
+        }
+
+        .log-title {
+            font-weight: bold;
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
+
+        .log-clear {
+            background: var(--accent);
+            border: none;
+            color: white;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            font-family: Georgia, serif;
+        }
+
+        .log-entries {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 220px;
+        }
+
+        .log-entry {
+            background: rgba(30, 58, 95, 0.2);
+            border-left: 3px solid var(--secondary);
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .log-entry.combat { border-left-color: var(--accent); }
+        .log-entry.movement { border-left-color: #3b82f6; }
+        .log-entry.info { border-left-color: var(--secondary); }
+
+        .log-time {
+            font-size: 0.7rem;
+            opacity: 0.6;
+            font-family: 'Courier New', monospace;
+        }
+
+        .tab-panel {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .section-header {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--secondary);
+        }
+
+        .character-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .character-card {
+            background: rgba(30, 58, 95, 0.2);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .character-card:hover {
+            background: rgba(30, 58, 95, 0.4);
+            border-color: var(--secondary);
+            transform: translateY(-3px);
+        }
+
+        .character-name {
+            font-weight: bold;
+            font-size: 1rem;
+            margin-bottom: 0.3rem;
+            color: var(--secondary);
+        }
+
+        .character-info {
+            font-size: 0.8rem;
+            opacity: 0.8;
         }
 
         /* Markers */
@@ -862,18 +1018,87 @@
             <div class="tactical-title" id="tactical-location-name">⚔️ Tactical Map</div>
             <button class="tactical-close" onclick="closeTactical()">← Back to Map</button>
         </div>
+
+        <div class="tactical-tabs">
+            <div class="tactical-tab active" onclick="switchTacticalTab('maps')">🗺️ MAPS</div>
+            <div class="tactical-tab" onclick="switchTacticalTab('party')">👥 PARTY</div>
+            <div class="tactical-tab" onclick="switchTacticalTab('encounters')">📖 ENCOUNTERS</div>
+            <div class="tactical-tab" onclick="switchTacticalTab('combat')">⚔️ COMBAT</div>
+            <div class="tactical-tab" onclick="switchTacticalTab('notes')">📝 NOTES</div>
+            <div class="tactical-tab" onclick="switchTacticalTab('info')">ℹ️ INFO</div>
+        </div>
+
         <div class="tactical-body">
-            <canvas id="tactical-canvas"></canvas>
-            <div class="tactical-controls">
-                <div class="control-title">Grid Controls</div>
-                <button class="control-btn active" id="grid-toggle-btn" onclick="tactical.toggleGrid()">Hide Grid</button>
-                <button class="control-btn" id="snap-toggle-btn" onclick="tactical.toggleSnap()">Snap: ON</button>
-                <div style="margin-top: 0.5rem; font-size: 0.75rem; opacity: 0.7;">Grid: <span id="grid-info">5ft • 30×20</span></div>
+            <!-- MAPS Tab -->
+            <div class="tactical-content active" id="tactical-tab-maps">
+                <canvas id="tactical-canvas"></canvas>
+                <div class="tactical-controls">
+                    <div class="control-title">Grid Controls</div>
+                    <button class="control-btn active" id="grid-toggle-btn" onclick="tactical.toggleGrid()">Hide Grid</button>
+                    <button class="control-btn" id="snap-toggle-btn" onclick="tactical.toggleSnap()">Snap: ON</button>
+                    <div style="margin-top: 0.5rem; font-size: 0.75rem; opacity: 0.7;">Grid: <span id="grid-info">5ft • 30×20</span></div>
+                </div>
+                <div class="token-controls">
+                    <button class="token-btn" onclick="tactical.addToken('player')">Add Player</button>
+                    <button class="token-btn" onclick="tactical.addToken('enemy')">Add Enemy</button>
+                    <button class="token-btn" onclick="tactical.clearTokens()">Clear All</button>
+                </div>
+                <div class="battle-log" id="battle-log">
+                    <div class="log-header">
+                        <div class="log-title">⚔️ Combat Log</div>
+                        <button class="log-clear" onclick="tactical.clearLog()">Clear</button>
+                    </div>
+                    <div class="log-entries" id="log-entries"></div>
+                </div>
             </div>
-            <div class="token-controls">
-                <button class="token-btn" onclick="tactical.addToken('player')">Add Player</button>
-                <button class="token-btn" onclick="tactical.addToken('enemy')">Add Enemy</button>
-                <button class="token-btn" onclick="tactical.clearTokens()">Clear All</button>
+
+            <!-- PARTY Tab -->
+            <div class="tactical-content" id="tactical-tab-party">
+                <div class="tab-panel">
+                    <div class="section-header">👥 Party Members</div>
+                    <div class="character-list" id="party-list">
+                        <div class="character-card">
+                            <div class="character-name">Add party members...</div>
+                            <div class="character-info">Use the character library to add players</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ENCOUNTERS Tab -->
+            <div class="tactical-content" id="tactical-tab-encounters">
+                <div class="tab-panel">
+                    <div class="section-header">📖 Active Encounters</div>
+                    <div id="encounters-list">
+                        <p style="opacity: 0.7; font-size: 0.9rem;">No active encounters</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COMBAT Tab -->
+            <div class="tactical-content" id="tactical-tab-combat">
+                <div class="tab-panel">
+                    <div class="section-header">⚔️ Combat Tracker</div>
+                    <div id="combat-tracker">
+                        <p style="opacity: 0.7; font-size: 0.9rem;">Initiative order will appear here</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NOTES Tab -->
+            <div class="tactical-content" id="tactical-tab-notes">
+                <div class="tab-panel">
+                    <div class="section-header">📝 Notes</div>
+                    <textarea id="tactical-notes" style="width: 100%; height: 400px; background: rgba(26, 20, 16, 0.5); border: 2px solid var(--secondary); color: var(--text); padding: 1rem; border-radius: 6px; font-family: Georgia, serif; font-size: 0.9rem;" placeholder="Campaign notes..."></textarea>
+                </div>
+            </div>
+
+            <!-- INFO Tab -->
+            <div class="tactical-content" id="tactical-tab-info">
+                <div class="tab-panel">
+                    <div class="section-header">ℹ️ Location Information</div>
+                    <div id="location-info-detail"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -975,7 +1200,9 @@
                 this.backgroundImage = null;
                 this.tokens = [];
                 this.selectedToken = null;
+                this.isDragging = false;
                 this.dragOffset = { x: 0, y: 0 };
+                this.battleLog = [];
             }
 
             init(locationKey, location) {
@@ -996,6 +1223,12 @@
 
                 // Initial draw
                 this.draw();
+
+                // Add log entry
+                this.addLog(`Entered ${location.name}`, 'info');
+
+                // Update INFO tab with location details
+                this.updateLocationInfo(location);
             }
 
             loadBackground(key, location) {
@@ -1045,15 +1278,28 @@
                     const dist = Math.sqrt(dx * dx + dy * dy);
 
                     if (dist < this.gridSize * 0.4) {
-                        this.selectedToken = token;
-                        this.dragOffset = { x: dx, y: dy };
+                        if (this.selectedToken === token) {
+                            // Already selected - start dragging
+                            this.isDragging = true;
+                            this.dragOffset = { x: dx, y: dy };
+                        } else {
+                            // Select this token
+                            this.selectedToken = token;
+                            this.isDragging = false;
+                            this.draw();
+                        }
                         return;
                     }
                 }
+
+                // Clicked empty space - deselect
+                this.selectedToken = null;
+                this.isDragging = false;
+                this.draw();
             }
 
             onMouseMove(e) {
-                if (!this.selectedToken) return;
+                if (!this.selectedToken || !this.isDragging) return;
 
                 const rect = this.canvas.getBoundingClientRect();
                 let x = e.clientX - rect.left - this.dragOffset.x;
@@ -1070,7 +1316,8 @@
             }
 
             onMouseUp() {
-                this.selectedToken = null;
+                this.isDragging = false;
+                this.draw();
             }
 
             toggleGrid() {
@@ -1100,12 +1347,35 @@
                     selected: false
                 });
 
+                this.addLog(`Added ${type} token to battlefield`, 'info');
                 this.draw();
             }
 
             clearTokens() {
+                const count = this.tokens.length;
                 this.tokens = [];
+                if (count > 0) {
+                    this.addLog(`Cleared ${count} token(s) from battlefield`, 'info');
+                }
                 this.draw();
+            }
+
+            updateLocationInfo(location) {
+                const container = document.getElementById('location-info-detail');
+                if (!container) return;
+
+                container.innerHTML = `
+                    <div class="info-section">
+                        <div class="section-title">📍 ${location.icon} ${location.name}</div>
+                        <div class="info-text">${location.info}</div>
+                    </div>
+                    ${location.dmOnly && app.dmMode ? `
+                        <div class="info-section" style="border: 2px solid #dc2626; background: rgba(220, 38, 38, 0.1);">
+                            <div class="section-title">🎲 DM Only</div>
+                            <div class="info-text">${location.dmOnly}</div>
+                        </div>
+                    ` : ''}
+                `;
             }
 
             draw() {
@@ -1174,8 +1444,8 @@
             drawToken(token) {
                 const radius = this.gridSize * 0.35;
 
-                // Draw movement range (glowing circle)
-                if (token === this.selectedToken) {
+                // Draw movement range (glowing circle) - only when selected and NOT dragging
+                if (token === this.selectedToken && !this.isDragging) {
                     const moveSquares = Math.floor(token.speed / this.gridFeet);
                     const moveRadius = moveSquares * this.gridSize;
 
@@ -1225,10 +1495,41 @@
                 this.ctx.fillText(token.type === 'player' ? '●' : '▲', token.x, token.y);
             }
 
+            addLog(message, type = 'info') {
+                const time = new Date().toLocaleTimeString();
+                this.battleLog.unshift({ time, message, type });
+                if (this.battleLog.length > 50) this.battleLog.pop();
+                this.renderLog();
+            }
+
+            clearLog() {
+                this.battleLog = [];
+                this.renderLog();
+            }
+
+            renderLog() {
+                const container = document.getElementById('log-entries');
+                if (!container) return;
+
+                if (this.battleLog.length === 0) {
+                    container.innerHTML = '<p style="opacity: 0.7; font-size: 0.8rem;">No combat events yet</p>';
+                    return;
+                }
+
+                container.innerHTML = this.battleLog.map(entry => `
+                    <div class="log-entry ${entry.type}">
+                        <div class="log-time">${entry.time}</div>
+                        <div>${entry.message}</div>
+                    </div>
+                `).join('');
+            }
+
             cleanup() {
                 this.tokens = [];
                 this.selectedToken = null;
                 this.backgroundImage = null;
+                this.battleLog = [];
+                this.renderLog();
             }
         }
 
@@ -1527,6 +1828,16 @@
             if (window.tactical) {
                 tactical.cleanup();
             }
+        }
+
+        function switchTacticalTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tactical-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tactical-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(`tactical-tab-${tabName}`).classList.add('active');
         }
 
         if (document.readyState === 'loading') {
