@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trenton 1776 - Episode 1</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: Georgia, serif;
+            background: #0a0a0a;
+            color: #f4e8d0;
+            overflow: hidden;
+        }
+        
+        /* Hideable Sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 350px;
+            height: 100vh;
+            background: linear-gradient(180deg, #1a1410 0%, #0a0a0a 100%);
+            border-right: 3px solid #d4af37;
+            transition: transform 0.3s ease;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .sidebar.hidden {
+            transform: translateX(-350px);
+        }
+        
+        .sidebar-toggle {
+            position: fixed;
+            left: 10px;
+            top: 10px;
+            z-index: 2001;
+            background: #1e3a5f;
+            color: #d4af37;
+            border: 2px solid #d4af37;
+            padding: 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+        
+        .sidebar.hidden + .sidebar-toggle {
+            left: 10px;
+        }
+        
+        .sidebar-toggle:hover {
+            background: #d4af37;
+            color: #1e3a5f;
+        }
+        
+        /* Sidebar Header */
+        .sidebar-header {
+            background: #1e3a5f;
+            padding: 1rem;
+            border-bottom: 2px solid #d4af37;
+        }
+        
+        .campaign-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #d4af37;
+        }
+        
+        .campaign-subtitle {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-top: 0.3rem;
+        }
+        
+        /* Tab Navigation */
+        .sidebar-tabs {
+            display: flex;
+            background: rgba(30, 58, 95, 0.3);
+            border-bottom: 2px solid #d4af37;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 0.8rem;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            border-right: 1px solid rgba(212, 175, 55, 0.3);
+            transition: all 0.3s;
+        }
+        
+        .tab:last-child {
+            border-right: none;
+        }
+        
+        .tab:hover {
+            background: rgba(212, 175, 55, 0.2);
+        }
+        
+        .tab.active {
+            background: rgba(212, 175, 55, 0.3);
+            color: #d4af37;
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Locations Tab */
+        .location-item {
+            background: rgba(30, 58, 95, 0.2);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-left: 4px solid #1e3a5f;
+            border-radius: 6px;
+            padding: 0.8rem;
+            margin-bottom: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .location-item:hover {
+            background: rgba(30, 58, 95, 0.4);
+            border-left-color: #d4af37;
+            transform: translateX(5px);
+        }
+        
+        .location-item.active {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: #d4af37;
+        }
+        
+        .location-item.quest { border-left-color: #dc2626; }
+        .location-item.continental { border-left-color: #3b82f6; }
+        
+        .location-name {
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .location-desc {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+        
+        .location-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .btn-small {
+            flex: 1;
+            background: rgba(30, 58, 95, 0.5);
+            border: 1px solid #d4af37;
+            color: #d4af37;
+            padding: 0.4rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-family: Georgia, serif;
+            font-weight: bold;
+        }
+        
+        .btn-small:hover {
+            background: rgba(212, 175, 55, 0.3);
+        }
+        
+        .btn-small.danger {
+            background: #dc2626;
+            border-color: #dc2626;
+            color: white;
+        }
+        
+        .btn-small.danger:hover {
+            background: #b91c1c;
+        }
+        
+        /* Log Tab */
+        .log-entry {
+            background: rgba(30, 58, 95, 0.2);
+            border-left: 3px solid #d4af37;
+            padding: 0.8rem;
+            margin-bottom: 0.8rem;
+            border-radius: 4px;
+        }
+        
+        .log-time {
+            font-size: 0.75rem;
+            opacity: 0.6;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .log-text {
+            margin-top: 0.3rem;
+            font-size: 0.9rem;
+        }
+        
+        .log-entry.combat {
+            border-left-color: #dc2626;
+        }
+        
+        .log-entry.travel {
+            border-left-color: #3b82f6;
+        }
+        
+        .log-entry.discovery {
+            border-left-color: #16a34a;
+        }
+        
+        /* Settings Tab */
+        .setting-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .setting-label {
+            font-weight: bold;
+            color: #d4af37;
+            margin-bottom: 0.5rem;
+        }
+        
+        .btn-full {
+            width: 100%;
+            background: #1e3a5f;
+            border: 2px solid #d4af37;
+            color: #d4af37;
+            padding: 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: Georgia, serif;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .btn-full:hover {
+            background: #d4af37;
+            color: #1e3a5f;
+        }
+        
+        .btn-full.danger {
+            background: #dc2626;
+            border-color: #dc2626;
+            color: white;
+        }
+        
+        .btn-full.danger:hover {
+            background: #b91c1c;
+        }
+        
+        /* Map */
+        .map-container {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 1000;
+        }
+        
+        .sidebar ~ .map-container {
+            left: 350px;
+            width: calc(100% - 350px);
+        }
+        
+        .sidebar.hidden ~ .map-container {
+            left: 0;
+            width: 100%;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Map Info Panel */
+        .map-info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(26, 20, 16, 0.95);
+            border: 2px solid #d4af37;
+            border-radius: 8px;
+            padding: 1rem;
+            min-width: 200px;
+            z-index: 1500;
+        }
+        
+        .info-title {
+            font-weight: bold;
+            color: #d4af37;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 0.3rem;
+        }
+        
+        .info-value {
+            font-weight: bold;
+            color: #d4af37;
+        }
+        
+        /* Route Info */
+        .route-panel {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(26, 20, 16, 0.95);
+            border: 3px solid #d4af37;
+            border-radius: 8px;
+            padding: 1rem;
+            z-index: 1500;
+            display: none;
+            min-width: 400px;
+        }
+        
+        .route-panel.active {
+            display: block;
+        }
+        
+        .route-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            text-align: center;
+        }
+        
+        .route-stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #f4e8d0;
+        }
+        
+        .route-stat-label {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 0.2rem;
+        }
+        
+        /* Tactical Iframe */
+        .tactical-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 5000;
+        }
+        
+        .tactical-overlay.active {
+            display: block;
+        }
+        
+        .tactical-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .tactical-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: Georgia, serif;
+            z-index: 5001;
+            font-size: 1rem;
+        }
+        
+        .tactical-close:hover {
+            background: #b91c1c;
+        }
+        
+        .tactical-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        /* Markers */
+        .custom-marker {
+            background: none;
+            border: none;
+        }
+        
+        .marker-pin {
+            width: 40px;
+            height: 40px;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+            border: 3px solid #fff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .marker-pin:hover {
+            transform: rotate(-45deg) scale(1.3);
+        }
+        
+        .marker-pin.quest {
+            background: radial-gradient(circle, #dc2626, #991b1b);
+            animation: pulse 2s infinite;
+        }
+        
+        .marker-pin.hessian {
+            background: radial-gradient(circle, #f59e0b, #d97706);
+        }
+        
+        .marker-pin.continental {
+            background: radial-gradient(circle, #3b82f6, #1e40af);
+        }
+        
+        .marker-pin.crossing {
+            background: radial-gradient(circle, #06b6d4, #0891b2);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: rotate(-45deg) scale(1); }
+            50% { transform: rotate(-45deg) scale(1.2); }
+        }
+        
+        .marker-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(45deg);
+            font-size: 1.2rem;
+        }
+        
+        /* Leaflet Popups */
+        .leaflet-popup-content-wrapper {
+            background: rgba(26, 20, 16, 0.98);
+            color: #f4e8d0;
+            border: 3px solid #d4af37;
+            border-radius: 8px;
+        }
+        
+        .leaflet-popup-content {
+            font-family: Georgia, serif;
+            margin: 1rem;
+        }
+        
+        .leaflet-popup-tip {
+            background: rgba(26, 20, 16, 0.98);
+        }
+        
+        .popup-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #d4af37;
+            margin-bottom: 0.5rem;
+        }
+        
+        .popup-desc {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .popup-btn {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 0.6rem;
+            width: 100%;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: Georgia, serif;
+            margin-top: 0.3rem;
+        }
+        
+        .popup-btn:hover {
+            background: #b91c1c;
+        }
+        
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-left: 0.3rem;
+        }
+        
+        .badge.visited { background: #16a34a; color: white; }
+        .badge.tactical { background: #dc2626; color: white; }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Toggle -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+    
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="campaign-title">🗺️ Episode 1: Trenton</div>
+            <div class="campaign-subtitle">December 25-26, 1776</div>
+        </div>
+        
+        <div class="sidebar-tabs">
+            <div class="tab active" onclick="showTab('locations')">📍 Locations</div>
+            <div class="tab" onclick="showTab('log')">📜 Log</div>
+            <div class="tab" onclick="showTab('settings')">⚙️ Save</div>
+        </div>
+        
+        <!-- Locations Tab -->
+        <div class="tab-content active" id="tab-locations"></div>
+        
+        <!-- Log Tab -->
+        <div class="tab-content" id="tab-log"></div>
+        
+        <!-- Settings Tab -->
+        <div class="tab-content" id="tab-settings">
+            <div class="setting-group">
+                <div class="setting-label">Save Game</div>
+                <button class="btn-full" onclick="game.save()">💾 Save Now</button>
+                <button class="btn-full" onclick="game.exportSave()">📤 Export Save</button>
+                <button class="btn-full" onclick="document.getElementById('import-file').click()">📥 Import Save</button>
+                <input type="file" id="import-file" accept=".json" style="display:none">
+            </div>
+            
+            <div class="setting-group">
+                <div class="setting-label">Campaign</div>
+                <button class="btn-full danger" onclick="game.reset()">🔄 Reset Campaign</button>
+            </div>
+            
+            <div class="setting-group">
+                <div class="setting-label">Stats</div>
+                <div class="info-row">
+                    <span>Locations Visited:</span>
+                    <span class="info-value" id="stat-visited">0 / 7</span>
+                </div>
+                <div class="info-row">
+                    <span>Log Entries:</span>
+                    <span class="info-value" id="stat-logs">0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Map -->
+    <div class="map-container">
+        <div id="map"></div>
+        
+        <!-- Map Info -->
+        <div class="map-info">
+            <div class="info-title">Current Location</div>
+            <div class="info-row">
+                <span>Lat:</span>
+                <span class="info-value" id="info-lat">--</span>
+            </div>
+            <div class="info-row">
+                <span>Lng:</span>
+                <span class="info-value" id="info-lng">--</span>
+            </div>
+            <div class="info-row">
+                <span>Elev:</span>
+                <span class="info-value" id="info-elev">--</span>
+            </div>
+        </div>
+        
+        <!-- Route Panel -->
+        <div class="route-panel" id="route-panel">
+            <div class="info-title" id="route-title" style="text-align: center; margin-bottom: 0.8rem;">Route</div>
+            <div class="route-stats">
+                <div>
+                    <div class="route-stat-value" id="route-dist">--</div>
+                    <div class="route-stat-label">Distance</div>
+                </div>
+                <div>
+                    <div class="route-stat-value" id="route-walk">--</div>
+                    <div class="route-stat-label">Walking</div>
+                </div>
+                <div>
+                    <div class="route-stat-value" id="route-horse">--</div>
+                    <div class="route-stat-label">Horse</div>
+                </div>
+                <div>
+                    <div class="route-stat-value" id="route-elev">--</div>
+                    <div class="route-stat-label">Elevation</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tactical Overlay -->
+    <div class="tactical-overlay" id="tactical-overlay">
+        <button class="tactical-close" onclick="closeTactical()">← Back to Map</button>
+        <div class="tactical-container">
+            <iframe class="tactical-frame" id="tactical-frame" src=""></iframe>
+        </div>
+    </div>
+    
+    <script>
+        // CAMPAIGN DATA
+        const LOCATIONS = {
+            'washington-camp': {
+                name: "Washington's Encampment",
+                coords: [40.2976, -74.8709],
+                elevation: 120,
+                type: 'continental',
+                icon: '⛺',
+                desc: "General Washington's command tent on the Pennsylvania side.",
+                tactical: null
+            },
+            'river-crossing': {
+                name: 'Delaware River Crossing',
+                coords: [40.2950, -74.8650],
+                elevation: 80,
+                type: 'crossing',
+                icon: '🚣',
+                desc: "McConkey's Ferry. 2,400 troops crossed here Christmas night.",
+                tactical: null
+            },
+            'old-barracks': {
+                name: 'The Old Barracks',
+                coords: [40.2190, -74.7608],
+                elevation: 50,
+                type: 'quest',
+                icon: '⚔️',
+                desc: 'Hessian garrison. A.G. Achilles imprisoned in Cell #4.',
+                tactical: 'old_barracks_ultimate.html'
+            },
+            'rall-hq': {
+                name: "Rall's Headquarters",
+                coords: [40.2195, -74.7592],
+                elevation: 52,
+                type: 'hessian',
+                icon: '🏛️',
+                desc: "Colonel Rall's command at Stacy's Tavern.",
+                tactical: null
+            },
+            'king-street': {
+                name: 'King Street Battery',
+                coords: [40.2210, -74.7615],
+                elevation: 55,
+                type: 'hessian',
+                icon: '🛡️',
+                desc: 'Northern artillery with 6-pounder cannon.',
+                tactical: null
+            },
+            'queen-street': {
+                name: 'Queen Street Battery',
+                coords: [40.2175, -74.7600],
+                elevation: 48,
+                type: 'hessian',
+                icon: '🛡️',
+                desc: 'Southern artillery position.',
+                tactical: null
+            },
+            'assunpink': {
+                name: 'Assunpink Creek Bridge',
+                coords: [40.2145, -74.7598],
+                elevation: 42,
+                type: 'continental',
+                icon: '🌉',
+                desc: 'Continental fallback position.',
+                tactical: null
+            }
+        };
+        
+        // GAME STATE
+        class Game {
+            constructor() {
+                this.state = {
+                    visited: [],
+                    current: 'old-barracks',
+                    routeFrom: null,
+                    log: []
+                };
+                this.map = null;
+                this.markers = {};
+                this.routeLine = null;
+            }
+            
+            init() {
+                this.load();
+                this.setupMap();
+                this.render();
+                
+                // Auto-save every 30s
+                setInterval(() => this.save(), 30000);
+                
+                // Select starting location
+                setTimeout(() => this.select('old-barracks'), 500);
+            }
+            
+            setupMap() {
+                this.map = L.map('map', {
+                    center: [40.2190, -74.7608],
+                    zoom: 13
+                });
+                
+                L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    maxZoom: 19
+                }).addTo(this.map);
+                
+                Object.keys(LOCATIONS).forEach(key => this.createMarker(key));
+                L.control.scale({ position: 'bottomleft', imperial: true }).addTo(this.map);
+            }
+            
+            createMarker(key) {
+                const loc = LOCATIONS[key];
+                const html = `<div class="marker-pin ${loc.type}"><div class="marker-icon">${loc.icon}</div></div>`;
+                
+                const marker = L.marker(loc.coords, {
+                    icon: L.divIcon({
+                        className: 'custom-marker',
+                        html: html,
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 40]
+                    })
+                }).addTo(this.map);
+                
+                marker.bindPopup(`
+                    <div class="popup-title">${loc.icon} ${loc.name}</div>
+                    <div class="popup-desc">${loc.desc}</div>
+                    ${loc.tactical ? `<button class="popup-btn" onclick="game.openTactical('${key}')">⚔️ Enter Tactical Map</button>` : ''}
+                `);
+                
+                marker.on('click', () => this.select(key));
+                this.markers[key] = marker;
+            }
+            
+            select(key) {
+                const loc = LOCATIONS[key];
+                this.state.current = key;
+                
+                if (!this.state.visited.includes(key)) {
+                    this.state.visited.push(key);
+                    this.addLog(`Discovered ${loc.name}`, 'discovery');
+                }
+                
+                this.map.flyTo(loc.coords, 16, { duration: 1.5 });
+                this.markers[key].openPopup();
+                
+                document.getElementById('info-lat').textContent = loc.coords[0].toFixed(4) + '°N';
+                document.getElementById('info-lng').textContent = Math.abs(loc.coords[1]).toFixed(4) + '°W';
+                document.getElementById('info-elev').textContent = loc.elevation + ' ft';
+                
+                if (this.state.routeFrom && this.state.routeFrom !== key) {
+                    this.showRoute(this.state.routeFrom, key);
+                }
+                
+                this.save();
+                this.render();
+            }
+            
+            setRouteFrom(key) {
+                this.state.routeFrom = key;
+                this.addLog(`Set route from ${LOCATIONS[key].name}`, 'travel');
+                this.render();
+            }
+            
+            showRoute(from, to) {
+                const loc1 = LOCATIONS[from];
+                const loc2 = LOCATIONS[to];
+                
+                if (this.routeLine) this.map.removeLayer(this.routeLine);
+                
+                this.routeLine = L.polyline([loc1.coords, loc2.coords], {
+                    color: '#3b82f6',
+                    weight: 4,
+                    opacity: 0.7,
+                    dashArray: '10, 10'
+                }).addTo(this.map);
+                
+                const dist = this.calcDist(loc1.coords, loc2.coords);
+                const walk = this.calcTime(dist, 3);
+                const horse = this.calcTime(dist, 8);
+                const elev = Math.abs(loc2.elevation - loc1.elevation);
+                
+                document.getElementById('route-title').textContent = `${loc1.icon} → ${loc2.icon}`;
+                document.getElementById('route-dist').textContent = dist.toFixed(1) + ' mi';
+                document.getElementById('route-walk').textContent = walk.toFixed(0) + ' min';
+                document.getElementById('route-horse').textContent = horse.toFixed(0) + ' min';
+                document.getElementById('route-elev').textContent = elev + ' ft';
+                document.getElementById('route-panel').classList.add('active');
+                
+                this.addLog(`Calculated route: ${dist.toFixed(1)} mi, ${walk.toFixed(0)} min walking`, 'travel');
+            }
+            
+            openTactical(key) {
+                const loc = LOCATIONS[key];
+                if (!loc.tactical) return;
+                
+                document.getElementById('tactical-frame').src = loc.tactical;
+                document.getElementById('tactical-overlay').classList.add('active');
+                this.addLog(`Entered ${loc.name} tactical map`, 'combat');
+            }
+            
+            calcDist(c1, c2) {
+                const R = 3959;
+                const lat1 = c1[0] * Math.PI / 180;
+                const lat2 = c2[0] * Math.PI / 180;
+                const dLat = (c2[0] - c1[0]) * Math.PI / 180;
+                const dLon = (c2[1] - c1[1]) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                         Math.cos(lat1) * Math.cos(lat2) *
+                         Math.sin(dLon/2) * Math.sin(dLon/2);
+                return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            }
+            
+            calcTime(dist, speed) {
+                return (dist / speed) * 60;
+            }
+            
+            addLog(text, type = 'info') {
+                const entry = {
+                    time: new Date().toLocaleTimeString(),
+                    text: text,
+                    type: type
+                };
+                this.state.log.unshift(entry);
+                if (this.state.log.length > 100) this.state.log.pop();
+                this.save();
+                this.renderLog();
+            }
+            
+            render() {
+                this.renderLocations();
+                this.renderLog();
+                document.getElementById('stat-visited').textContent = `${this.state.visited.length} / ${Object.keys(LOCATIONS).length}`;
+                document.getElementById('stat-logs').textContent = this.state.log.length;
+            }
+            
+            renderLocations() {
+                let html = '';
+                Object.keys(LOCATIONS).forEach(key => {
+                    const loc = LOCATIONS[key];
+                    const visited = this.state.visited.includes(key);
+                    const active = this.state.current === key;
+                    
+                    html += `
+                        <div class="location-item ${loc.type} ${active ? 'active' : ''}" onclick="game.select('${key}')">
+                            <div class="location-name">
+                                <span>${loc.icon} ${loc.name}</span>
+                                <span>
+                                    ${visited ? '<span class="badge visited">✓</span>' : ''}
+                                    ${loc.tactical ? '<span class="badge tactical">⚔️</span>' : ''}
+                                </span>
+                            </div>
+                            <div class="location-desc">${loc.desc}</div>
+                            <div class="location-actions">
+                                <button class="btn-small" onclick="event.stopPropagation(); game.setRouteFrom('${key}')">📍 Route From</button>
+                                ${loc.tactical ? `<button class="btn-small danger" onclick="event.stopPropagation(); game.openTactical('${key}')">⚔️ Enter</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                document.getElementById('tab-locations').innerHTML = html;
+            }
+            
+            renderLog() {
+                let html = '';
+                this.state.log.forEach(entry => {
+                    html += `
+                        <div class="log-entry ${entry.type}">
+                            <div class="log-time">${entry.time}</div>
+                            <div class="log-text">${entry.text}</div>
+                        </div>
+                    `;
+                });
+                document.getElementById('tab-log').innerHTML = html || '<div class="log-entry">No log entries yet.</div>';
+            }
+            
+            save() {
+                localStorage.setItem('trenton_1776', JSON.stringify(this.state));
+                this.addLog('Game saved', 'info');
+            }
+            
+            load() {
+                const saved = localStorage.getItem('trenton_1776');
+                if (saved) {
+                    try {
+                        this.state = JSON.parse(saved);
+                    } catch (e) {
+                        console.error('Failed to load:', e);
+                    }
+                }
+            }
+            
+            exportSave() {
+                const blob = new Blob([JSON.stringify(this.state, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `trenton_save_${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                this.addLog('Save exported', 'info');
+            }
+            
+            reset() {
+                if (confirm('Reset campaign? This will delete all progress.')) {
+                    localStorage.removeItem('trenton_1776');
+                    this.state = { visited: [], current: 'old-barracks', routeFrom: null, log: [] };
+                    this.render();
+                    this.addLog('Campaign reset', 'info');
+                }
+            }
+        }
+        
+        // GLOBAL FUNCTIONS
+        const game = new Game();
+        
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('hidden');
+        }
+        
+        function showTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + name).classList.add('active');
+        }
+        
+        function closeTactical() {
+            document.getElementById('tactical-overlay').classList.remove('active');
+            document.getElementById('tactical-frame').src = '';
+        }
+        
+        // File import handler
+        document.getElementById('import-file').onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    game.state = JSON.parse(ev.target.result);
+                    game.save();
+                    game.render();
+                    game.addLog('Save imported', 'info');
+                } catch (err) {
+                    alert('Import failed: Invalid save file');
+                }
+            };
+            reader.readAsText(file);
+        };
+        
+        // Init on load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => game.init());
+        } else {
+            game.init();
+        }
+    </script>
+</body>
+</html>
