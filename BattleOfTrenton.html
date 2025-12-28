@@ -448,58 +448,33 @@
             z-index: 5000;
         }
 
-        .tactical-overlay.active { display: block; }
+        .tactical-overlay.active { display: flex; }
 
         .tactical-close {
             position: fixed;
             top: 15px;
-            left: 15px;
+            right: 15px;
             background: var(--accent);
             color: white;
             border: none;
-            padding: 0.8rem 1.5rem;
+            padding: 0.6rem 1.2rem;
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
             font-family: Georgia, serif;
-            z-index: 5001;
-            font-size: 1rem;
+            z-index: 5002;
+            font-size: 0.9rem;
+            transition: all 0.2s;
         }
 
-        .tactical-close:hover { background: #b91c1c; }
+        .tactical-close:hover {
+            background: #b91c1c;
+            transform: scale(1.05);
+        }
 
         #tactical-map {
             width: 100%;
             height: 100%;
-        }
-
-        .tactical-controls {
-            position: fixed;
-            right: 15px;
-            top: 80px;
-            background: linear-gradient(135deg, var(--primary), #0f1f3a);
-            border: 2px solid var(--secondary);
-            border-radius: 8px;
-            padding: 1rem;
-            z-index: 5001;
-            max-width: 280px;
-        }
-
-        .control-title {
-            font-weight: bold;
-            color: var(--secondary);
-            margin-bottom: 0.8rem;
-            font-size: 1rem;
-            border-bottom: 2px solid var(--secondary);
-            padding-bottom: 0.5rem;
-        }
-
-        .btn-small {
-            padding: 0.4rem 0.8rem;
-            font-size: 0.75rem;
-            display: inline-block;
-            margin-right: 0.5rem;
-            margin-bottom: 0.5rem;
         }
 
         /* Markers */
@@ -779,18 +754,8 @@
 
     <!-- Tactical Overlay -->
     <div class="tactical-overlay" id="tactical-overlay">
-        <button class="tactical-close" onclick="closeTactical()">← Back to Campaign Map</button>
+        <button class="tactical-close" onclick="closeTactical()">✕ Close</button>
         <div id="tactical-map"></div>
-
-        <div class="tactical-controls">
-            <div class="control-title">⚔️ Tactical View</div>
-            <div id="tactical-location-name" style="margin-bottom: 1rem; font-size: 0.9rem; opacity: 0.9;"></div>
-            <button class="btn btn-small" id="grid-toggle" onclick="app.toggleTacticalGrid()">Show Grid</button>
-            <br>
-            <button class="btn btn-small" onclick="app.setTacticalGridSize(5)">5ft</button>
-            <button class="btn btn-small" onclick="app.setTacticalGridSize(10)">10ft</button>
-            <button class="btn btn-small" onclick="app.setTacticalGridSize(30)">30ft</button>
-        </div>
     </div>
 
     <script>
@@ -1034,7 +999,6 @@
                 const loc = CAMPAIGN[key];
                 this.currentTactical = key;
 
-                document.getElementById('tactical-location-name').textContent = `${loc.icon} ${loc.name}`;
                 document.getElementById('tactical-overlay').classList.add('active');
 
                 // Setup tactical map
@@ -1045,8 +1009,12 @@
                 this.tacticalMap = L.map('tactical-map', {
                     center: loc.coords,
                     zoom: 20,
-                    maxZoom: 22
+                    maxZoom: 22,
+                    zoomControl: false
                 });
+
+                // Add zoom control in bottom-right to avoid overlap
+                L.control.zoom({ position: 'bottomright' }).addTo(this.tacticalMap);
 
                 this.layers.satellite.addTo(this.tacticalMap);
 
@@ -1071,94 +1039,6 @@
                     console.log(`No background image found at ${imagePath}`);
                 };
                 img.src = imagePath;
-            }
-
-            toggleTacticalGrid() {
-                this.gridVisible = !this.gridVisible;
-
-                if (this.gridVisible) {
-                    this.showTacticalGrid();
-                    document.getElementById('grid-toggle').textContent = 'Hide Grid';
-                } else {
-                    this.hideTacticalGrid();
-                    document.getElementById('grid-toggle').textContent = 'Show Grid';
-                }
-            }
-
-            setTacticalGridSize(size) {
-                this.gridSize = size;
-                if (this.gridVisible) {
-                    this.hideTacticalGrid();
-                    this.showTacticalGrid();
-                }
-            }
-
-            showTacticalGrid() {
-                const bounds = this.tacticalMap.getBounds();
-                const zoom = this.tacticalMap.getZoom();
-                const feetPerDegree = 364000 / Math.pow(2, zoom - 13);
-                const gridSpacing = this.gridSize / feetPerDegree;
-
-                const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-                svgElement.setAttribute('class', 'grid-overlay');
-
-                const topLeft = this.tacticalMap.latLngToLayerPoint(bounds.getNorthWest());
-                const bottomRight = this.tacticalMap.latLngToLayerPoint(bounds.getSouthEast());
-
-                let col = 0;
-                for (let lng = bounds.getWest(); lng <= bounds.getEast(); lng += gridSpacing) {
-                    const point = this.tacticalMap.latLngToLayerPoint([bounds.getNorth(), lng]);
-                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                    line.setAttribute('class', col % 5 === 0 ? 'grid-line major' : 'grid-line');
-                    line.setAttribute('x1', point.x);
-                    line.setAttribute('y1', topLeft.y);
-                    line.setAttribute('x2', point.x);
-                    line.setAttribute('y2', bottomRight.y);
-                    svgElement.appendChild(line);
-
-                    if (col % 5 === 0 && col > 0) {
-                        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                        text.setAttribute('class', 'grid-label');
-                        text.setAttribute('x', point.x);
-                        text.setAttribute('y', topLeft.y + 15);
-                        text.textContent = String.fromCharCode(65 + Math.floor(col / 5) - 1);
-                        svgElement.appendChild(text);
-                    }
-                    col++;
-                }
-
-                let row = 0;
-                for (let lat = bounds.getNorth(); lat >= bounds.getSouth(); lat -= gridSpacing) {
-                    const point = this.tacticalMap.latLngToLayerPoint([lat, bounds.getWest()]);
-                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                    line.setAttribute('class', row % 5 === 0 ? 'grid-line major' : 'grid-line');
-                    line.setAttribute('x1', topLeft.x);
-                    line.setAttribute('y1', point.y);
-                    line.setAttribute('x2', bottomRight.x);
-                    line.setAttribute('y2', point.y);
-                    svgElement.appendChild(line);
-
-                    if (row % 5 === 0 && row > 0) {
-                        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                        text.setAttribute('class', 'grid-label');
-                        text.setAttribute('x', topLeft.x + 15);
-                        text.setAttribute('y', point.y + 4);
-                        text.textContent = Math.floor(row / 5);
-                        svgElement.appendChild(text);
-                    }
-                    row++;
-                }
-
-                this.gridLayer = L.svgOverlay(svgElement, bounds, {
-                    interactive: false
-                }).addTo(this.tacticalMap);
-            }
-
-            hideTacticalGrid() {
-                if (this.gridLayer) {
-                    this.tacticalMap.removeLayer(this.gridLayer);
-                    this.gridLayer = null;
-                }
             }
 
             render() {
@@ -1280,8 +1160,6 @@
                 app.tacticalMap.remove();
                 app.tacticalMap = null;
             }
-            app.gridVisible = false;
-            document.getElementById('grid-toggle').textContent = 'Show Grid';
         }
 
         if (document.readyState === 'loading') {
