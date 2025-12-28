@@ -46,16 +46,23 @@ assunpink.jpg                ← Assunpink Creek Bridge
 
 ### Exploring the Campaign Map
 1. Click any **location marker** (the colorful pins)
-2. Or click **location cards** in the sidebar
-3. View info with **📖 Info** button
-4. Enter tactical view with **⚔️ Tactical Map** button
+2. Or **hover over pins** to see faction info (Continental Army, Hessian, etc.)
+3. Or click **location cards** in the sidebar
+4. View info with **📖 Info** button
+5. Enter location view with **→ Enter** button
 
-### Using Tactical Maps
-1. Click **⚔️ Tactical Map** on any location
-2. **Toggle Grid** for D&D-style combat
-3. Adjust **grid size** (5ft, 10ft, 30ft)
-4. **Zoom in** to see building details
-5. If you added a background image, it shows automatically!
+### Using Location Detail View
+1. Click **→ Enter** on any location
+2. **Show Grid** for 5ft tactical grid (D&D-style combat)
+3. Can adjust grid size (5ft, 10ft, 30ft) if needed
+4. **Zoom in** to see building/tent details
+5. Background images show automatically if you added them!
+
+### DM Mode vs Player Mode
+- **🎲 DM Mode** (default): Shows hidden info like prisoner locations, quest objectives
+- **👥 Player Mode**: Hides DM-only information for sharing with players
+- Toggle in top-right corner (same area as map layers)
+- Great for sharing the map with your players without spoilers!
 
 ### Saving Your Progress
 - **Auto-saves** every 30 seconds

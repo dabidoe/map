@@ -659,6 +659,8 @@
         <button class="layer-btn" id="layer-street" onclick="app.setLayer('street')">Street</button>
         <button class="layer-btn active" id="layer-satellite" onclick="app.setLayer('satellite')">Satellite</button>
         <button class="layer-btn" id="layer-terrain" onclick="app.setLayer('terrain')">Terrain</button>
+        <div style="border-top: 1px solid rgba(212, 175, 55, 0.3); margin: 0.5rem 0;"></div>
+        <button class="layer-btn" id="dm-mode-toggle" onclick="app.toggleDMMode()">🎲 DM Mode</button>
     </div>
 
     <!-- Sidebar -->
@@ -723,7 +725,7 @@
                 <div class="section-title">🗺️ Using the Map</div>
                 <ul class="info-list">
                     <li>Click markers or sidebar cards to visit locations</li>
-                    <li>Click "⚔️ Tactical Map" to enter combat view</li>
+                    <li>Click "→ Enter" to zoom into location</li>
                     <li>Use layer buttons (Street/Satellite) to change view</li>
                 </ul>
             </div>
@@ -739,12 +741,12 @@
             </div>
 
             <div class="info-section">
-                <div class="section-title">⚔️ Tactical Maps</div>
+                <div class="section-title">🔍 Location Details</div>
                 <ul class="info-list">
-                    <li>Toggle grid for D&D-style combat</li>
-                    <li>Adjust grid size (5ft, 10ft, 30ft)</li>
+                    <li>Toggle 5ft grid for tactical view</li>
                     <li>Background images overlay automatically</li>
-                    <li>Use zoom to see building details</li>
+                    <li>Use zoom to see building/tent details</li>
+                    <li>Hover over pins to see faction info</li>
                 </ul>
             </div>
 
@@ -796,59 +798,74 @@
         const CAMPAIGN = {
             "washington-camp": {
                 name: "Washington's Encampment",
-                coords: [40.2976, -74.8709],
+                coords: [40.2976, -74.8900],
                 type: "continental",
                 icon: "⛺",
+                faction: "Continental Army",
                 desc: "General Washington's command tent on the Pennsylvania side.",
-                info: "On Christmas night 1776, approximately 2,400 Continental Army troops assembled here. The password: 'Victory or Death'."
+                info: "On Christmas night 1776, approximately 2,400 Continental Army troops assembled here. The password: 'Victory or Death'.",
+                dmOnly: "Cell #4 holds prisoner A.G. Achilles - rescued during the Old Barracks raid."
             },
             "river-crossing": {
                 name: "Delaware River Crossing",
                 coords: [40.2950, -74.8650],
                 type: "crossing",
                 icon: "🚣",
+                faction: "Continental Army",
                 desc: "McConkey's Ferry. 2,400 troops crossed Christmas night.",
-                info: "Durham boats ferried troops across ice floes for 9 hours. One of the most iconic moments in American history."
+                info: "Durham boats ferried troops across ice floes for 9 hours. One of the most iconic moments in American history.",
+                dmOnly: null
             },
             "old-barracks": {
                 name: "The Old Barracks",
                 coords: [40.2190, -74.7608],
                 type: "quest",
                 icon: "⚔️",
-                desc: "Hessian garrison. A.G. Achilles imprisoned in Cell #4.",
-                info: "Built in 1758, still standing today! Approximately 40-50 Hessian soldiers were quartered here. Some were captured in their bunks."
+                faction: "Hessian / British",
+                desc: "Hessian garrison.",
+                playerDesc: "Hessian garrison. Important objective.",
+                info: "Built in 1758, still standing today! Approximately 40-50 Hessian soldiers were quartered here. Some were captured in their bunks.",
+                dmOnly: "A.G. Achilles imprisoned in Cell #4. Rescue mission objective. 4 guards outside, 2 inside near cell."
             },
             "rall-hq": {
                 name: "Rall's Headquarters",
                 coords: [40.2195, -74.7592],
                 type: "hessian",
                 icon: "🏛️",
+                faction: "Hessian / British",
                 desc: "Colonel Rall's command at Stacy's Tavern.",
-                info: "Colonel Rall was playing cards when the attack began. An unread warning note was found in his pocket after he died."
+                info: "Colonel Rall was playing cards when the attack began. An unread warning note was found in his pocket after he died.",
+                dmOnly: "Contains intelligence documents about troop movements."
             },
             "king-street": {
                 name: "King Street Battery",
                 coords: [40.2210, -74.7615],
                 type: "hessian",
                 icon: "🛡️",
+                faction: "Hessian / British",
                 desc: "Northern artillery with 6-pounder cannon.",
-                info: "Main northern defense. Artillery pieces were captured early in the battle when crews were caught off-guard."
+                info: "Main northern defense. Artillery pieces were captured early in the battle when crews were caught off-guard.",
+                dmOnly: null
             },
             "queen-street": {
                 name: "Queen Street Battery",
                 coords: [40.2175, -74.7600],
                 type: "hessian",
                 icon: "🛡️",
+                faction: "Hessian / British",
                 desc: "Southern artillery position.",
-                info: "Crews struggled to serve their pieces in the sleet and snow. Position was abandoned as Hessians attempted to retreat."
+                info: "Crews struggled to serve their pieces in the sleet and snow. Position was abandoned as Hessians attempted to retreat.",
+                dmOnly: null
             },
             "assunpink": {
                 name: "Assunpink Creek Bridge",
                 coords: [40.2145, -74.7598],
                 type: "continental",
                 icon: "🌉",
+                faction: "Continental Army",
                 desc: "Continental fallback position.",
-                info: "Washington's planned escape route became a trap for the Hessians. Americans blocked the bridge, forcing surrender."
+                info: "Washington's planned escape route became a trap for the Hessians. Americans blocked the bridge, forcing surrender.",
+                dmOnly: null
             }
         };
 
@@ -863,6 +880,7 @@
                 this.gridSize = 5;
                 this.backgroundLayer = null;
                 this.currentTactical = null;
+                this.dmMode = true; // Default to DM mode
 
                 this.layers = {
                     street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -884,6 +902,9 @@
                 this.setupMap();
                 this.render();
                 this.setupEventListeners();
+
+                // Set DM mode button as active by default
+                document.getElementById('dm-mode-toggle').classList.add('active');
 
                 // Show help banner for first-time users
                 if (!this.state.visited || this.state.visited.length === 0) {
@@ -933,16 +954,27 @@
                     <div class="popup-desc">${loc.desc}</div>
                     <div class="popup-actions">
                         <button class="popup-btn" onclick="app.showInfo('${key}')">📖 Info</button>
-                        <button class="popup-btn tactical" onclick="app.openTactical('${key}')">⚔️ Tactical Map</button>
+                        <button class="popup-btn tactical" onclick="app.openTactical('${key}')">→ Enter</button>
                     </div>
                 `;
 
                 marker.bindPopup(popupHTML);
                 marker.on('click', () => this.select(key));
-                marker.bindTooltip(`${loc.icon} ${loc.name}`, {
+
+                // Faction color for tooltip
+                const factionColor = loc.faction.includes('Continental') ? '#3b82f6' :
+                                   loc.faction.includes('Hessian') ? '#f59e0b' : '#06b6d4';
+
+                marker.bindTooltip(`
+                    <div style="text-align: center;">
+                        <div style="font-weight: bold; margin-bottom: 0.2rem;">${loc.icon} ${loc.name}</div>
+                        <div style="font-size: 0.75rem; color: ${factionColor}; font-weight: bold;">${loc.faction}</div>
+                    </div>
+                `, {
                     permanent: false,
                     direction: 'top',
-                    offset: [0, -35]
+                    offset: [0, -35],
+                    className: 'custom-tooltip'
                 });
 
                 this.markers[key] = marker;
@@ -964,14 +996,38 @@
             showInfo(key) {
                 const loc = CAMPAIGN[key];
                 document.getElementById('info-title').textContent = `${loc.icon} ${loc.name}`;
-                document.getElementById('info-subtitle').textContent = `${loc.coords[0].toFixed(4)}°N, ${Math.abs(loc.coords[1]).toFixed(4)}°W`;
+                document.getElementById('info-subtitle').textContent = `${loc.coords[0].toFixed(4)}°N, ${Math.abs(loc.coords[1]).toFixed(4)}°W • ${loc.faction}`;
+
+                let dmSection = '';
+                if (this.dmMode && loc.dmOnly) {
+                    dmSection = `
+                        <div class="info-section" style="border: 2px solid #dc2626; background: rgba(220, 38, 38, 0.1);">
+                            <div class="section-title">🎲 DM Only</div>
+                            <div class="info-text">${loc.dmOnly}</div>
+                        </div>
+                    `;
+                }
+
                 document.getElementById('info-body').innerHTML = `
                     <div class="info-section">
                         <div class="section-title">📜 About</div>
                         <div class="info-text">${loc.info}</div>
                     </div>
+                    ${dmSection}
                 `;
                 document.getElementById('info-modal').classList.add('active');
+            }
+
+            toggleDMMode() {
+                this.dmMode = !this.dmMode;
+                const btn = document.getElementById('dm-mode-toggle');
+                if (this.dmMode) {
+                    btn.classList.add('active');
+                    btn.textContent = '🎲 DM Mode';
+                } else {
+                    btn.classList.remove('active');
+                    btn.textContent = '👥 Player Mode';
+                }
             }
 
             openTactical(key) {
