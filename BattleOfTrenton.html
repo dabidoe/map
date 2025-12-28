@@ -1186,6 +1186,18 @@
             }
         };
 
+        // CHARACTER LIBRARY
+        let CHARACTERS = {};
+
+        // Load characters from JSON
+        fetch('campaigns/american-revolution.json')
+            .then(res => res.json())
+            .then(data => {
+                CHARACTERS = data.characters || {};
+                console.log('Loaded characters:', Object.keys(CHARACTERS).length);
+            })
+            .catch(err => console.error('Failed to load characters:', err));
+
         // TACTICAL GRID SYSTEM
         class TacticalGrid {
             constructor() {
@@ -1203,11 +1215,13 @@
                 this.isDragging = false;
                 this.dragOffset = { x: 0, y: 0 };
                 this.battleLog = [];
+                this.currentLocation = null;
             }
 
             init(locationKey, location) {
                 this.canvas = document.getElementById('tactical-canvas');
                 this.ctx = this.canvas.getContext('2d');
+                this.currentLocation = locationKey;
 
                 // Set canvas size
                 this.canvas.width = this.cols * this.gridSize;
@@ -1229,6 +1243,10 @@
 
                 // Update INFO tab with location details
                 this.updateLocationInfo(location);
+
+                // Load characters for this location and update PARTY tab
+                this.loadLocationCharacters(locationKey);
+                this.renderCharacterLibrary(locationKey);
             }
 
             loadBackground(key, location) {
@@ -1493,6 +1511,92 @@
                 this.ctx.textAlign = 'center';
                 this.ctx.textBaseline = 'middle';
                 this.ctx.fillText(token.type === 'player' ? '●' : '▲', token.x, token.y);
+
+                // Character name label (if character token)
+                if (token.character) {
+                    this.ctx.save();
+                    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                    this.ctx.font = 'bold 11px Arial';
+                    const nameWidth = this.ctx.measureText(token.character.name).width;
+                    this.ctx.fillRect(token.x - nameWidth/2 - 4, token.y + this.gridSize * 0.5, nameWidth + 8, 16);
+
+                    this.ctx.fillStyle = token.type === 'player' ? '#3b82f6' : '#dc2626';
+                    this.ctx.fillText(token.character.name, token.x, token.y + this.gridSize * 0.5 + 11);
+                    this.ctx.restore();
+                }
+            }
+
+            loadLocationCharacters(locationKey) {
+                // Auto-load character tokens for this location
+                Object.values(CHARACTERS).forEach(char => {
+                    if (char.location === locationKey) {
+                        this.addCharacterToken(char);
+                    }
+                });
+            }
+
+            addCharacterToken(character) {
+                const centerX = (this.cols / 2) * this.gridSize;
+                const centerY = (this.rows / 2) * this.gridSize;
+
+                // Add some randomness to prevent tokens from stacking
+                const randomX = centerX + (Math.random() - 0.5) * this.gridSize * 4;
+                const randomY = centerY + (Math.random() - 0.5) * this.gridSize * 4;
+
+                this.tokens.push({
+                    type: character.type || 'player',
+                    x: randomX,
+                    y: randomY,
+                    speed: character.speed || 30,
+                    character: character,
+                    name: character.name,
+                    selected: false
+                });
+
+                this.addLog(`${character.name} entered battlefield`, character.type === 'enemy' ? 'combat' : 'movement');
+                this.draw();
+            }
+
+            renderCharacterLibrary(locationKey) {
+                const container = document.getElementById('party-list');
+                if (!container) return;
+
+                const locationCharacters = Object.values(CHARACTERS).filter(c => c.location === locationKey);
+
+                if (locationCharacters.length === 0) {
+                    container.innerHTML = `
+                        <div class="character-card">
+                            <div class="character-name">No characters at this location</div>
+                            <div class="character-info">Characters will appear here automatically when entering their location</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = locationCharacters.map(char => `
+                    <div class="character-card" onclick="tactical.selectCharacterToken('${char.id}')">
+                        <div class="character-name">${char.name}</div>
+                        <div class="character-info">${char.title || ''}</div>
+                        <div class="character-info" style="margin-top: 0.5rem; font-size: 0.75rem;">
+                            <strong>Speed:</strong> ${char.speed || 30} ft
+                            <br><strong>Faction:</strong> ${char.faction}
+                        </div>
+                        ${char.description ? `<p style="margin-top: 0.5rem; font-size: 0.75rem; opacity: 0.8;">${char.description}</p>` : ''}
+                    </div>
+                `).join('');
+            }
+
+            selectCharacterToken(characterId) {
+                // Find and select the token for this character
+                const token = this.tokens.find(t => t.character && t.character.id === characterId);
+                if (token) {
+                    this.selectedToken = token;
+                    this.isDragging = false;
+                    this.draw();
+                    this.addLog(`Selected ${token.name}`, 'info');
+                    // Switch to MAPS tab to see the selected token
+                    switchTacticalTab('maps');
+                }
             }
 
             addLog(message, type = 'info') {
