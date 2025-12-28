@@ -1,0 +1,191 @@
+{
+  "metadata": {
+    "id": "american_revolution_trenton",
+    "title": "Battle of Trenton",
+    "subtitle": "December 25-26, 1776",
+    "date": "Dec 25-26, 1776",
+    "weather": "28°F, Sleet",
+    "description": "Washington's daring Christmas crossing of the Delaware River to attack Hessian forces at Trenton.",
+    "saveKey": "trenton_1776"
+  },
+  "map": {
+    "center": [40.2190, -74.7608],
+    "zoom": 13,
+    "minZoom": 11,
+    "maxZoom": 19
+  },
+  "locations": {
+    "washington-camp": {
+      "name": "Washington's Encampment",
+      "coords": [40.2976, -74.8709],
+      "elevation": 120,
+      "type": "continental",
+      "icon": "⛺",
+      "description": "General Washington's command tent on the Pennsylvania side of the Delaware River.",
+      "tactical": null,
+      "characters": [],
+      "historical": {
+        "overview": "On Christmas night 1776, General George Washington assembled approximately 2,400 Continental Army troops at this encampment in Pennsylvania, preparing for one of the most daring operations of the Revolutionary War.",
+        "facts": [
+          "The army began assembling here around 3:00 PM on December 25, 1776",
+          "Troops were organized into three divisions under Generals Greene, Sullivan, and Stirling",
+          "Many soldiers lacked proper winter clothing and footwear",
+          "Washington kept the target destination secret from most officers until the last moment",
+          "The password for the operation was 'Victory or Death'"
+        ],
+        "significance": "This site marks the staging ground for Washington's famous Delaware River crossing. The decision to attack during a winter storm, on Christmas night, demonstrated Washington's strategic brilliance and desperation to achieve a much-needed victory.",
+        "forces": "Continental Army: ~2,400 troops, 18 cannons"
+      }
+    },
+    "river-crossing": {
+      "name": "Delaware River Crossing",
+      "coords": [40.2950, -74.8650],
+      "elevation": 80,
+      "type": "crossing",
+      "icon": "🚣",
+      "description": "McConkey's Ferry. 2,400 troops crossed here Christmas night in Durham boats through ice and sleet.",
+      "tactical": null,
+      "characters": [],
+      "historical": {
+        "overview": "The Delaware River crossing at McConkey's Ferry is one of the most iconic moments in American history. Despite freezing temperatures, ice floes, and a winter storm, Washington's army successfully ferried across the Delaware.",
+        "facts": [
+          "The crossing began around 6:00 PM on December 25, 1776",
+          "Durham boats (40-60 feet long) were used to ferry troops",
+          "The operation took approximately 9 hours to complete",
+          "Ice chunks in the river threatened to crush the boats",
+          "The crossing was delayed by 3 hours due to weather",
+          "Colonel John Glover's Marblehead Regiment manned the boats"
+        ],
+        "significance": "Emanuel Leutze's famous 1851 painting immortalized this crossing, though it contains historical inaccuracies. The actual crossing occurred at night in a blizzard, making it far more treacherous than typically depicted.",
+        "forces": "Three divisions crossed; two other divisions failed to cross at different points downstream"
+      }
+    },
+    "old-barracks": {
+      "name": "The Old Barracks",
+      "coords": [40.2190, -74.7608],
+      "elevation": 50,
+      "type": "quest",
+      "icon": "⚔️",
+      "description": "Hessian garrison. A.G. Achilles imprisoned in Cell #4.",
+      "tactical": "old-barracks-tactical.html",
+      "tacticalBackground": "https://example.com/old-barracks-floorplan.jpg",
+      "characters": ["achilles"],
+      "historical": {
+        "overview": "Built in 1758 during the French and Indian War, the Old Barracks served as housing for British troops. By December 1776, it was occupied by Hessian soldiers under Colonel Rall's command.",
+        "facts": [
+          "One of the oldest barracks buildings in America (still standing today!)",
+          "Originally built to house 300 British soldiers",
+          "Housed Hessian troops from the Rall Regiment in December 1776",
+          "Approximately 40-50 Hessian soldiers were quartered here during the battle",
+          "Some Hessians were captured here while still in their bunks",
+          "The building survives today as a museum in Trenton"
+        ],
+        "significance": "The Old Barracks represents one of the few remaining physical structures from the Battle of Trenton. Its capture was crucial to securing the town and preventing organized Hessian resistance.",
+        "forces": "Hessian garrison: ~40-50 soldiers from the Rall Regiment"
+      }
+    },
+    "rall-hq": {
+      "name": "Rall's Headquarters",
+      "coords": [40.2195, -74.7592],
+      "elevation": 52,
+      "type": "hessian",
+      "icon": "🏛️",
+      "description": "Colonel Rall's command post at Stacy's Tavern.",
+      "tactical": null,
+      "characters": [],
+      "historical": {
+        "overview": "Colonel Johann Rall established his headquarters at Stacy's Tavern (also called the True American Inn). This location served as the command center for all Hessian forces in Trenton.",
+        "facts": [
+          "Colonel Rall was playing cards here when the attack began",
+          "A Loyalist farmer attempted to deliver a warning note to Rall the night before",
+          "Rall put the unread note in his pocket - it was found on his body after he was killed",
+          "The headquarters was located near the center of town for quick response",
+          "Rall had dismissed concerns about American attack, considering them defeated",
+          "He had refused to build defensive fortifications, calling them unnecessary"
+        ],
+        "significance": "Rall's overconfidence and dismissal of warnings proved fatal. His death during the battle (mortally wounded, died the next day) contributed to the collapse of Hessian resistance.",
+        "forces": "Command staff and personal guard"
+      }
+    },
+    "king-street": {
+      "name": "King Street Battery",
+      "coords": [40.2210, -74.7615],
+      "elevation": 55,
+      "type": "hessian",
+      "icon": "🛡️",
+      "description": "Northern artillery position with 6-pounder cannon.",
+      "tactical": null,
+      "characters": [],
+      "historical": {
+        "overview": "The King Street battery represented one of two main artillery positions defending Trenton from the north. Despite having cannon, the Hessians were unable to effectively deploy them during the surprise attack.",
+        "facts": [
+          "Positioned to defend against attack from Princeton to the north",
+          "Equipped with 6-pounder field pieces",
+          "Crews were caught off-guard by the dawn attack",
+          "American forces under General Sullivan attacked from this direction",
+          "The artillery pieces were captured early in the battle",
+          "Wet weather had dampened much of the Hessian gunpowder"
+        ],
+        "significance": "The rapid capture of this battery prevented the Hessians from organizing effective artillery defense. The Americans turned these captured guns against their former owners.",
+        "forces": "Artillery crew: ~20-30 Hessian gunners"
+      }
+    },
+    "queen-street": {
+      "name": "Queen Street Battery",
+      "coords": [40.2175, -74.7600],
+      "elevation": 48,
+      "type": "hessian",
+      "icon": "🛡️",
+      "description": "Southern artillery position.",
+      "tactical": null,
+      "characters": [],
+      "historical": {
+        "overview": "The Queen Street battery formed the southern artillery defense of Trenton. Like its northern counterpart, it was quickly overrun by American forces.",
+        "facts": [
+          "Protected the southern approach to Trenton",
+          "Also equipped with 6-pounder cannon",
+          "Crews struggled to serve their pieces in the sleet and snow",
+          "General Greene's division approached from this direction",
+          "The position was abandoned as Hessians attempted to retreat",
+          "Captured guns were later used by the Continental Army"
+        ],
+        "significance": "The loss of both artillery batteries left the Hessians without their most powerful weapons, forcing them to rely on muskets alone against Washington's coordinated attack.",
+        "forces": "Artillery crew: ~20-30 Hessian gunners"
+      }
+    },
+    "assunpink": {
+      "name": "Assunpink Creek Bridge",
+      "coords": [40.2145, -74.7598],
+      "elevation": 42,
+      "type": "continental",
+      "icon": "🌉",
+      "description": "Continental fallback position. Bridge became Hessian trap.",
+      "tactical": null,
+      "characters": [],
+      "historical": {
+        "overview": "The Assunpink Creek bridge represented Washington's planned escape route if the attack failed. Instead, it became the Hessians' attempted escape route as they fled south.",
+        "facts": [
+          "Washington secured this bridge to ensure his escape route",
+          "Hessian forces attempted to retreat across it when surrounded",
+          "American troops blocked the bridge, trapping the Hessians",
+          "The creek was partially frozen, making crossing difficult",
+          "Some Hessians attempted to wade across and drowned",
+          "The bridge would see more action in the Second Battle of Trenton (Jan 2, 1777)"
+        ],
+        "significance": "Control of this bridge was crucial to Washington's victory. By blocking the Hessian retreat, American forces forced a surrender rather than allowing an escape.",
+        "forces": "American rear guard: Several hundred troops"
+      }
+    }
+  },
+  "characters": {
+    "achilles": {
+      "id": "achilles",
+      "name": "A.G. Achilles",
+      "title": "Prisoner of War",
+      "faction": "Continental",
+      "location": "old-barracks",
+      "profileUrl": null,
+      "description": "Continental soldier imprisoned in Cell #4 of the Old Barracks"
+    }
+  }
+}

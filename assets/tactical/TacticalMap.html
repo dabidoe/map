@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tactical Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #1e3a5f;
+            --secondary: #d4af37;
+            --accent: #dc2626;
+            --bg-dark: #0a0a0a;
+            --text: #f4e8d0;
+        }
+
+        body {
+            font-family: Georgia, serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        #map {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #2a2a2a;
+        }
+
+        /* Control Panel */
+        .control-panel {
+            position: fixed;
+            right: 10px;
+            top: 10px;
+            background: linear-gradient(135deg, var(--primary) 0%, #0f1f3a 100%);
+            border: 2px solid var(--secondary);
+            border-radius: 8px;
+            padding: 1rem;
+            z-index: 2000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+            max-width: 280px;
+        }
+
+        .panel-title {
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 0.8rem;
+            font-size: 1rem;
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 0.5rem;
+        }
+
+        .control-group {
+            margin-bottom: 0.8rem;
+        }
+
+        .control-label {
+            display: block;
+            font-size: 0.8rem;
+            margin-bottom: 0.3rem;
+            opacity: 0.9;
+        }
+
+        .control-input {
+            width: 100%;
+            background: rgba(26, 20, 16, 0.5);
+            border: 1px solid var(--secondary);
+            color: var(--text);
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-family: Georgia, serif;
+            font-size: 0.85rem;
+        }
+
+        .control-input[type="range"] {
+            padding: 0;
+        }
+
+        .btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, #0f1f3a 100%);
+            color: var(--secondary);
+            border: 2px solid var(--secondary);
+            padding: 0.6rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            font-family: Georgia, serif;
+            transition: all 0.3s;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, var(--secondary) 0%, #b8941f 100%);
+            color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn.active {
+            background: var(--secondary);
+            color: var(--primary);
+        }
+
+        .btn-small {
+            width: auto;
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+            display: inline-block;
+            margin-right: 0.5rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .stat-box {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 4px;
+            padding: 0.4rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: var(--secondary);
+            font-size: 1rem;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 0.2rem;
+        }
+
+        /* Grid overlay */
+        .grid-overlay {
+            pointer-events: none;
+            z-index: 600;
+        }
+
+        .grid-line {
+            fill: none;
+            stroke: rgba(212, 175, 55, 0.4);
+            stroke-width: 1.5;
+        }
+
+        .grid-line.major {
+            stroke: rgba(212, 175, 55, 0.6);
+            stroke-width: 2;
+        }
+
+        .grid-label {
+            fill: var(--secondary);
+            font-size: 13px;
+            font-weight: bold;
+            text-anchor: middle;
+            paint-order: stroke;
+            stroke: rgba(0, 0, 0, 0.9);
+            stroke-width: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Info display */
+        .info-display {
+            position: fixed;
+            left: 10px;
+            bottom: 10px;
+            background: rgba(26, 20, 16, 0.95);
+            border: 2px solid var(--secondary);
+            border-radius: 6px;
+            padding: 0.8rem;
+            z-index: 2000;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+        }
+
+        .info-row {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .info-item strong {
+            color: var(--secondary);
+        }
+
+        /* Background image overlay */
+        .bg-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            pointer-events: none;
+            z-index: 400;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <div class="control-panel">
+        <div class="panel-title">⚔️ Tactical Controls</div>
+
+        <div class="control-group">
+            <label class="control-label">Background Image URL</label>
+            <input type="text" class="control-input" id="bg-url" placeholder="https://...">
+            <div style="margin-top: 0.5rem;">
+                <button class="btn-small btn" onclick="tactical.setBackground()">Apply</button>
+                <button class="btn-small btn" onclick="tactical.clearBackground()">Clear</button>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">Background Opacity: <span id="opacity-value">70</span>%</label>
+            <input type="range" class="control-input" id="bg-opacity" min="0" max="100" value="70">
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">Grid Size (feet)</label>
+            <input type="number" class="control-input" id="grid-size" value="5" min="1" max="100">
+        </div>
+
+        <div class="stat-grid">
+            <div class="stat-box">
+                <div class="stat-value" id="grid-cols">0</div>
+                <div class="stat-label">Columns</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="grid-rows">0</div>
+                <div class="stat-label">Rows</div>
+            </div>
+        </div>
+
+        <button class="btn" id="grid-toggle" onclick="tactical.toggleGrid()">Show Grid</button>
+
+        <div class="control-group" style="margin-top: 0.5rem;">
+            <button class="btn-small btn" onclick="tactical.setGridSize(5)">5ft</button>
+            <button class="btn-small btn" onclick="tactical.setGridSize(10)">10ft</button>
+            <button class="btn-small btn" onclick="tactical.setGridSize(30)">30ft</button>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">Map Layer</label>
+            <button class="btn-small btn" id="layer-street" onclick="tactical.setLayer('street')">Street</button>
+            <button class="btn-small btn active" id="layer-satellite" onclick="tactical.setLayer('satellite')">Satellite</button>
+            <button class="btn-small btn" id="layer-blank" onclick="tactical.setLayer('blank')">Blank</button>
+        </div>
+    </div>
+
+    <div class="info-display">
+        <div class="info-row">
+            <div class="info-item">
+                <strong>Grid:</strong> <span id="info-grid-size">5 ft</span>
+            </div>
+            <div class="info-item">
+                <strong>Zoom:</strong> <span id="info-zoom">13</span>
+            </div>
+            <div class="info-item">
+                <strong>Center:</strong> <span id="info-center">--</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class TacticalMap {
+            constructor() {
+                this.map = null;
+                this.gridLayer = null;
+                this.backgroundLayer = null;
+                this.gridVisible = false;
+                this.gridSize = 5;
+                this.bgOpacity = 0.7;
+
+                this.layers = {
+                    street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap',
+                        maxZoom: 19
+                    }),
+                    satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: '© Esri',
+                        maxZoom: 19
+                    }),
+                    blank: L.tileLayer('', {
+                        maxZoom: 19
+                    })
+                };
+
+                this.currentLayer = 'satellite';
+            }
+
+            init() {
+                // Get params from URL
+                const params = new URLSearchParams(window.location.search);
+                const bgUrl = params.get('background');
+                const lat = parseFloat(params.get('lat')) || 40.2190;
+                const lng = parseFloat(params.get('lng')) || -74.7608;
+                const zoom = parseInt(params.get('zoom')) || 18;
+
+                this.map = L.map('map', {
+                    center: [lat, lng],
+                    zoom: zoom,
+                    zoomControl: true
+                });
+
+                this.layers.satellite.addTo(this.map);
+
+                if (bgUrl) {
+                    document.getElementById('bg-url').value = bgUrl;
+                    setTimeout(() => this.setBackground(), 500);
+                }
+
+                this.setupEventListeners();
+                this.updateInfo();
+            }
+
+            setLayer(type) {
+                this.map.removeLayer(this.layers[this.currentLayer]);
+                this.layers[type].addTo(this.map);
+                this.currentLayer = type;
+
+                document.querySelectorAll('[id^="layer-"]').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(`layer-${type}`).classList.add('active');
+            }
+
+            toggleGrid() {
+                this.gridVisible = !this.gridVisible;
+
+                if (this.gridVisible) {
+                    this.showGrid();
+                    document.getElementById('grid-toggle').textContent = 'Hide Grid';
+                    document.getElementById('grid-toggle').classList.add('active');
+                } else {
+                    this.hideGrid();
+                    document.getElementById('grid-toggle').textContent = 'Show Grid';
+                    document.getElementById('grid-toggle').classList.remove('active');
+                }
+            }
+
+            setGridSize(size) {
+                this.gridSize = size;
+                document.getElementById('grid-size').value = size;
+                document.getElementById('info-grid-size').textContent = `${size} ft`;
+
+                if (this.gridVisible) {
+                    this.hideGrid();
+                    this.showGrid();
+                }
+            }
+
+            showGrid() {
+                const bounds = this.map.getBounds();
+                const zoom = this.map.getZoom();
+
+                // Rough conversion: 1 degree ≈ 364,000 feet at this latitude
+                const feetPerDegree = 364000 / Math.pow(2, zoom - 13);
+                const gridSpacing = this.gridSize / feetPerDegree;
+
+                const svgElement = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svgElement.setAttribute('xmlns', "http://www.w3.org/2000/svg");
+                svgElement.setAttribute('class', 'grid-overlay');
+
+                const topLeft = this.map.latLngToLayerPoint(bounds.getNorthWest());
+                const bottomRight = this.map.latLngToLayerPoint(bounds.getSouthEast());
+
+                let col = 0;
+                for (let lng = bounds.getWest(); lng <= bounds.getEast(); lng += gridSpacing) {
+                    const point = this.map.latLngToLayerPoint([bounds.getNorth(), lng]);
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute('class', col % 5 === 0 ? 'grid-line major' : 'grid-line');
+                    line.setAttribute('x1', point.x);
+                    line.setAttribute('y1', topLeft.y);
+                    line.setAttribute('x2', point.x);
+                    line.setAttribute('y2', bottomRight.y);
+                    svgElement.appendChild(line);
+
+                    if (col % 5 === 0) {
+                        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        text.setAttribute('class', 'grid-label');
+                        text.setAttribute('x', point.x);
+                        text.setAttribute('y', topLeft.y + 20);
+                        text.textContent = col;
+                        svgElement.appendChild(text);
+                    }
+                    col++;
+                }
+
+                let row = 0;
+                for (let lat = bounds.getNorth(); lat >= bounds.getSouth(); lat -= gridSpacing) {
+                    const point = this.map.latLngToLayerPoint([lat, bounds.getWest()]);
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute('class', row % 5 === 0 ? 'grid-line major' : 'grid-line');
+                    line.setAttribute('x1', topLeft.x);
+                    line.setAttribute('y1', point.y);
+                    line.setAttribute('x2', bottomRight.x);
+                    line.setAttribute('y2', point.y);
+                    svgElement.appendChild(line);
+
+                    if (row % 5 === 0) {
+                        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        text.setAttribute('class', 'grid-label');
+                        text.setAttribute('x', topLeft.x + 20);
+                        text.setAttribute('y', point.y + 5);
+                        text.textContent = row;
+                        svgElement.appendChild(text);
+                    }
+                    row++;
+                }
+
+                document.getElementById('grid-cols').textContent = col;
+                document.getElementById('grid-rows').textContent = row;
+
+                this.gridLayer = L.svgOverlay(svgElement, bounds, {
+                    interactive: false,
+                    bubblingMouseEvents: true
+                }).addTo(this.map);
+            }
+
+            hideGrid() {
+                if (this.gridLayer) {
+                    this.map.removeLayer(this.gridLayer);
+                    this.gridLayer = null;
+                }
+            }
+
+            setBackground() {
+                const url = document.getElementById('bg-url').value;
+                const opacity = document.getElementById('bg-opacity').value / 100;
+
+                if (!url) {
+                    alert('Please enter an image URL');
+                    return;
+                }
+
+                this.clearBackground();
+
+                const bounds = this.map.getBounds();
+                this.backgroundLayer = L.imageOverlay(url, bounds, {
+                    opacity: opacity,
+                    interactive: false
+                }).addTo(this.map);
+
+                this.bgOpacity = opacity;
+            }
+
+            clearBackground() {
+                if (this.backgroundLayer) {
+                    this.map.removeLayer(this.backgroundLayer);
+                    this.backgroundLayer = null;
+                }
+            }
+
+            updateInfo() {
+                const center = this.map.getCenter();
+                const zoom = this.map.getZoom();
+
+                document.getElementById('info-zoom').textContent = zoom;
+                document.getElementById('info-center').textContent =
+                    `${center.lat.toFixed(4)}°, ${center.lng.toFixed(4)}°`;
+            }
+
+            setupEventListeners() {
+                document.getElementById('grid-size').addEventListener('input', (e) => {
+                    this.setGridSize(parseInt(e.target.value));
+                });
+
+                document.getElementById('bg-opacity').addEventListener('input', (e) => {
+                    const opacity = e.target.value;
+                    document.getElementById('opacity-value').textContent = opacity;
+                    if (this.backgroundLayer) {
+                        this.backgroundLayer.setOpacity(opacity / 100);
+                    }
+                });
+
+                this.map.on('moveend', () => {
+                    if (this.gridVisible) {
+                        this.hideGrid();
+                        this.showGrid();
+                    }
+                    this.updateInfo();
+                });
+
+                this.map.on('zoomend', () => {
+                    this.updateInfo();
+                });
+            }
+        }
+
+        const tactical = new TacticalMap();
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => tactical.init());
+        } else {
+            tactical.init();
+        }
+    </script>
+</body>
+</html>
