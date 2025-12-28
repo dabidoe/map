@@ -444,18 +444,31 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: var(--bg-dark);
+            background: #1a1410;
             z-index: 5000;
         }
 
         .tactical-overlay.active {
-            display: block;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tactical-header {
+            background: linear-gradient(135deg, var(--primary), #0f1f3a);
+            border-bottom: 3px solid var(--secondary);
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tactical-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--secondary);
         }
 
         .tactical-close {
-            position: fixed;
-            top: 15px;
-            right: 15px;
             background: var(--accent);
             color: white;
             border: none;
@@ -464,7 +477,6 @@
             cursor: pointer;
             font-weight: bold;
             font-family: Georgia, serif;
-            z-index: 5002;
             font-size: 0.9rem;
             transition: all 0.2s;
         }
@@ -474,13 +486,99 @@
             transform: scale(1.05);
         }
 
-        #tactical-map {
+        .tactical-body {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #tactical-canvas {
             position: absolute;
             top: 0;
             left: 0;
+            cursor: crosshair;
+        }
+
+        .tactical-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(26, 20, 16, 0.95);
+            border: 2px solid var(--secondary);
+            border-radius: 8px;
+            padding: 1rem;
+            max-width: 250px;
+            z-index: 100;
+        }
+
+        .control-title {
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 0.8rem;
+            font-size: 0.9rem;
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 0.5rem;
+        }
+
+        .control-btn {
             width: 100%;
-            height: 100%;
-            background: #2a2a2a;
+            background: rgba(30, 58, 95, 0.5);
+            border: 1px solid var(--secondary);
+            color: var(--text);
+            padding: 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: Georgia, serif;
+            font-size: 0.8rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            background: rgba(212, 175, 55, 0.3);
+        }
+
+        .control-btn.active {
+            background: var(--secondary);
+            color: var(--primary);
+        }
+
+        .token-controls {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(26, 20, 16, 0.95);
+            border: 2px solid var(--secondary);
+            border-radius: 8px;
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        .token-btn {
+            background: linear-gradient(135deg, var(--primary), #0f1f3a);
+            border: 2px solid var(--secondary);
+            color: var(--secondary);
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+
+        .token-btn:hover {
+            background: var(--secondary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .token-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: white;
         }
 
         /* Markers */
@@ -760,8 +858,24 @@
 
     <!-- Tactical Overlay -->
     <div class="tactical-overlay" id="tactical-overlay">
-        <button class="tactical-close" onclick="closeTactical()">✕ Close</button>
-        <div id="tactical-map"></div>
+        <div class="tactical-header">
+            <div class="tactical-title" id="tactical-location-name">⚔️ Tactical Map</div>
+            <button class="tactical-close" onclick="closeTactical()">← Back to Map</button>
+        </div>
+        <div class="tactical-body">
+            <canvas id="tactical-canvas"></canvas>
+            <div class="tactical-controls">
+                <div class="control-title">Grid Controls</div>
+                <button class="control-btn active" id="grid-toggle-btn" onclick="tactical.toggleGrid()">Hide Grid</button>
+                <button class="control-btn" id="snap-toggle-btn" onclick="tactical.toggleSnap()">Snap: ON</button>
+                <div style="margin-top: 0.5rem; font-size: 0.75rem; opacity: 0.7;">Grid: <span id="grid-info">5ft • 30×20</span></div>
+            </div>
+            <div class="token-controls">
+                <button class="token-btn" onclick="tactical.addToken('player')">Add Player</button>
+                <button class="token-btn" onclick="tactical.addToken('enemy')">Add Enemy</button>
+                <button class="token-btn" onclick="tactical.clearTokens()">Clear All</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -846,6 +960,277 @@
                 placeholderImage: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Old_stone_bridge_winter.jpg/1280px-Old_stone_bridge_winter.jpg"
             }
         };
+
+        // TACTICAL GRID SYSTEM
+        class TacticalGrid {
+            constructor() {
+                this.canvas = null;
+                this.ctx = null;
+                this.gridSize = 40; // pixels per square
+                this.gridFeet = 5; // feet per square
+                this.cols = 30;
+                this.rows = 20;
+                this.showGrid = true;
+                this.snapToGrid = true;
+                this.backgroundImage = null;
+                this.tokens = [];
+                this.selectedToken = null;
+                this.dragOffset = { x: 0, y: 0 };
+            }
+
+            init(locationKey, location) {
+                this.canvas = document.getElementById('tactical-canvas');
+                this.ctx = this.canvas.getContext('2d');
+
+                // Set canvas size
+                this.canvas.width = this.cols * this.gridSize;
+                this.canvas.height = this.rows * this.gridSize;
+
+                document.getElementById('grid-info').textContent = `${this.gridFeet}ft • ${this.cols}×${this.rows}`;
+
+                // Try to load background image
+                this.loadBackground(locationKey, location);
+
+                // Setup event listeners
+                this.setupEventListeners();
+
+                // Initial draw
+                this.draw();
+            }
+
+            loadBackground(key, location) {
+                const possiblePaths = [
+                    `campaign-images/${key}/background.jpg`,
+                    `campaign-images/${key}/background.png`,
+                    `campaign-images/${key}/background.webp`,
+                    location.placeholderImage
+                ];
+
+                const tryLoad = (index = 0) => {
+                    if (index >= possiblePaths.length || !possiblePaths[index]) {
+                        this.draw();
+                        return;
+                    }
+
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        this.backgroundImage = img;
+                        this.draw();
+                    };
+                    img.onerror = () => tryLoad(index + 1);
+                    img.src = possiblePaths[index];
+                };
+
+                tryLoad();
+            }
+
+            setupEventListeners() {
+                this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+                this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
+                this.canvas.addEventListener('mouseup', () => this.onMouseUp());
+                this.canvas.addEventListener('mouseleave', () => this.onMouseUp());
+            }
+
+            onMouseDown(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                // Check if clicking on a token
+                for (let i = this.tokens.length - 1; i >= 0; i--) {
+                    const token = this.tokens[i];
+                    const dx = x - token.x;
+                    const dy = y - token.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < this.gridSize * 0.4) {
+                        this.selectedToken = token;
+                        this.dragOffset = { x: dx, y: dy };
+                        return;
+                    }
+                }
+            }
+
+            onMouseMove(e) {
+                if (!this.selectedToken) return;
+
+                const rect = this.canvas.getBoundingClientRect();
+                let x = e.clientX - rect.left - this.dragOffset.x;
+                let y = e.clientY - rect.top - this.dragOffset.y;
+
+                if (this.snapToGrid) {
+                    x = Math.round(x / this.gridSize) * this.gridSize;
+                    y = Math.round(y / this.gridSize) * this.gridSize;
+                }
+
+                this.selectedToken.x = x;
+                this.selectedToken.y = y;
+                this.draw();
+            }
+
+            onMouseUp() {
+                this.selectedToken = null;
+            }
+
+            toggleGrid() {
+                this.showGrid = !this.showGrid;
+                const btn = document.getElementById('grid-toggle-btn');
+                btn.textContent = this.showGrid ? 'Hide Grid' : 'Show Grid';
+                btn.classList.toggle('active', this.showGrid);
+                this.draw();
+            }
+
+            toggleSnap() {
+                this.snapToGrid = !this.snapToGrid;
+                const btn = document.getElementById('snap-toggle-btn');
+                btn.textContent = `Snap: ${this.snapToGrid ? 'ON' : 'OFF'}`;
+                btn.classList.toggle('active', this.snapToGrid);
+            }
+
+            addToken(type) {
+                const centerX = (this.cols / 2) * this.gridSize;
+                const centerY = (this.rows / 2) * this.gridSize;
+
+                this.tokens.push({
+                    type: type,
+                    x: centerX,
+                    y: centerY,
+                    speed: 30, // movement speed in feet
+                    selected: false
+                });
+
+                this.draw();
+            }
+
+            clearTokens() {
+                this.tokens = [];
+                this.draw();
+            }
+
+            draw() {
+                // Clear canvas
+                this.ctx.fillStyle = '#2a2a2a';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // Draw background image
+                if (this.backgroundImage) {
+                    this.ctx.globalAlpha = 0.7;
+                    this.ctx.drawImage(
+                        this.backgroundImage,
+                        0, 0,
+                        this.canvas.width,
+                        this.canvas.height
+                    );
+                    this.ctx.globalAlpha = 1.0;
+                }
+
+                // Draw grid
+                if (this.showGrid) {
+                    this.drawGrid();
+                }
+
+                // Draw tokens
+                this.tokens.forEach(token => this.drawToken(token));
+            }
+
+            drawGrid() {
+                this.ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)';
+                this.ctx.lineWidth = 1;
+
+                // Vertical lines
+                for (let x = 0; x <= this.cols; x++) {
+                    const px = x * this.gridSize;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(px, 0);
+                    this.ctx.lineTo(px, this.canvas.height);
+                    this.ctx.stroke();
+
+                    // Labels every 5 squares
+                    if (x % 5 === 0 && x > 0) {
+                        this.ctx.fillStyle = '#d4af37';
+                        this.ctx.font = 'bold 12px monospace';
+                        this.ctx.fillText(x.toString(), px - 10, 15);
+                    }
+                }
+
+                // Horizontal lines
+                for (let y = 0; y <= this.rows; y++) {
+                    const py = y * this.gridSize;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, py);
+                    this.ctx.lineTo(this.canvas.width, py);
+                    this.ctx.stroke();
+
+                    // Labels every 5 squares
+                    if (y % 5 === 0 && y > 0) {
+                        this.ctx.fillStyle = '#d4af37';
+                        this.ctx.font = 'bold 12px monospace';
+                        this.ctx.fillText(y.toString(), 5, py - 5);
+                    }
+                }
+            }
+
+            drawToken(token) {
+                const radius = this.gridSize * 0.35;
+
+                // Draw movement range (glowing circle)
+                if (token === this.selectedToken) {
+                    const moveSquares = Math.floor(token.speed / this.gridFeet);
+                    const moveRadius = moveSquares * this.gridSize;
+
+                    // Outer glow
+                    const gradient = this.ctx.createRadialGradient(token.x, token.y, 0, token.x, token.y, moveRadius);
+                    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
+                    gradient.addColorStop(0.7, 'rgba(59, 130, 246, 0.1)');
+                    gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                    // Range circle
+                    this.ctx.strokeStyle = 'rgba(59, 130, 246, 0.6)';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.beginPath();
+                    this.ctx.arc(token.x, token.y, moveRadius, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                }
+
+                // Draw token
+                this.ctx.save();
+
+                // Shadow
+                this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                this.ctx.shadowBlur = 8;
+                this.ctx.shadowOffsetX = 2;
+                this.ctx.shadowOffsetY = 2;
+
+                // Token circle
+                this.ctx.fillStyle = token.type === 'player' ? '#3b82f6' : '#dc2626';
+                this.ctx.beginPath();
+                this.ctx.arc(token.x, token.y, radius, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Border
+                this.ctx.strokeStyle = token === this.selectedToken ? '#d4af37' : 'white';
+                this.ctx.lineWidth = token === this.selectedToken ? 4 : 2;
+                this.ctx.stroke();
+
+                this.ctx.restore();
+
+                // Icon
+                this.ctx.fillStyle = 'white';
+                this.ctx.font = `bold ${this.gridSize * 0.4}px Arial`;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText(token.type === 'player' ? '●' : '▲', token.x, token.y);
+            }
+
+            cleanup() {
+                this.tokens = [];
+                this.selectedToken = null;
+                this.backgroundImage = null;
+            }
+        }
 
         class CampaignApp {
             constructor() {
@@ -1012,75 +1397,16 @@
                 const loc = CAMPAIGN[key];
                 this.currentTactical = key;
 
+                document.getElementById('tactical-location-name').textContent = `${loc.icon} ${loc.name}`;
                 document.getElementById('tactical-overlay').classList.add('active');
 
-                // Small delay to let overlay render before initializing map
+                // Initialize tactical grid
                 setTimeout(() => {
-                    // Setup tactical map
-                    if (this.tacticalMap) {
-                        this.tacticalMap.remove();
-                        this.tacticalMap = null;
+                    if (!window.tactical) {
+                        window.tactical = new TacticalGrid();
                     }
-
-                    this.tacticalMap = L.map('tactical-map', {
-                        center: loc.coords,
-                        zoom: 20,
-                        maxZoom: 22,
-                        zoomControl: false
-                    });
-
-                    // Add zoom control in bottom-right to avoid overlap
-                    L.control.zoom({ position: 'bottomright' }).addTo(this.tacticalMap);
-
-                    // Create NEW satellite layer for tactical map (don't reuse main map's layer!)
-                    const tacticalLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                        maxZoom: 22
-                    });
-                    tacticalLayer.addTo(this.tacticalMap);
-
-                    // Try to load background image
-                    this.loadTacticalBackground(key);
-                }, 100);
-            }
-
-            loadTacticalBackground(key) {
-                const loc = CAMPAIGN[key];
-
-                // Try multiple possible image paths in order
-                const possiblePaths = [
-                    `campaign-images/${key}/background.jpg`,
-                    `campaign-images/${key}/background.png`,
-                    `campaign-images/${key}/background.webp`
-                ];
-
-                // Function to try loading an image
-                const tryLoadImage = (paths, index = 0) => {
-                    if (index >= paths.length) {
-                        // All local paths failed, try placeholder URL if available
-                        if (loc.placeholderImage) {
-                            this.addBackgroundImage(loc.placeholderImage);
-                        }
-                        return;
-                    }
-
-                    const img = new Image();
-                    img.onload = () => this.addBackgroundImage(paths[index]);
-                    img.onerror = () => tryLoadImage(paths, index + 1);
-                    img.src = paths[index];
-                };
-
-                tryLoadImage(possiblePaths);
-            }
-
-            addBackgroundImage(imagePath) {
-                if (this.backgroundLayer) {
-                    this.tacticalMap.removeLayer(this.backgroundLayer);
-                }
-                const bounds = this.tacticalMap.getBounds();
-                this.backgroundLayer = L.imageOverlay(imagePath, bounds, {
-                    opacity: 0.7,
-                    interactive: false
-                }).addTo(this.tacticalMap);
+                    tactical.init(key, loc);
+                }, 50);
             }
 
             render() {
@@ -1197,26 +1523,10 @@
         }
 
         function closeTactical() {
-            // Clean up tactical map first
-            if (app.tacticalMap) {
-                app.tacticalMap.remove();
-                app.tacticalMap = null;
-            }
-
-            // Remove background layer if exists
-            if (app.backgroundLayer) {
-                app.backgroundLayer = null;
-            }
-
-            // Hide overlay
             document.getElementById('tactical-overlay').classList.remove('active');
-
-            // Force main map to refresh/resize
-            setTimeout(() => {
-                if (app.map) {
-                    app.map.invalidateSize();
-                }
-            }, 50);
+            if (window.tactical) {
+                tactical.cleanup();
+            }
         }
 
         if (document.readyState === 'loading') {
