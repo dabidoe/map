@@ -1179,24 +1179,8 @@
 
             <!-- COMBAT Tab -->
             <div class="tactical-content" id="tactical-tab-combat">
-                <div class="tab-panel">
-                    <div class="section-header">🎲 Dice Roller</div>
-                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
-                        <button class="token-btn" onclick="rollDice(20)">d20</button>
-                        <button class="token-btn" onclick="rollDice(12)">d12</button>
-                        <button class="token-btn" onclick="rollDice(10)">d10</button>
-                        <button class="token-btn" onclick="rollDice(8)">d8</button>
-                        <button class="token-btn" onclick="rollDice(6)">d6</button>
-                        <button class="token-btn" onclick="rollDice(4)">d4</button>
-                    </div>
-                    <div id="dice-results" style="min-height: 100px; background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-                        <div style="opacity: 0.5; font-size: 0.9rem;">Roll results appear here</div>
-                    </div>
-
-                    <div class="section-header">⚔️ Combat Tracker</div>
-                    <div id="combat-tracker">
-                        <p style="opacity: 0.7; font-size: 0.9rem;">Initiative order will appear here</p>
-                    </div>
+                <div class="tab-panel" id="combat-content">
+                    <!-- Combat tracker loaded dynamically -->
                 </div>
             </div>
 
@@ -1355,32 +1339,41 @@
             },
             "rall": {
                 "id": "rall",
-                "name": "Johann Rall",
-                "title": "Colonel, Hessian Commander",
+                "name": "Colonel Johann Rall",
+                "title": "Hessian Commander",
                 "faction": "Hessian",
                 "location": "old-barracks-floor3",
                 "type": "enemy",
                 "speed": 30,
+                "hp": 75,
+                "maxHp": 75,
+                "ac": 18,
                 "description": "Commander of Hessian forces. In the officers' quarters on third floor."
             },
-            "hessian_guard_1": {
-                "id": "hessian_guard_1",
-                "name": "Hessian Guard (Exterior)",
+            "gus": {
+                "id": "gus",
+                "name": "Unteroffizier Gus",
                 "title": "Guard",
                 "faction": "Hessian",
                 "location": "old-barracks-floor1",
                 "type": "enemy",
                 "speed": 30,
+                "hp": 58,
+                "maxHp": 58,
+                "ac": 17,
                 "description": "Hessian guard stationed outside the Old Barracks main entrance."
             },
-            "hessian_guard_2": {
-                "id": "hessian_guard_2",
+            "hessian_guard_1": {
+                "id": "hessian_guard_1",
                 "name": "Hessian Guard (Patrol)",
                 "title": "Guard",
                 "faction": "Hessian",
                 "location": "old-barracks-floor1",
                 "type": "enemy",
                 "speed": 30,
+                "hp": 45,
+                "maxHp": 45,
+                "ac": 15,
                 "description": "Hessian guard on patrol duty, first floor."
             },
             "hessian_guard_3": {
@@ -1391,6 +1384,9 @@
                 "location": "old-barracks-floor2",
                 "type": "enemy",
                 "speed": 30,
+                "hp": 45,
+                "maxHp": 45,
+                "ac": 15,
                 "description": "Hessian guard stationed near Cell #4, second floor."
             },
             "hessian_guard_4": {
@@ -1401,6 +1397,9 @@
                 "location": "old-barracks-floor3",
                 "type": "enemy",
                 "speed": 30,
+                "hp": 52,
+                "maxHp": 52,
+                "ac": 16,
                 "description": "Hessian sergeant in the officers' quarters, third floor."
             }
         };
@@ -1541,6 +1540,9 @@
 
                 // Load encounter data
                 this.renderEncounter(locationKey);
+
+                // Load combat tracker
+                this.renderCombatTracker(locationKey);
             }
 
             renderEncounter(locationKey) {
@@ -1596,6 +1598,63 @@
                             `).join('')}
                         </div>
                     ` : ''}
+                `;
+            }
+
+            renderCombatTracker(locationKey) {
+                const container = document.getElementById('combat-content');
+                if (!container) return;
+
+                const encounter = ENCOUNTERS[locationKey];
+                if (!encounter || !encounter.enemies) {
+                    container.innerHTML = '<p style="opacity: 0.7; font-size: 0.9rem; padding: 2rem;">No combat encounter</p>';
+                    return;
+                }
+
+                const enemyIds = encounter.enemies;
+                const enemies = enemyIds.map(id => CHARACTERS[id]).filter(e => e);
+
+                container.innerHTML = `
+                    <div style="background: #dc2626; padding: 1rem; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="margin: 0; color: white;">⚔️ Combat Tracker - ${encounter.name}</h3>
+                        <button onclick="rollAllInitiative()" style="background: var(--secondary); color: var(--primary); border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">Roll All Initiative</button>
+                    </div>
+
+                    <div style="background: rgba(0,0,0,0.2); padding: 1.5rem;">
+                        ${enemies.map(enemy => {
+                            const hp = enemy.hp || 58;
+                            const maxHp = enemy.maxHp || hp;
+                            const ac = enemy.ac || 15;
+                            return `
+                                <div style="background: rgba(30, 30, 30, 0.6); border: 3px solid var(--secondary); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                        <div style="display: flex; align-items: center; gap: 1rem;">
+                                            <div style="font-size: 2rem;">▲</div>
+                                            <strong style="font-size: 1.3rem;">${enemy.name}</strong>
+                                        </div>
+                                        <div style="display: flex; gap: 1rem; align-items: center;">
+                                            <div style="text-align: center;">
+                                                <div style="font-size: 0.8rem; opacity: 0.7;">HP</div>
+                                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                                    <input type="number" value="${hp}" max="${maxHp}"
+                                                           style="width: 60px; padding: 0.4rem; background: rgba(0,0,0,0.5); border: 2px solid var(--secondary); color: white; text-align: center; font-size: 1.2rem; font-weight: bold; border-radius: 4px;"
+                                                           onchange="updateHP('${enemy.id}', this.value)">
+                                                    <span style="font-size: 1.2rem; font-weight: bold;">/ ${maxHp}</span>
+                                                </div>
+                                            </div>
+                                            <div style="text-align: center; padding: 0 1rem;">
+                                                <div style="font-size: 0.8rem; opacity: 0.7;">AC</div>
+                                                <div style="font-size: 1.5rem; font-weight: bold;">${ac}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <button onclick="attackRoll('${enemy.id}', '${enemy.name}')" style="flex: 1; background: #dc2626; color: white; border: none; padding: 0.6rem; border-radius: 6px; font-weight: bold; cursor: pointer;">Attack</button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
                 `;
             }
 
@@ -2627,21 +2686,43 @@
 
         function rollDice(sides) {
             const result = Math.floor(Math.random() * sides) + 1;
-            const container = document.getElementById('dice-results');
-            const time = new Date().toLocaleTimeString();
-            const resultHTML = `
-                <div style="padding: 0.5rem; margin-bottom: 0.5rem; background: rgba(212, 175, 55, 0.2); border-left: 3px solid #d4af37; border-radius: 4px;">
-                    <strong style="font-size: 1.2rem; color: #d4af37;">d${sides}: ${result}</strong>
-                    <span style="opacity: 0.7; font-size: 0.8rem; margin-left: 1rem;">${time}</span>
-                </div>
-            `;
-            if (container.children.length > 0 && container.children[0].style.opacity === '0.5') {
-                container.innerHTML = resultHTML;
-            } else {
-                container.innerHTML = resultHTML + container.innerHTML;
-            }
             if (window.tactical) {
                 tactical.addLog(`Rolled d${sides}: ${result}`, 'combat');
+            }
+            return result;
+        }
+
+        function rollAllInitiative() {
+            if (!window.tactical) return;
+            const encounter = ENCOUNTERS[tactical.currentLocation];
+            if (!encounter || !encounter.enemies) return;
+
+            encounter.enemies.forEach(enemyId => {
+                const enemy = CHARACTERS[enemyId];
+                if (enemy) {
+                    const roll = rollDice(20);
+                    tactical.addLog(`${enemy.name}: Initiative ${roll}`, 'combat');
+                }
+            });
+        }
+
+        function updateHP(enemyId, newHP) {
+            if (!window.tactical) return;
+            const enemy = CHARACTERS[enemyId];
+            if (enemy) {
+                tactical.addLog(`${enemy.name}: HP changed to ${newHP}`, 'info');
+            }
+        }
+
+        function attackRoll(enemyId, enemyName) {
+            const roll = rollDice(20);
+            const damage = rollDice(8) + 5;
+            if (window.tactical) {
+                if (roll >= 15) {
+                    tactical.addLog(`${enemyName}: CRITICAL HIT! ${roll}+5=${roll+5} to hit → ${damage} damage`, 'combat');
+                } else {
+                    tactical.addLog(`${enemyName}: Attack roll ${roll}+5=${roll+5} to hit`, 'combat');
+                }
             }
         }
 
