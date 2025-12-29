@@ -1178,6 +1178,63 @@
         </div>
     </div>
 
+    <!-- Combatant Actions Modal -->
+    <div class="modal-overlay" id="combatant-actions-modal" style="display: none;">
+        <div class="modal-content" style="max-width: 900px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--secondary);">
+                <h2 style="margin: 0; color: var(--secondary);" id="combatant-modal-name">Character Actions</h2>
+                <button onclick="closeCombatantModal()" style="background: #dc2626; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: bold;">Close</button>
+            </div>
+
+            <div id="combatant-modal-content" style="display: grid; gap: 1.5rem;">
+                <!-- Stats Overview -->
+                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem;">
+                    <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                        <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">HP</div>
+                        <div style="font-size: 1.8rem; font-weight: bold; color: #16a34a;" id="modal-hp">—</div>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                        <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">AC</div>
+                        <div style="font-size: 1.8rem; font-weight: bold;" id="modal-ac">—</div>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                        <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Speed</div>
+                        <div style="font-size: 1.8rem; font-weight: bold;" id="modal-speed">—</div>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                        <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Initiative</div>
+                        <div style="font-size: 1.8rem; font-weight: bold; color: var(--secondary);" id="modal-initiative">—</div>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                        <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Type</div>
+                        <div style="font-size: 1.2rem; font-weight: bold;" id="modal-type">—</div>
+                    </div>
+                </div>
+
+                <!-- Attacks Section -->
+                <div>
+                    <div style="font-weight: bold; font-size: 1.2rem; margin-bottom: 1rem; color: var(--secondary);">⚔️ Attacks</div>
+                    <div id="modal-attacks" style="display: grid; gap: 0.8rem;">
+                        <!-- Attacks rendered here -->
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div>
+                    <div style="font-weight: bold; font-size: 1.2rem; margin-bottom: 1rem; color: var(--secondary);">🎲 Quick Actions</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem;">
+                        <button onclick="rollSavingThrow('STR')" style="padding: 0.8rem; background: rgba(59, 130, 246, 0.3); border: 2px solid #3b82f6; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">💪 STR Save</button>
+                        <button onclick="rollSavingThrow('DEX')" style="padding: 0.8rem; background: rgba(59, 130, 246, 0.3); border: 2px solid #3b82f6; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">🏃 DEX Save</button>
+                        <button onclick="rollSavingThrow('CON')" style="padding: 0.8rem; background: rgba(59, 130, 246, 0.3); border: 2px solid #3b82f6; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">❤️ CON Save</button>
+                        <button onclick="rollSavingThrow('INT')" style="padding: 0.8rem; background: rgba(59, 130, 246, 0.3); border: 2px solid #3b82f6; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">🧠 INT Save</button>
+                        <button onclick="rollSavingThrow('WIS')" style="padding: 0.8rem; background: rgba(59, 130, 246, 0.3); border: 2px solid #3b82f6; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">👁️ WIS Save</button>
+                        <button onclick="rollSavingThrow('CHA')" style="padding: 0.8rem; background: rgba(59, 130, 246, 0.3); border: 2px solid #3b82f6; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">🗣️ CHA Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Tactical Overlay -->
     <div class="tactical-overlay" id="tactical-overlay">
         <div class="tactical-header">
@@ -3237,24 +3294,71 @@
             }
         }
 
+        let currentCombatantId = null;
+
         function openCombatantActions(id) {
             const combatant = COMBAT_TRACKER.find(c => c.id === id);
             if (!combatant) return;
 
-            // For now, show a simple alert - will be enhanced to modal in next step
-            const attacksList = combatant.attacks && combatant.attacks.length > 0
-                ? combatant.attacks.join('\n')
-                : 'No attacks defined';
+            currentCombatantId = id;
 
-            const info = `${combatant.name}\n\n` +
-                `HP: ${combatant.hp}/${combatant.maxHp}\n` +
-                `AC: ${combatant.ac}\n` +
-                `Speed: ${combatant.speed}ft\n` +
-                `Initiative: ${combatant.initiative}\n\n` +
-                `Attacks:\n${attacksList}`;
+            // Update modal content
+            document.getElementById('combatant-modal-name').textContent = combatant.name;
+            document.getElementById('modal-hp').textContent = `${combatant.hp}/${combatant.maxHp}`;
+            document.getElementById('modal-ac').textContent = combatant.ac;
+            document.getElementById('modal-speed').textContent = `${combatant.speed}ft`;
+            document.getElementById('modal-initiative').textContent = combatant.initiative || '—';
+            document.getElementById('modal-type').textContent = combatant.type === 'enemy' ? '👹 Enemy' : '👥 Ally';
 
-            alert(info);
-            // TODO: Replace with modal showing skills, saving throws, attacks, abilities
+            // Render attacks
+            const attacksContainer = document.getElementById('modal-attacks');
+            if (combatant.attacks && combatant.attacks.length > 0) {
+                attacksContainer.innerHTML = combatant.attacks.map((attack, idx) => `
+                    <button onclick="rollAttack(${idx}, '${attack.replace(/'/g, "\\'")}')" style="padding: 1rem; background: rgba(220, 38, 38, 0.2); border: 3px solid #dc2626; color: white; border-radius: 8px; cursor: pointer; text-align: left; font-family: monospace; font-size: 0.95rem; transition: background 0.2s;" onmouseover="this.style.background='rgba(220, 38, 38, 0.4)'" onmouseout="this.style.background='rgba(220, 38, 38, 0.2)'">
+                        ${attack}
+                    </button>
+                `).join('');
+            } else {
+                attacksContainer.innerHTML = '<p style="opacity: 0.6; text-align: center; padding: 1rem;">No attacks defined</p>';
+            }
+
+            // Show modal
+            document.getElementById('combatant-actions-modal').style.display = 'flex';
+        }
+
+        function closeCombatantModal() {
+            document.getElementById('combatant-actions-modal').style.display = 'none';
+            currentCombatantId = null;
+        }
+
+        function rollAttack(attackIndex, attackText) {
+            const combatant = COMBAT_TRACKER.find(c => c.id === currentCombatantId);
+            if (!combatant) return;
+
+            const attackRoll = Math.floor(Math.random() * 20) + 1;
+            const damageRoll = Math.floor(Math.random() * 8) + 1;
+
+            if (window.tactical) {
+                if (attackRoll === 20) {
+                    tactical.addLog(`${combatant.name}: CRITICAL HIT! (${attackRoll}) - ${attackText}`, 'combat');
+                } else if (attackRoll === 1) {
+                    tactical.addLog(`${combatant.name}: CRITICAL MISS! (${attackRoll}) - ${attackText}`, 'combat');
+                } else {
+                    tactical.addLog(`${combatant.name}: Attack roll ${attackRoll} - ${attackText}`, 'combat');
+                }
+            }
+        }
+
+        function rollSavingThrow(ability) {
+            const combatant = COMBAT_TRACKER.find(c => c.id === currentCombatantId);
+            if (!combatant) return;
+
+            const roll = Math.floor(Math.random() * 20) + 1;
+            const modifier = 0; // Default modifier - could be enhanced with actual ability scores
+
+            if (window.tactical) {
+                tactical.addLog(`${combatant.name}: ${ability} Save: ${roll} + ${modifier} = ${roll + modifier}`, 'combat');
+            }
         }
 
         function clearCombatTracker() {
