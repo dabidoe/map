@@ -1240,7 +1240,10 @@
         <div class="modal-content" style="max-width: 700px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--secondary);">
                 <h2 style="margin: 0; color: var(--secondary);" id="char-detail-name">Character</h2>
-                <button onclick="closeCharacterDetail()" style="background: #dc2626; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: bold;">Close</button>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button onclick="editCharacterFromDetail()" style="background: var(--secondary); color: var(--primary); border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: bold;">✏️ Edit</button>
+                    <button onclick="closeCharacterDetail()" style="background: #dc2626; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: bold;">Close</button>
+                </div>
             </div>
             <div id="char-detail-content"></div>
         </div>
@@ -1292,7 +1295,6 @@
                     <button class="token-btn" onclick="tactical.loadAllPartyMembers()">👥 Load Party</button>
                     <button class="token-btn" onclick="tactical.openCharacterLibrary('player')">Add Player</button>
                     <button class="token-btn" onclick="tactical.openCharacterLibrary('enemy')">Add Enemy</button>
-                    <button class="token-btn" onclick="tactical.clearTokens()">Clear All</button>
                 </div>
                 <div class="battle-log" id="battle-log">
                     <div class="log-header">
@@ -2845,17 +2847,20 @@
                 const container = document.getElementById('characters-library');
                 if (!container) return;
 
-                const allCharacters = Object.values(CHARACTERS);
+                // Only show NPCs/allies, not enemies (to avoid spoilers)
+                const npcs = Object.values(CHARACTERS).filter(c => c.type !== 'enemy');
 
-                if (allCharacters.length === 0) {
+                if (npcs.length === 0) {
                     container.innerHTML = '<p style="opacity: 0.7; font-size: 0.9rem;">Loading characters...</p>';
                     return;
                 }
 
-                // Simple card list, no location grouping
-                const html = allCharacters.map(char => {
-                    const borderColor = char.type === 'enemy' ? '#dc2626' : '#3b82f6';
-                    const icon = char.type === 'enemy' ? '👹' : '👤';
+                // Simple card list with location display
+                const html = npcs.map(char => {
+                    const borderColor = '#3b82f6';
+                    const icon = '👤';
+                    const location = CAMPAIGN[char.location];
+                    const locationName = location ? location.name : char.location;
 
                     return `
                         <div onclick="showCharacterDetail('${char.id}')" style="background: rgba(30, 58, 95, 0.3); border-left: 4px solid ${borderColor}; border-radius: 6px; padding: 0.8rem; margin-bottom: 0.8rem; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(30, 58, 95, 0.5)'" onmouseout="this.style.background='rgba(30, 58, 95, 0.3)'">
@@ -2864,6 +2869,7 @@
                                 <div style="flex: 1;">
                                     <div style="font-weight: bold; color: var(--secondary);">${char.name}</div>
                                     <div style="font-size: 0.75rem; opacity: 0.8;">${char.title || char.faction || ''}</div>
+                                    <div style="font-size: 0.7rem; opacity: 0.6; margin-top: 0.2rem;">📍 ${locationName}</div>
                                 </div>
                             </div>
                             <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; font-size: 0.7rem;">
@@ -3079,10 +3085,13 @@
         }
 
         // Character Detail Modal (for sidebar characters)
+        let currentDetailCharId = null;
+
         function showCharacterDetail(charId) {
             const char = CHARACTERS[charId];
             if (!char) return;
 
+            currentDetailCharId = charId;
             document.getElementById('char-detail-name').textContent = char.name;
 
             const location = CAMPAIGN[char.location];
@@ -3151,6 +3160,69 @@
 
         function closeCharacterDetail() {
             document.getElementById('character-detail-modal').style.display = 'none';
+            currentDetailCharId = null;
+        }
+
+        function editCharacterFromDetail() {
+            if (!currentDetailCharId) return;
+
+            const char = CHARACTERS[currentDetailCharId];
+            if (!char) return;
+
+            // Close detail modal
+            closeCharacterDetail();
+
+            // Open character creation modal with pre-filled data
+            currentCharacterType = char.type || 'player';
+            document.getElementById('character-modal').style.display = 'flex';
+
+            // Pre-fill form
+            document.getElementById('char-name').value = char.name || '';
+            document.getElementById('char-class').value = char.class || char.title || '';
+            document.getElementById('char-hp').value = char.hp || 30;
+            document.getElementById('char-ac').value = char.ac || 15;
+            document.getElementById('char-speed').value = char.speed || 30;
+            document.getElementById('char-initiative').value = char.initiative || '+0';
+            document.getElementById('char-attacks').value = (char.attacks || []).join('\n');
+            document.getElementById('char-image-url').value = char.image || '';
+
+            // Show image preview if available
+            if (char.image) {
+                previewImage(char.image);
+            } else {
+                document.getElementById('char-preview').style.display = 'none';
+                document.getElementById('char-placeholder').style.display = 'flex';
+            }
+
+            // Modify save function to update instead of create new
+            const form = document.getElementById('character-form');
+            form.onsubmit = function(event) {
+                event.preventDefault();
+
+                // Update existing character
+                char.name = document.getElementById('char-name').value;
+                char.class = document.getElementById('char-class').value;
+                char.hp = parseInt(document.getElementById('char-hp').value);
+                char.maxHp = parseInt(document.getElementById('char-hp').value);
+                char.ac = parseInt(document.getElementById('char-ac').value);
+                char.speed = parseInt(document.getElementById('char-speed').value);
+                char.initiative = document.getElementById('char-initiative').value;
+                char.attacks = document.getElementById('char-attacks').value.split('\n').filter(a => a.trim());
+                char.image = document.getElementById('char-image-url').value || null;
+
+                // Update in storage
+                CHARACTERS[currentDetailCharId] = char;
+
+                // Refresh displays
+                if (app.renderCharacters) app.renderCharacters();
+                renderEnemiesList();
+                renderNPCsList();
+
+                closeCharacterModal();
+
+                // Restore normal save function
+                form.onsubmit = saveCharacter;
+            };
         }
 
         function previewImage(url) {
@@ -3364,27 +3436,98 @@
         // Render Enemies List
         function renderEnemiesList() {
             const container = document.getElementById('enemies-cards');
-            const enemies = Object.values(CHARACTERS).filter(c => c.type === 'enemy');
+            if (!container) return;
+
+            // Filter by current location if in tactical view
+            const currentLoc = window.tactical ? window.tactical.currentLocation : null;
+            const enemies = Object.values(CHARACTERS).filter(c => {
+                if (c.type !== 'enemy') return false;
+                if (currentLoc && c.location !== currentLoc) return false;
+                return true;
+            });
 
             if (enemies.length === 0) {
-                container.innerHTML = '<p style="opacity: 0.7; text-align: center; padding: 2rem;">No enemies yet. Add enemies above.</p>';
+                container.innerHTML = '<p style="opacity: 0.7; text-align: center; padding: 2rem;">No enemies at this location.</p>';
                 return;
             }
 
-            container.innerHTML = enemies.map(char => renderStatBlock(char)).join('');
+            container.innerHTML = enemies.map(char => renderStatBlockCompact(char)).join('');
         }
 
         // Render NPCs List
         function renderNPCsList() {
             const container = document.getElementById('npcs-cards');
-            const npcs = Object.values(CHARACTERS).filter(c => c.type === 'player' || c.type === 'npc');
+            if (!container) return;
+
+            // Filter by current location if in tactical view
+            const currentLoc = window.tactical ? window.tactical.currentLocation : null;
+            const npcs = Object.values(CHARACTERS).filter(c => {
+                if (c.type === 'enemy') return false;
+                if (currentLoc && c.location !== currentLoc) return false;
+                return true;
+            });
 
             if (npcs.length === 0) {
-                container.innerHTML = '<p style="opacity: 0.7; text-align: center; padding: 2rem;">No NPCs yet. Add NPCs above.</p>';
+                container.innerHTML = '<p style="opacity: 0.7; text-align: center; padding: 2rem;">No NPCs at this location.</p>';
                 return;
             }
 
-            container.innerHTML = npcs.map(char => renderStatBlock(char)).join('');
+            container.innerHTML = npcs.map(char => renderStatBlockCompact(char)).join('');
+        }
+
+        // Compact stat block without description
+        function renderStatBlockCompact(char) {
+            const imgSrc = char.image || '';
+            const hasImage = imgSrc && imgSrc.trim();
+
+            return `
+                <div style="background: rgba(30, 58, 95, 0.3); border: 3px solid var(--secondary); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; display: grid; grid-template-columns: 150px 1fr; gap: 1.5rem;">
+                    <!-- Image -->
+                    <div style="width: 150px; height: 150px; background: rgba(0,0,0,0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        ${hasImage ? `<img src="${imgSrc}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="font-size: 4rem; opacity: 0.5;">👤</div>'}
+                    </div>
+
+                    <!-- Stats -->
+                    <div>
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                            <div>
+                                <h3 style="margin: 0; color: var(--secondary); font-size: 1.5rem;">${char.name}</h3>
+                                ${char.class || char.title ? `<div style="opacity: 0.8; font-style: italic; margin-top: 0.3rem;">${char.class || char.title}</div>` : ''}
+                            </div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1rem;">
+                            <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 6px;">
+                                <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">HP</div>
+                                <div style="font-size: 1.5rem; font-weight: bold; color: #16a34a;">${char.hp || '?'}/${char.maxHp || '?'}</div>
+                            </div>
+                            <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 6px;">
+                                <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">AC</div>
+                                <div style="font-size: 1.5rem; font-weight: bold;">${char.ac || '?'}</div>
+                            </div>
+                            <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 6px;">
+                                <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Speed</div>
+                                <div style="font-size: 1.5rem; font-weight: bold;">${char.speed || 30}ft</div>
+                            </div>
+                            <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 6px;">
+                                <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Initiative</div>
+                                <div style="font-size: 1.5rem; font-weight: bold;">${char.initiative || '+0'}</div>
+                            </div>
+                        </div>
+
+                        ${char.attacks && char.attacks.length > 0 ? `
+                            <div>
+                                <div style="font-weight: bold; margin-bottom: 0.5rem; opacity: 0.9;">⚔️ Attacks</div>
+                                ${char.attacks.map(attack => `
+                                    <div style="background: rgba(220, 38, 38, 0.2); padding: 0.6rem; border-left: 3px solid #dc2626; margin-bottom: 0.5rem; border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
+                                        ${attack}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
         }
 
         // COMBAT TRACKER
