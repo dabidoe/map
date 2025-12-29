@@ -1189,7 +1189,7 @@
             <div style="display: flex;">
                 <div class="tactical-tab active" onclick="switchTacticalTab('maps')">🗺️ MAPS</div>
                 <div class="tactical-tab" onclick="switchTacticalTab('party')">👥 PARTY</div>
-                <div class="tactical-tab" onclick="switchTacticalTab('encounters')">📖 ENCOUNTERS</div>
+                <div class="tactical-tab" onclick="switchTacticalTab('encounters')">🎭 CHARACTERS</div>
                 <div class="tactical-tab" onclick="switchTacticalTab('combat')">⚔️ COMBAT</div>
                 <div class="tactical-tab" onclick="switchTacticalTab('notes')">📝 NOTES</div>
                 <div class="tactical-tab" onclick="switchTacticalTab('info')">ℹ️ INFO</div>
@@ -1239,10 +1239,30 @@
                 </div>
             </div>
 
-            <!-- ENCOUNTERS Tab -->
+            <!-- CHARACTERS Tab -->
             <div class="tactical-content" id="tactical-tab-encounters">
                 <div class="tab-panel" id="encounters-content" style="max-width: 1200px;">
-                    <!-- Encounters loaded dynamically -->
+                    <!-- Character Type Subtabs -->
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--secondary); padding-bottom: 0.5rem;">
+                        <button id="enemies-subtab" class="subtab-btn active" onclick="switchCharacterSubtab('enemies')" style="flex: 1; padding: 0.8rem; background: #dc2626; color: white; border: none; border-radius: 6px 6px 0 0; font-weight: bold; cursor: pointer;">👹 Enemies</button>
+                        <button id="npcs-subtab" class="subtab-btn" onclick="switchCharacterSubtab('npcs')" style="flex: 1; padding: 0.8rem; background: rgba(251, 191, 36, 0.2); color: var(--secondary); border: none; border-radius: 6px 6px 0 0; font-weight: bold; cursor: pointer;">🤝 NPCs / Allies</button>
+                    </div>
+
+                    <!-- Enemies Content -->
+                    <div id="enemies-list" class="character-subtab-content">
+                        <div style="margin-bottom: 1rem;">
+                            <button onclick="showAddCharacterModal('enemy')" style="padding: 0.8rem 1.5rem; background: #dc2626; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">+ Add Enemy</button>
+                        </div>
+                        <div id="enemies-cards"></div>
+                    </div>
+
+                    <!-- NPCs Content -->
+                    <div id="npcs-list" class="character-subtab-content" style="display: none;">
+                        <div style="margin-bottom: 1rem;">
+                            <button onclick="showAddCharacterModal('npc')" style="padding: 0.8rem 1.5rem; background: var(--secondary); color: var(--primary); border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">+ Add NPC</button>
+                        </div>
+                        <div id="npcs-cards"></div>
+                    </div>
                 </div>
             </div>
 
@@ -2751,6 +2771,17 @@
             // Update tab content
             document.querySelectorAll('.tactical-content').forEach(content => content.classList.remove('active'));
             document.getElementById(`tactical-tab-${tabName}`).classList.add('active');
+
+            // Load character lists when switching to CHARACTERS tab
+            if (tabName === 'encounters') {
+                renderEnemiesList();
+                renderNPCsList();
+            }
+
+            // Load party list when switching to PARTY tab
+            if (tabName === 'party') {
+                renderPartyList();
+            }
         }
 
         function rollDice(sides) {
@@ -2817,7 +2848,10 @@
         // CHARACTER MANAGEMENT
         let PARTY_CHARACTERS = JSON.parse(localStorage.getItem('party_characters') || '[]');
 
+        let currentCharacterType = 'player'; // Track what type of character we're adding
+
         function showAddCharacterModal(type) {
+            currentCharacterType = type || 'player';
             document.getElementById('character-modal').style.display = 'flex';
             document.getElementById('character-form').reset();
             document.getElementById('char-preview').style.display = 'none';
@@ -2863,13 +2897,24 @@
                 initiative: document.getElementById('char-initiative').value,
                 attacks: document.getElementById('char-attacks').value.split('\n').filter(a => a.trim()),
                 image: document.getElementById('char-image-url').value || null,
-                type: 'player'
+                type: currentCharacterType
             };
 
-            PARTY_CHARACTERS.push(character);
-            localStorage.setItem('party_characters', JSON.stringify(PARTY_CHARACTERS));
+            // Save to appropriate location based on type
+            if (currentCharacterType === 'player') {
+                PARTY_CHARACTERS.push(character);
+                localStorage.setItem('party_characters', JSON.stringify(PARTY_CHARACTERS));
+                renderPartyList();
+            } else {
+                // Add to CHARACTERS object for enemies/NPCs
+                CHARACTERS[character.id] = character;
+                if (currentCharacterType === 'enemy') {
+                    renderEnemiesList();
+                } else {
+                    renderNPCsList();
+                }
+            }
 
-            renderPartyList();
             closeCharacterModal();
         }
 
@@ -2986,6 +3031,57 @@
                     alert('Failed to parse D&D Beyond JSON: ' + e.message);
                 }
             }
+        }
+
+        // Character Subtab Switching
+        function switchCharacterSubtab(subtab) {
+            // Update button styles
+            const enemiesBtn = document.getElementById('enemies-subtab');
+            const npcsBtn = document.getElementById('npcs-subtab');
+
+            if (subtab === 'enemies') {
+                enemiesBtn.style.background = '#dc2626';
+                enemiesBtn.style.color = 'white';
+                npcsBtn.style.background = 'rgba(251, 191, 36, 0.2)';
+                npcsBtn.style.color = 'var(--secondary)';
+
+                document.getElementById('enemies-list').style.display = 'block';
+                document.getElementById('npcs-list').style.display = 'none';
+            } else {
+                npcsBtn.style.background = 'var(--secondary)';
+                npcsBtn.style.color = 'var(--primary)';
+                enemiesBtn.style.background = 'rgba(220, 38, 38, 0.2)';
+                enemiesBtn.style.color = '#dc2626';
+
+                document.getElementById('npcs-list').style.display = 'block';
+                document.getElementById('enemies-list').style.display = 'none';
+            }
+        }
+
+        // Render Enemies List
+        function renderEnemiesList() {
+            const container = document.getElementById('enemies-cards');
+            const enemies = Object.values(CHARACTERS).filter(c => c.type === 'enemy');
+
+            if (enemies.length === 0) {
+                container.innerHTML = '<p style="opacity: 0.7; text-align: center; padding: 2rem;">No enemies yet. Add enemies above.</p>';
+                return;
+            }
+
+            container.innerHTML = enemies.map(char => renderStatBlock(char)).join('');
+        }
+
+        // Render NPCs List
+        function renderNPCsList() {
+            const container = document.getElementById('npcs-cards');
+            const npcs = Object.values(CHARACTERS).filter(c => c.type === 'player' || c.type === 'npc');
+
+            if (npcs.length === 0) {
+                container.innerHTML = '<p style="opacity: 0.7; text-align: center; padding: 2rem;">No NPCs yet. Add NPCs above.</p>';
+                return;
+            }
+
+            container.innerHTML = npcs.map(char => renderStatBlock(char)).join('');
         }
 
         if (document.readyState === 'loading') {
