@@ -1235,6 +1235,17 @@
         </div>
     </div>
 
+    <!-- Character Detail Modal -->
+    <div class="modal-overlay" id="character-detail-modal" style="display: none;">
+        <div class="modal-content" style="max-width: 700px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--secondary);">
+                <h2 style="margin: 0; color: var(--secondary);" id="char-detail-name">Character</h2>
+                <button onclick="closeCharacterDetail()" style="background: #dc2626; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: bold;">Close</button>
+            </div>
+            <div id="char-detail-content"></div>
+        </div>
+    </div>
+
     <!-- Tactical Overlay -->
     <div class="tactical-overlay" id="tactical-overlay">
         <div class="tactical-header">
@@ -1471,6 +1482,11 @@
                 "location": "washington-camp",
                 "type": "player",
                 "speed": 30,
+                "hp": 95,
+                "maxHp": 95,
+                "ac": 18,
+                "initiative": "+2",
+                "attacks": ["Saber +7 to hit, 1d8+4 slashing", "Pistol +5 to hit, 1d10+2 piercing"],
                 "description": "Commander-in-Chief of the Continental Army. Led the daring Christmas night attack on Trenton."
             },
             "greene": {
@@ -1481,6 +1497,11 @@
                 "location": "washington-camp",
                 "type": "player",
                 "speed": 30,
+                "hp": 85,
+                "maxHp": 85,
+                "ac": 17,
+                "initiative": "+3",
+                "attacks": ["Sword +6 to hit, 1d8+3 slashing", "Pistol +5 to hit, 1d10+2 piercing"],
                 "description": "Washington's most trusted general. Commanded the southern division during the attack."
             },
             "sullivan": {
@@ -1491,6 +1512,11 @@
                 "location": "washington-camp",
                 "type": "player",
                 "speed": 30,
+                "hp": 80,
+                "maxHp": 80,
+                "ac": 16,
+                "initiative": "+2",
+                "attacks": ["Sword +6 to hit, 1d8+3 slashing", "Musket +4 to hit, 1d12+1 piercing"],
                 "description": "Led the northern division during the Trenton attack."
             },
             "knox": {
@@ -1500,7 +1526,12 @@
                 "faction": "Continental",
                 "location": "washington-camp",
                 "type": "player",
-                "speed": 30,
+                "speed": 25,
+                "hp": 75,
+                "maxHp": 75,
+                "ac": 15,
+                "initiative": "+1",
+                "attacks": ["Sword +4 to hit, 1d8+2 slashing", "Pistol +3 to hit, 1d10+1 piercing"],
                 "description": "Former bookseller who became Washington's artillery chief."
             },
             "achilles": {
@@ -1511,6 +1542,11 @@
                 "location": "old-barracks-floor2",
                 "type": "player",
                 "speed": 30,
+                "hp": 30,
+                "maxHp": 45,
+                "ac": 12,
+                "initiative": "+2",
+                "attacks": ["Unarmed Strike +3 to hit, 1d4+1 bludgeoning"],
                 "description": "Continental soldier imprisoned in Cell #4 on the second floor"
             },
             "rall": {
@@ -1524,6 +1560,8 @@
                 "hp": 75,
                 "maxHp": 75,
                 "ac": 18,
+                "initiative": "+3",
+                "attacks": ["Greatsword +8 to hit, 2d6+5 slashing", "Command: Rally troops (allies gain +2 AC for 1 round)"],
                 "description": "Commander of Hessian forces. In the officers' quarters on third floor."
             },
             "gus": {
@@ -1537,6 +1575,8 @@
                 "hp": 58,
                 "maxHp": 58,
                 "ac": 17,
+                "initiative": "+1",
+                "attacks": ["Musket +5 to hit, 1d12+2 piercing (range 80/240)", "Bayonet +4 to hit, 1d8+2 piercing"],
                 "description": "Hessian guard stationed outside the Old Barracks main entrance."
             },
             "hessian_guard_1": {
@@ -1550,6 +1590,8 @@
                 "hp": 45,
                 "maxHp": 45,
                 "ac": 15,
+                "initiative": "+1",
+                "attacks": ["Musket +4 to hit, 1d12+1 piercing (range 80/240)", "Bayonet +3 to hit, 1d8+1 piercing"],
                 "description": "Hessian guard on patrol duty, first floor."
             },
             "hessian_guard_3": {
@@ -1563,6 +1605,8 @@
                 "hp": 45,
                 "maxHp": 45,
                 "ac": 15,
+                "initiative": "+1",
+                "attacks": ["Musket +4 to hit, 1d12+1 piercing (range 80/240)", "Bayonet +3 to hit, 1d8+1 piercing"],
                 "description": "Hessian guard stationed near Cell #4, second floor."
             },
             "hessian_guard_4": {
@@ -1576,6 +1620,8 @@
                 "hp": 52,
                 "maxHp": 52,
                 "ac": 16,
+                "initiative": "+2",
+                "attacks": ["Musket +5 to hit, 1d12+2 piercing (range 80/240)", "Saber +4 to hit, 1d8+2 slashing"],
                 "description": "Hessian sergeant in the officers' quarters, third floor."
             }
         };
@@ -2806,40 +2852,41 @@
                     return;
                 }
 
-                // Group characters by location
-                const byLocation = {};
-                allCharacters.forEach(char => {
-                    const loc = char.location || 'unknown';
-                    if (!byLocation[loc]) byLocation[loc] = [];
-                    byLocation[loc].push(char);
-                });
+                // Simple card list, no location grouping
+                const html = allCharacters.map(char => {
+                    const borderColor = char.type === 'enemy' ? '#dc2626' : '#3b82f6';
+                    const icon = char.type === 'enemy' ? '👹' : '👤';
 
-                let html = '';
-                Object.keys(byLocation).forEach(locationKey => {
-                    const location = CAMPAIGN[locationKey];
-                    const chars = byLocation[locationKey];
-
-                    html += `
-                        <div class="info-section" style="margin-bottom: 1rem;">
-                            <div class="section-title">${location ? location.icon + ' ' + location.name : locationKey}</div>
-                            ${chars.map(char => `
-                                <div class="stat-row" style="flex-direction: column; align-items: flex-start; cursor: default;">
-                                    <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 0.3rem;">
-                                        <strong>${char.name}</strong>
-                                        <span style="font-size: 0.75rem; padding: 0.2rem 0.5rem; background: ${char.type === 'player' ? 'rgba(59, 130, 246, 0.3)' : 'rgba(220, 38, 38, 0.3)'}; border-radius: 3px;">
-                                            ${char.faction}
-                                        </span>
-                                    </div>
-                                    <div style="font-size: 0.8rem; opacity: 0.8;">${char.title || ''}</div>
-                                    ${char.description ? `<div style="font-size: 0.75rem; opacity: 0.7; margin-top: 0.3rem;">${char.description}</div>` : ''}
-                                    <div style="font-size: 0.75rem; margin-top: 0.3rem;">
-                                        <strong>Speed:</strong> ${char.speed || 30} ft
-                                    </div>
+                    return `
+                        <div onclick="showCharacterDetail('${char.id}')" style="background: rgba(30, 58, 95, 0.3); border-left: 4px solid ${borderColor}; border-radius: 6px; padding: 0.8rem; margin-bottom: 0.8rem; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(30, 58, 95, 0.5)'" onmouseout="this.style.background='rgba(30, 58, 95, 0.3)'">
+                            <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.5rem;">
+                                <div style="font-size: 1.5rem;">${icon}</div>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: bold; color: var(--secondary);">${char.name}</div>
+                                    <div style="font-size: 0.75rem; opacity: 0.8;">${char.title || char.faction || ''}</div>
                                 </div>
-                            `).join('')}
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; font-size: 0.7rem;">
+                                <div style="text-align: center; padding: 0.3rem; background: rgba(0,0,0,0.3); border-radius: 3px;">
+                                    <div style="opacity: 0.7;">HP</div>
+                                    <div style="font-weight: bold;">${char.hp || '?'}</div>
+                                </div>
+                                <div style="text-align: center; padding: 0.3rem; background: rgba(0,0,0,0.3); border-radius: 3px;">
+                                    <div style="opacity: 0.7;">AC</div>
+                                    <div style="font-weight: bold;">${char.ac || '?'}</div>
+                                </div>
+                                <div style="text-align: center; padding: 0.3rem; background: rgba(0,0,0,0.3); border-radius: 3px;">
+                                    <div style="opacity: 0.7;">SPD</div>
+                                    <div style="font-weight: bold;">${char.speed || 30}</div>
+                                </div>
+                                <div style="text-align: center; padding: 0.3rem; background: rgba(0,0,0,0.3); border-radius: 3px;">
+                                    <div style="opacity: 0.7;">INIT</div>
+                                    <div style="font-weight: bold;">${char.initiative || '+0'}</div>
+                                </div>
+                            </div>
                         </div>
                     `;
-                });
+                }).join('');
 
                 container.innerHTML = html;
             }
@@ -3031,6 +3078,81 @@
             document.getElementById('character-modal').style.display = 'none';
         }
 
+        // Character Detail Modal (for sidebar characters)
+        function showCharacterDetail(charId) {
+            const char = CHARACTERS[charId];
+            if (!char) return;
+
+            document.getElementById('char-detail-name').textContent = char.name;
+
+            const location = CAMPAIGN[char.location];
+            const locationName = location ? location.name : char.location;
+
+            document.getElementById('char-detail-content').innerHTML = `
+                <div style="display: grid; gap: 1.5rem;">
+                    <!-- Stats Grid -->
+                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem;">
+                        <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                            <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">HP</div>
+                            <div style="font-size: 1.8rem; font-weight: bold; color: #16a34a;">${char.hp || '?'}/${char.maxHp || '?'}</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                            <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">AC</div>
+                            <div style="font-size: 1.8rem; font-weight: bold;">${char.ac || '?'}</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                            <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Speed</div>
+                            <div style="font-size: 1.8rem; font-weight: bold;">${char.speed || 30}ft</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                            <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Initiative</div>
+                            <div style="font-size: 1.8rem; font-weight: bold; color: var(--secondary);">${char.initiative || '+0'}</div>
+                        </div>
+                        <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                            <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Type</div>
+                            <div style="font-size: 1.2rem; font-weight: bold;">${char.type === 'enemy' ? '👹 Enemy' : '👤 Ally'}</div>
+                        </div>
+                    </div>
+
+                    <!-- Info -->
+                    <div>
+                        <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--secondary);">📍 Location</div>
+                        <div style="opacity: 0.9;">${locationName}</div>
+                    </div>
+
+                    <div>
+                        <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--secondary);">🏴 Faction</div>
+                        <div style="opacity: 0.9;">${char.faction || 'Unknown'}</div>
+                    </div>
+
+                    ${char.description ? `
+                        <div>
+                            <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--secondary);">📝 Notes</div>
+                            <div style="opacity: 0.9; line-height: 1.6;">${char.description}</div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Attacks -->
+                    ${char.attacks && char.attacks.length > 0 ? `
+                        <div>
+                            <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 0.8rem; color: var(--secondary);">⚔️ Attacks</div>
+                            ${char.attacks.map(attack => `
+                                <div style="background: rgba(220, 38, 38, 0.2); padding: 0.8rem; border-left: 3px solid #dc2626; margin-bottom: 0.5rem; border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
+                                    ${attack}
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            document.getElementById('character-detail-modal').style.display = 'flex';
+        }
+
+        function closeCharacterDetail() {
+            document.getElementById('character-detail-modal').style.display = 'none';
+        }
+
         function previewImage(url) {
             if (url) {
                 const preview = document.getElementById('char-preview');
@@ -3074,6 +3196,12 @@
                 PARTY_CHARACTERS.push(character);
                 localStorage.setItem('party_characters', JSON.stringify(PARTY_CHARACTERS));
                 renderPartyList();
+
+                // Add to tactical map if currently in tactical view
+                if (window.tactical && window.tactical.canvas) {
+                    tactical.addCharacterToken(character);
+                    tactical.addLog(`Added ${character.name} to the battlefield`, 'info');
+                }
             } else {
                 // Add to CHARACTERS object for enemies/NPCs
                 CHARACTERS[character.id] = character;
@@ -3081,6 +3209,12 @@
                     renderEnemiesList();
                 } else {
                     renderNPCsList();
+                }
+
+                // Add to tactical map if currently in tactical view
+                if (window.tactical && window.tactical.canvas) {
+                    tactical.addCharacterToken(character);
+                    tactical.addLog(`Added ${character.name} to the battlefield`, 'info');
                 }
             }
 
