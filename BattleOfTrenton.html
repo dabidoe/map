@@ -1268,8 +1268,28 @@
 
             <!-- COMBAT Tab -->
             <div class="tactical-content" id="tactical-tab-combat">
-                <div class="tab-panel" id="combat-content">
-                    <!-- Combat tracker loaded dynamically -->
+                <div class="tab-panel" id="combat-content" style="max-width: 1200px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--secondary);">
+                        <div class="section-header" style="margin: 0;">⚔️ Initiative Tracker</div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button onclick="rollAllCombatInitiative()" style="padding: 0.8rem 1.5rem; background: #dc2626; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">🎲 Roll All Initiative</button>
+                            <button onclick="clearCombatTracker()" style="padding: 0.8rem 1.5rem; background: rgba(100, 100, 100, 0.3); color: var(--text); border: none; border-radius: 6px; cursor: pointer;">Clear Combat</button>
+                        </div>
+                    </div>
+
+                    <!-- Add Combatants -->
+                    <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(30, 58, 95, 0.2); border-radius: 8px;">
+                        <div style="font-weight: bold; margin-bottom: 0.8rem; opacity: 0.9;">Add to Combat:</div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button onclick="addPartyToCombat()" style="flex: 1; padding: 0.6rem; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">+ All Party Members</button>
+                            <button onclick="addEnemyToCombat()" style="flex: 1; padding: 0.6rem; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer;">+ Select Enemy</button>
+                        </div>
+                    </div>
+
+                    <!-- Initiative Order List -->
+                    <div id="initiative-list">
+                        <p style="opacity: 0.7; text-align: center; padding: 3rem;">No combatants in initiative. Add characters and roll initiative to begin.</p>
+                    </div>
                 </div>
             </div>
 
@@ -3082,6 +3102,169 @@
             }
 
             container.innerHTML = npcs.map(char => renderStatBlock(char)).join('');
+        }
+
+        // COMBAT TRACKER
+        let COMBAT_TRACKER = [];
+
+        function addPartyToCombat() {
+            PARTY_CHARACTERS.forEach(char => {
+                if (!COMBAT_TRACKER.find(c => c.id === char.id)) {
+                    COMBAT_TRACKER.push({
+                        ...char,
+                        initiative: null,
+                        initiativeRoll: null
+                    });
+                }
+            });
+            renderInitiativeList();
+            if (window.tactical) {
+                tactical.addLog(`Added ${PARTY_CHARACTERS.length} party members to combat`, 'info');
+            }
+        }
+
+        function addEnemyToCombat() {
+            const enemies = Object.values(CHARACTERS).filter(c => c.type === 'enemy');
+            if (enemies.length === 0) {
+                alert('No enemies available. Add enemies in the CHARACTERS tab first.');
+                return;
+            }
+
+            // Simple prompt for now - could be enhanced with a modal selector
+            const enemyNames = enemies.map(e => e.name).join('\n');
+            const selectedName = prompt('Select enemy to add:\n\n' + enemyNames);
+
+            if (selectedName) {
+                const enemy = enemies.find(e => e.name === selectedName);
+                if (enemy && !COMBAT_TRACKER.find(c => c.id === enemy.id)) {
+                    COMBAT_TRACKER.push({
+                        ...enemy,
+                        initiative: null,
+                        initiativeRoll: null
+                    });
+                    renderInitiativeList();
+                    if (window.tactical) {
+                        tactical.addLog(`Added ${enemy.name} to combat`, 'info');
+                    }
+                }
+            }
+        }
+
+        function rollAllCombatInitiative() {
+            if (COMBAT_TRACKER.length === 0) {
+                alert('Add combatants to combat first!');
+                return;
+            }
+
+            COMBAT_TRACKER.forEach(combatant => {
+                const roll = Math.floor(Math.random() * 20) + 1;
+                const initMod = parseInt(combatant.initiative) || 0;
+                combatant.initiativeRoll = roll + initMod;
+
+                if (window.tactical) {
+                    tactical.addLog(`${combatant.name}: Initiative ${roll} + ${initMod} = ${combatant.initiativeRoll}`, 'combat');
+                }
+            });
+
+            // Sort by initiative (highest first)
+            COMBAT_TRACKER.sort((a, b) => (b.initiativeRoll || 0) - (a.initiativeRoll || 0));
+
+            renderInitiativeList();
+        }
+
+        function renderInitiativeList() {
+            const container = document.getElementById('initiative-list');
+
+            if (COMBAT_TRACKER.length === 0) {
+                container.innerHTML = '<p style="opacity: 0.7; text-align: center; padding: 3rem;">No combatants in initiative. Add characters and roll initiative to begin.</p>';
+                return;
+            }
+
+            container.innerHTML = COMBAT_TRACKER.map((combatant, index) => {
+                const imgSrc = combatant.image || '';
+                const hasImage = imgSrc && imgSrc.trim();
+                const borderColor = combatant.type === 'enemy' ? '#dc2626' : '#3b82f6';
+                const initiativeDisplay = combatant.initiativeRoll !== null ? combatant.initiativeRoll : '—';
+
+                return `
+                    <div onclick="openCombatantActions('${combatant.id}')" style="background: rgba(30, 58, 95, 0.3); border-left: 5px solid ${borderColor}; border-radius: 8px; padding: 1rem; margin-bottom: 0.8rem; display: grid; grid-template-columns: 60px 80px 1fr 120px 100px auto; gap: 1rem; align-items: center; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(30, 58, 95, 0.5)'" onmouseout="this.style.background='rgba(30, 58, 95, 0.3)'">
+                        <!-- Initiative # -->
+                        <div style="text-align: center; font-size: 2rem; font-weight: bold; color: var(--secondary);">
+                            ${index + 1}
+                        </div>
+
+                        <!-- Portrait -->
+                        <div style="width: 60px; height: 60px; background: rgba(0,0,0,0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                            ${hasImage ? `<img src="${imgSrc}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="font-size: 2rem; opacity: 0.5;">👤</div>'}
+                        </div>
+
+                        <!-- Name & Class -->
+                        <div>
+                            <div style="font-size: 1.2rem; font-weight: bold; color: var(--secondary);">${combatant.name}</div>
+                            ${combatant.class ? `<div style="opacity: 0.7; font-size: 0.85rem;">${combatant.class}</div>` : ''}
+                        </div>
+
+                        <!-- HP -->
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem;">HP</div>
+                            <input type="number" value="${combatant.hp}" onchange="updateCombatantHP('${combatant.id}', this.value)" onclick="event.stopPropagation()" style="width: 100%; padding: 0.4rem; background: rgba(0,0,0,0.3); border: 2px solid #16a34a; color: #16a34a; border-radius: 4px; text-align: center; font-size: 1.2rem; font-weight: bold;">
+                            <div style="opacity: 0.6; font-size: 0.8rem; margin-top: 0.2rem;">/ ${combatant.maxHp}</div>
+                        </div>
+
+                        <!-- AC -->
+                        <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 6px;">
+                            <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem;">AC</div>
+                            <div style="font-size: 1.5rem; font-weight: bold;">${combatant.ac}</div>
+                        </div>
+
+                        <!-- Initiative Roll -->
+                        <div style="text-align: center; padding: 0.8rem; background: rgba(251, 191, 36, 0.2); border: 2px solid var(--secondary); border-radius: 6px;">
+                            <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem;">Initiative</div>
+                            <div style="font-size: 1.8rem; font-weight: bold; color: var(--secondary);">${initiativeDisplay}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateCombatantHP(id, newHP) {
+            const combatant = COMBAT_TRACKER.find(c => c.id === id);
+            if (combatant) {
+                combatant.hp = parseInt(newHP);
+                if (window.tactical) {
+                    tactical.addLog(`${combatant.name}: HP changed to ${newHP}/${combatant.maxHp}`, 'info');
+                }
+            }
+        }
+
+        function openCombatantActions(id) {
+            const combatant = COMBAT_TRACKER.find(c => c.id === id);
+            if (!combatant) return;
+
+            // For now, show a simple alert - will be enhanced to modal in next step
+            const attacksList = combatant.attacks && combatant.attacks.length > 0
+                ? combatant.attacks.join('\n')
+                : 'No attacks defined';
+
+            const info = `${combatant.name}\n\n` +
+                `HP: ${combatant.hp}/${combatant.maxHp}\n` +
+                `AC: ${combatant.ac}\n` +
+                `Speed: ${combatant.speed}ft\n` +
+                `Initiative: ${combatant.initiative}\n\n` +
+                `Attacks:\n${attacksList}`;
+
+            alert(info);
+            // TODO: Replace with modal showing skills, saving throws, attacks, abilities
+        }
+
+        function clearCombatTracker() {
+            if (confirm('Clear all combatants from initiative?')) {
+                COMBAT_TRACKER = [];
+                renderInitiativeList();
+                if (window.tactical) {
+                    tactical.addLog('Combat tracker cleared', 'info');
+                }
+            }
         }
 
         if (document.readyState === 'loading') {
