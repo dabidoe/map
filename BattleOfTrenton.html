@@ -1278,6 +1278,7 @@
                     </div>
                 </div>
                 <div class="token-controls">
+                    <button class="token-btn" onclick="tactical.loadAllPartyMembers()">👥 Load Party</button>
                     <button class="token-btn" onclick="tactical.openCharacterLibrary('player')">Add Player</button>
                     <button class="token-btn" onclick="tactical.openCharacterLibrary('enemy')">Add Enemy</button>
                     <button class="token-btn" onclick="tactical.clearTokens()">Clear All</button>
@@ -2034,6 +2035,45 @@
                     this.addLog(`Cleared ${count} token(s) from battlefield`, 'info');
                 }
                 this.draw();
+            }
+
+            loadAllPartyMembers() {
+                if (PARTY_CHARACTERS.length === 0) {
+                    alert('No party members saved. Add party members in the PARTY tab first.');
+                    return;
+                }
+
+                let loaded = 0;
+                PARTY_CHARACTERS.forEach((char, index) => {
+                    // Check if already on map
+                    if (!this.tokens.find(t => t.id === char.id)) {
+                        // Place party members in a row
+                        const x = ((index % 5) + 1) * this.gridSize + this.gridSize / 2;
+                        const y = (Math.floor(index / 5) + 1) * this.gridSize + this.gridSize / 2;
+
+                        this.tokens.push({
+                            id: char.id,
+                            name: char.name,
+                            type: 'player',
+                            faction: 'Continental',
+                            x: x,
+                            y: y,
+                            speed: char.speed || 30,
+                            hp: char.hp,
+                            maxHp: char.maxHp,
+                            ac: char.ac,
+                            selected: false
+                        });
+                        loaded++;
+                    }
+                });
+
+                if (loaded > 0) {
+                    this.addLog(`Loaded ${loaded} party member(s) onto the map`, 'info');
+                    this.draw();
+                } else {
+                    this.addLog('All party members already on map', 'info');
+                }
             }
 
             updateLocationInfo(location) {
