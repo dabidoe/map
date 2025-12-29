@@ -335,7 +335,7 @@
             width: 100vw;
             height: 100vh;
             background: rgba(0, 0, 0, 0.95);
-            z-index: 4000;
+            z-index: 6000;
             align-items: center;
             justify-content: center;
             padding: 2rem;
@@ -2352,13 +2352,13 @@
                 if (token.character && isHovered) {
                     this.ctx.save();
 
-                    // Build stat text
+                    // Build stat text (no description - moved to Notes tab)
                     const char = token.character;
                     const lines = [
                         char.name,
                         char.title || '',
                         `${char.faction} • Speed ${char.speed}ft`,
-                        char.description || ''
+                        `HP: ${char.hp || '?'}/${char.maxHp || '?'} • AC: ${char.ac || '?'}`
                     ].filter(l => l);
 
                     // Measure and draw background
@@ -3097,54 +3097,64 @@
             const location = CAMPAIGN[char.location];
             const locationName = location ? location.name : char.location;
 
+            const hasImage = char.image && char.image.trim();
+
             document.getElementById('char-detail-content').innerHTML = `
                 <div style="display: grid; gap: 1.5rem;">
-                    <!-- Stats Grid -->
-                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem;">
-                        <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
-                            <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">HP</div>
-                            <div style="font-size: 1.8rem; font-weight: bold; color: #16a34a;">${char.hp || '?'}/${char.maxHp || '?'}</div>
-                        </div>
-                        <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
-                            <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">AC</div>
-                            <div style="font-size: 1.8rem; font-weight: bold;">${char.ac || '?'}</div>
-                        </div>
-                        <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
-                            <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Speed</div>
-                            <div style="font-size: 1.8rem; font-weight: bold;">${char.speed || 30}ft</div>
-                        </div>
-                        <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
-                            <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Initiative</div>
-                            <div style="font-size: 1.8rem; font-weight: bold; color: var(--secondary);">${char.initiative || '+0'}</div>
-                        </div>
-                        <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
-                            <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Type</div>
-                            <div style="font-size: 1.2rem; font-weight: bold;">${char.type === 'enemy' ? '👹 Enemy' : '👤 Ally'}</div>
+                    <!-- Image and Quick Info -->
+                    <div style="display: grid; grid-template-columns: ${hasImage ? '200px 1fr' : '1fr'}; gap: 1.5rem;">
+                        ${hasImage ? `
+                            <div style="width: 200px; height: 200px; background: rgba(0,0,0,0.3); border-radius: 8px; overflow: hidden; border: 3px solid var(--secondary);">
+                                <img src="${char.image}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\\"display: flex; align-items: center; justify-content: center; height: 100%; font-size: 4rem; opacity: 0.5;\\">👤</div>';">
+                            </div>
+                        ` : ''}
+                        <div>
+                            <div style="margin-bottom: 1rem;">
+                                <div style="font-size: 1.1rem; opacity: 0.8;">${char.title || char.class || ''}</div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
+                                <div><strong>Type:</strong> ${char.type === 'enemy' ? '👹 Enemy' : '👤 Ally'}</div>
+                                <div><strong>Faction:</strong> ${char.faction || 'Unknown'}</div>
+                                <div><strong>Location:</strong> ${locationName}</div>
+                                <div><strong>Speed:</strong> ${char.speed || 30}ft</div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Info -->
+                    <!-- Core Stats Grid -->
                     <div>
-                        <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--secondary);">📍 Location</div>
-                        <div style="opacity: 0.9;">${locationName}</div>
-                    </div>
-
-                    <div>
-                        <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--secondary);">🏴 Faction</div>
-                        <div style="opacity: 0.9;">${char.faction || 'Unknown'}</div>
+                        <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 0.8rem; color: var(--secondary);">📊 Combat Stats</div>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+                            <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">HP</div>
+                                <div style="font-size: 1.8rem; font-weight: bold; color: #16a34a;">${char.hp || '?'}/${char.maxHp || '?'}</div>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">AC</div>
+                                <div style="font-size: 1.8rem; font-weight: bold;">${char.ac || '?'}</div>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Initiative</div>
+                                <div style="font-size: 1.8rem; font-weight: bold; color: var(--secondary);">${char.initiative || '+0'}</div>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Proficiency</div>
+                                <div style="font-size: 1.8rem; font-weight: bold;">+${char.proficiency || 2}</div>
+                            </div>
+                        </div>
                     </div>
 
                     ${char.description ? `
                         <div>
                             <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--secondary);">📝 Notes</div>
-                            <div style="opacity: 0.9; line-height: 1.6;">${char.description}</div>
+                            <div style="opacity: 0.9; line-height: 1.6; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 6px;">${char.description}</div>
                         </div>
                     ` : ''}
 
                     <!-- Attacks -->
                     ${char.attacks && char.attacks.length > 0 ? `
                         <div>
-                            <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 0.8rem; color: var(--secondary);">⚔️ Attacks</div>
+                            <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 0.8rem; color: var(--secondary);">⚔️ Attacks & Actions</div>
                             ${char.attacks.map(attack => `
                                 <div style="background: rgba(220, 38, 38, 0.2); padding: 0.8rem; border-left: 3px solid #dc2626; margin-bottom: 0.5rem; border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
                                     ${attack}
