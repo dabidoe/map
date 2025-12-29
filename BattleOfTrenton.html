@@ -3491,53 +3491,89 @@
             const hasImage = imgSrc && imgSrc.trim();
 
             return `
-                <div style="background: rgba(30, 58, 95, 0.3); border: 3px solid var(--secondary); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; display: grid; grid-template-columns: 150px 1fr; gap: 1.5rem;">
-                    <!-- Image -->
-                    <div style="width: 150px; height: 150px; background: rgba(0,0,0,0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                        ${hasImage ? `<img src="${imgSrc}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="font-size: 4rem; opacity: 0.5;">👤</div>'}
-                    </div>
-
-                    <!-- Stats -->
-                    <div>
-                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
-                            <div>
-                                <h3 style="margin: 0; color: var(--secondary); font-size: 1.5rem;">${char.name}</h3>
-                                ${char.class || char.title ? `<div style="opacity: 0.8; font-style: italic; margin-top: 0.3rem;">${char.class || char.title}</div>` : ''}
-                            </div>
+                <div style="background: rgba(30, 58, 95, 0.3); border: 3px solid var(--secondary); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem;">
+                    <div style="display: grid; grid-template-columns: 150px 1fr; gap: 1.5rem;">
+                        <!-- Image -->
+                        <div style="width: 150px; height: 150px; background: rgba(0,0,0,0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                            ${hasImage ? `<img src="${imgSrc}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="font-size: 4rem; opacity: 0.5;">👤</div>'}
                         </div>
 
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1rem;">
-                            <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 6px;">
-                                <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">HP</div>
-                                <div style="font-size: 1.5rem; font-weight: bold; color: #16a34a;">${char.hp || '?'}/${char.maxHp || '?'}</div>
+                        <!-- Stats -->
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                                <div>
+                                    <h3 style="margin: 0; color: var(--secondary); font-size: 1.5rem;">${char.name}</h3>
+                                    ${char.class || char.title ? `<div style="opacity: 0.8; font-style: italic; margin-top: 0.3rem;">${char.class || char.title}</div>` : ''}
+                                </div>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button onclick="duplicateEnemy('${char.id}')" style="background: var(--secondary); color: var(--primary); border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">📋 Copy</button>
+                                    <button onclick="addEnemyToMap('${char.id}')" style="background: #16a34a; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">+ Map</button>
+                                </div>
                             </div>
-                            <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 6px;">
-                                <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">AC</div>
-                                <div style="font-size: 1.5rem; font-weight: bold;">${char.ac || '?'}</div>
-                            </div>
-                            <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 6px;">
-                                <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Speed</div>
-                                <div style="font-size: 1.5rem; font-weight: bold;">${char.speed || 30}ft</div>
-                            </div>
-                            <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 6px;">
-                                <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Initiative</div>
-                                <div style="font-size: 1.5rem; font-weight: bold;">${char.initiative || '+0'}</div>
-                            </div>
-                        </div>
 
-                        ${char.attacks && char.attacks.length > 0 ? `
-                            <div>
-                                <div style="font-weight: bold; margin-bottom: 0.5rem; opacity: 0.9;">⚔️ Attacks</div>
-                                ${char.attacks.map(attack => `
-                                    <div style="background: rgba(220, 38, 38, 0.2); padding: 0.6rem; border-left: 3px solid #dc2626; margin-bottom: 0.5rem; border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
-                                        ${attack}
-                                    </div>
-                                `).join('')}
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1rem;">
+                                <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 6px;">
+                                    <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">HP</div>
+                                    <div style="font-size: 1.5rem; font-weight: bold; color: #16a34a;">${char.hp || '?'}/${char.maxHp || '?'}</div>
+                                </div>
+                                <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 6px;">
+                                    <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">AC</div>
+                                    <div style="font-size: 1.5rem; font-weight: bold;">${char.ac || '?'}</div>
+                                </div>
+                                <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 6px;">
+                                    <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Speed</div>
+                                    <div style="font-size: 1.5rem; font-weight: bold;">${char.speed || 30}ft</div>
+                                </div>
+                                <div style="text-align: center; padding: 0.8rem; background: 0,0,0,0.3); border-radius: 6px;">
+                                    <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Initiative</div>
+                                    <div style="font-size: 1.5rem; font-weight: bold;">${char.initiative || '+0'}</div>
+                                </div>
                             </div>
-                        ` : ''}
+
+                            ${char.attacks && char.attacks.length > 0 ? `
+                                <div>
+                                    <div style="font-weight: bold; margin-bottom: 0.5rem; opacity: 0.9;">⚔️ Attacks</div>
+                                    ${char.attacks.map(attack => `
+                                        <div style="background: rgba(220, 38, 38, 0.2); padding: 0.6rem; border-left: 3px solid #dc2626; margin-bottom: 0.5rem; border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
+                                            ${attack}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
                     </div>
                 </div>
             `;
+        }
+
+        // Duplicate enemy to create more
+        function duplicateEnemy(charId) {
+            const original = CHARACTERS[charId];
+            if (!original) return;
+
+            const newChar = {
+                ...original,
+                id: 'char_' + Date.now(),
+                name: original.name + ' (Copy)',
+                hp: original.maxHp // Reset HP to full
+            };
+
+            CHARACTERS[newChar.id] = newChar;
+            renderEnemiesList();
+            renderNPCsList();
+
+            if (window.tactical) {
+                tactical.addLog(`Duplicated ${original.name}`, 'info');
+            }
+        }
+
+        // Add enemy directly to map
+        function addEnemyToMap(charId) {
+            const char = CHARACTERS[charId];
+            if (!char || !window.tactical) return;
+
+            tactical.addCharacterToken(char);
+            tactical.addLog(`Added ${char.name} to battlefield`, 'info');
         }
 
         // COMBAT TRACKER
