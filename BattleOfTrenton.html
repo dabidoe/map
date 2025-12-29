@@ -491,6 +491,41 @@
             background: rgba(30, 58, 95, 0.3);
             border-bottom: 3px solid var(--secondary);
             padding: 0 1rem;
+            justify-content: space-between;
+        }
+
+        .floor-tabs {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .floor-tabs.active {
+            display: flex;
+        }
+
+        .floor-tab {
+            padding: 0.6rem 1.2rem;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 6px;
+            transition: all 0.2s;
+            color: rgba(244, 232, 208, 0.8);
+        }
+
+        .floor-tab:hover {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: rgba(212, 175, 55, 0.6);
+            color: var(--text);
+        }
+
+        .floor-tab.active {
+            background: var(--secondary);
+            border-color: var(--secondary);
+            color: var(--primary);
         }
 
         .tactical-tab {
@@ -1083,12 +1118,19 @@
         </div>
 
         <div class="tactical-tabs">
-            <div class="tactical-tab active" onclick="switchTacticalTab('maps')">🗺️ MAPS</div>
-            <div class="tactical-tab" onclick="switchTacticalTab('party')">👥 PARTY</div>
-            <div class="tactical-tab" onclick="switchTacticalTab('encounters')">📖 ENCOUNTERS</div>
-            <div class="tactical-tab" onclick="switchTacticalTab('combat')">⚔️ COMBAT</div>
-            <div class="tactical-tab" onclick="switchTacticalTab('notes')">📝 NOTES</div>
-            <div class="tactical-tab" onclick="switchTacticalTab('info')">ℹ️ INFO</div>
+            <div style="display: flex;">
+                <div class="tactical-tab active" onclick="switchTacticalTab('maps')">🗺️ MAPS</div>
+                <div class="tactical-tab" onclick="switchTacticalTab('party')">👥 PARTY</div>
+                <div class="tactical-tab" onclick="switchTacticalTab('encounters')">📖 ENCOUNTERS</div>
+                <div class="tactical-tab" onclick="switchTacticalTab('combat')">⚔️ COMBAT</div>
+                <div class="tactical-tab" onclick="switchTacticalTab('notes')">📝 NOTES</div>
+                <div class="tactical-tab" onclick="switchTacticalTab('info')">ℹ️ INFO</div>
+            </div>
+            <div class="floor-tabs" id="floor-tabs">
+                <div class="floor-tab active" onclick="switchFloor('old-barracks-floor1')">🏛️ Ground Floor</div>
+                <div class="floor-tab" onclick="switchFloor('old-barracks-floor2')">⛓️ Cell Block</div>
+                <div class="floor-tab" onclick="switchFloor('old-barracks-floor3')">👑 Officers</div>
+            </div>
         </div>
 
         <div class="tactical-body">
@@ -1105,11 +1147,6 @@
                     <button class="token-btn" onclick="tactical.openCharacterLibrary('player')">Add Player</button>
                     <button class="token-btn" onclick="tactical.openCharacterLibrary('enemy')">Add Enemy</button>
                     <button class="token-btn" onclick="tactical.clearTokens()">Clear All</button>
-                </div>
-                <div class="token-controls" id="floor-nav" style="display: none;">
-                    <div class="control-title">Floor Navigation</div>
-                    <button class="control-btn" onclick="changeFloor('up')">↑ Go Up</button>
-                    <button class="control-btn" onclick="changeFloor('down')">↓ Go Down</button>
                 </div>
                 <div class="battle-log" id="battle-log">
                     <div class="log-header">
@@ -1426,12 +1463,17 @@
                 // Update PARTY tab to show character library
                 this.renderCharacterLibrary(locationKey);
 
-                // Show floor navigation if on a barracks floor
-                const floorNav = document.getElementById('floor-nav');
+                // Show/hide floor tabs based on location
+                const floorTabs = document.getElementById('floor-tabs');
                 if (locationKey.startsWith('old-barracks-floor')) {
-                    floorNav.style.display = 'block';
+                    floorTabs.classList.add('active');
+                    // Update active floor tab
+                    document.querySelectorAll('.floor-tab').forEach((tab, i) => {
+                        const floors = ['old-barracks-floor1', 'old-barracks-floor2', 'old-barracks-floor3'];
+                        tab.classList.toggle('active', floors[i] === locationKey);
+                    });
                 } else {
-                    floorNav.style.display = 'none';
+                    floorTabs.classList.remove('active');
                 }
             }
 
@@ -1942,21 +1984,23 @@
                 }
 
                 container.innerHTML = `
-                    <div class="section-header" style="margin-bottom: 1rem;">Available Characters</div>
-                    <div class="character-list">
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                         ${locationCharacters.map(char => {
                             const onMap = this.tokens.some(t => t.character && t.character.id === char.id);
+                            const factionColor = char.type === 'player' ? '#3b82f6' : '#dc2626';
                             return `
-                                <div class="character-card" onclick="tactical.${onMap ? 'selectCharacterToken' : 'addCharacterFromLibrary'}('${char.id}')">
-                                    <div class="character-name">${char.name}</div>
-                                    <div class="character-info">${char.title || ''}</div>
-                                    <div class="character-info" style="margin-top: 0.5rem; font-size: 0.75rem;">
-                                        <strong>Speed:</strong> ${char.speed || 30} ft
-                                        <br><strong>Faction:</strong> ${char.faction}
+                                <div onclick="tactical.${onMap ? 'selectCharacterToken' : 'addCharacterFromLibrary'}('${char.id}')"
+                                     style="display: flex; align-items: center; gap: 1rem; padding: 0.8rem; background: rgba(30, 58, 95, 0.2); border: 2px solid ${onMap ? '#16a34a' : 'rgba(212, 175, 55, 0.3)'}; border-left: 4px solid ${factionColor}; border-radius: 6px; cursor: pointer; transition: all 0.2s;"
+                                     onmouseover="this.style.background='rgba(30, 58, 95, 0.4)'; this.style.borderColor='${factionColor}'"
+                                     onmouseout="this.style.background='rgba(30, 58, 95, 0.2)'; this.style.borderColor='${onMap ? '#16a34a' : 'rgba(212, 175, 55, 0.3)'}'">
+                                    <div style="font-size: 2rem;">${char.type === 'player' ? '●' : '▲'}</div>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: bold; font-size: 1rem; margin-bottom: 0.2rem; color: ${factionColor};">${char.name}</div>
+                                        <div style="font-size: 0.8rem; opacity: 0.8;">${char.title || ''}</div>
+                                        <div style="font-size: 0.75rem; margin-top: 0.3rem; opacity: 0.7;">${char.faction} • ${char.speed}ft</div>
                                     </div>
-                                    ${char.description ? `<p style="margin-top: 0.5rem; font-size: 0.75rem; opacity: 0.8;">${char.description}</p>` : ''}
-                                    <div style="margin-top: 0.8rem; padding: 0.4rem; background: ${onMap ? 'rgba(22, 163, 74, 0.2)' : 'rgba(59, 130, 246, 0.2)'}; border-radius: 4px; text-align: center; font-size: 0.75rem; font-weight: bold;">
-                                        ${onMap ? '✓ On Map - Click to Select' : '+ Click to Add to Map'}
+                                    <div style="padding: 0.4rem 0.8rem; background: ${onMap ? 'rgba(22, 163, 74, 0.3)' : 'rgba(212, 175, 55, 0.3)'}; border-radius: 4px; font-size: 0.75rem; font-weight: bold; white-space: nowrap;">
+                                        ${onMap ? '✓ ON MAP' : '+ ADD'}
                                     </div>
                                 </div>
                             `;
@@ -2479,29 +2523,23 @@
             }
         }
 
-        function changeFloor(direction) {
+        function switchFloor(floorKey) {
             if (!window.tactical) return;
 
-            const floors = {
-                'old-barracks-floor1': { up: 'old-barracks-floor2', down: null },
-                'old-barracks-floor2': { up: 'old-barracks-floor3', down: 'old-barracks-floor1' },
-                'old-barracks-floor3': { up: null, down: 'old-barracks-floor2' }
+            const floorNames = {
+                'old-barracks-floor1': 'Old Barracks - Ground Floor',
+                'old-barracks-floor2': 'Old Barracks - Cell Block',
+                'old-barracks-floor3': 'Old Barracks - Officers\' Quarters'
             };
 
-            const current = tactical.currentLocation;
-            const next = floors[current] ? floors[current][direction] : null;
+            // Update active floor tab
+            document.querySelectorAll('.floor-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
 
-            if (next) {
-                const floorNames = {
-                    'old-barracks-floor1': 'Old Barracks - First Floor',
-                    'old-barracks-floor2': 'Old Barracks - Second Floor (Cell Block)',
-                    'old-barracks-floor3': 'Old Barracks - Third Floor (Officers\' Quarters)'
-                };
-
-                document.getElementById('tactical-location-name').textContent = `⚔️ ${floorNames[next]}`;
-                tactical.cleanup();
-                tactical.init(next, { name: floorNames[next] });
-            }
+            // Update location and reinit
+            document.getElementById('tactical-location-name').textContent = `⚔️ ${floorNames[floorKey]}`;
+            tactical.cleanup();
+            tactical.init(floorKey, { name: floorNames[floorKey] });
         }
 
         if (document.readyState === 'loading') {
