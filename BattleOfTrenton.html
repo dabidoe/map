@@ -1172,34 +1172,15 @@
 
             <!-- ENCOUNTERS Tab -->
             <div class="tactical-content" id="tactical-tab-encounters">
-                <div class="tab-panel">
-                    <div class="section-header">📖 Active Encounters</div>
-                    <div id="encounters-list">
-                        <p style="opacity: 0.7; font-size: 0.9rem;">No active encounters</p>
-                    </div>
+                <div class="tab-panel" id="encounters-content" style="max-width: 1200px;">
+                    <!-- Encounters loaded dynamically -->
                 </div>
             </div>
 
             <!-- COMBAT Tab -->
             <div class="tactical-content" id="tactical-tab-combat">
-                <div class="tab-panel">
-                    <div class="section-header">🎲 Dice Roller</div>
-                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
-                        <button class="token-btn" onclick="rollDice(20)">d20</button>
-                        <button class="token-btn" onclick="rollDice(12)">d12</button>
-                        <button class="token-btn" onclick="rollDice(10)">d10</button>
-                        <button class="token-btn" onclick="rollDice(8)">d8</button>
-                        <button class="token-btn" onclick="rollDice(6)">d6</button>
-                        <button class="token-btn" onclick="rollDice(4)">d4</button>
-                    </div>
-                    <div id="dice-results" style="min-height: 100px; background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-                        <div style="opacity: 0.5; font-size: 0.9rem;">Roll results appear here</div>
-                    </div>
-
-                    <div class="section-header">⚔️ Combat Tracker</div>
-                    <div id="combat-tracker">
-                        <p style="opacity: 0.7; font-size: 0.9rem;">Initiative order will appear here</p>
-                    </div>
+                <div class="tab-panel" id="combat-content">
+                    <!-- Combat tracker loaded dynamically -->
                 </div>
             </div>
 
@@ -1358,32 +1339,41 @@
             },
             "rall": {
                 "id": "rall",
-                "name": "Johann Rall",
-                "title": "Colonel, Hessian Commander",
+                "name": "Colonel Johann Rall",
+                "title": "Hessian Commander",
                 "faction": "Hessian",
                 "location": "old-barracks-floor3",
                 "type": "enemy",
                 "speed": 30,
+                "hp": 75,
+                "maxHp": 75,
+                "ac": 18,
                 "description": "Commander of Hessian forces. In the officers' quarters on third floor."
             },
-            "hessian_guard_1": {
-                "id": "hessian_guard_1",
-                "name": "Hessian Guard (Exterior)",
+            "gus": {
+                "id": "gus",
+                "name": "Unteroffizier Gus",
                 "title": "Guard",
                 "faction": "Hessian",
                 "location": "old-barracks-floor1",
                 "type": "enemy",
                 "speed": 30,
+                "hp": 58,
+                "maxHp": 58,
+                "ac": 17,
                 "description": "Hessian guard stationed outside the Old Barracks main entrance."
             },
-            "hessian_guard_2": {
-                "id": "hessian_guard_2",
+            "hessian_guard_1": {
+                "id": "hessian_guard_1",
                 "name": "Hessian Guard (Patrol)",
                 "title": "Guard",
                 "faction": "Hessian",
                 "location": "old-barracks-floor1",
                 "type": "enemy",
                 "speed": 30,
+                "hp": 45,
+                "maxHp": 45,
+                "ac": 15,
                 "description": "Hessian guard on patrol duty, first floor."
             },
             "hessian_guard_3": {
@@ -1394,6 +1384,9 @@
                 "location": "old-barracks-floor2",
                 "type": "enemy",
                 "speed": 30,
+                "hp": 45,
+                "maxHp": 45,
+                "ac": 15,
                 "description": "Hessian guard stationed near Cell #4, second floor."
             },
             "hessian_guard_4": {
@@ -1404,11 +1397,80 @@
                 "location": "old-barracks-floor3",
                 "type": "enemy",
                 "speed": 30,
+                "hp": 52,
+                "maxHp": 52,
+                "ac": 16,
                 "description": "Hessian sergeant in the officers' quarters, third floor."
             }
         };
 
         console.log('Characters loaded:', Object.keys(CHARACTERS).length);
+
+        // ENCOUNTER DATA
+        const ENCOUNTERS = {
+            'old-barracks-floor1': {
+                name: 'Guard Post - Unteroffizier Gus',
+                subtitle: 'Cellar - Central Guard Station',
+                readAloud: `A single oil lamp casts flickering shadows across the stone cellar. At a rough wooden table sits a middle-aged Hessian soldier, his blue coat unbuttoned, musket leaning against the wall. He's reading a letter, lips moving slightly. Four heavy iron doors line the far wall—the prison cells. The guard looks tired, melancholy. A half-empty schnapps bottle sits beside the lamp.`,
+                dmNotes: `Gus can be: (1) bribed (10gp, DC 14), (2) persuaded with daughter's letter (DC 12), (3) knocked out (DC 16 Stealth), or (4) fought. NOT fanatically loyal. His daughter Elisabeth is 12 years old. If bribed, he'll turn away for 10 minutes. If letter used, he becomes ally.`,
+                skillChallenges: [
+                    {
+                        name: 'Bribe Gus',
+                        dc: 14,
+                        skill: 'Persuasion',
+                        success: 'He takes gold, turns away for 10 minutes',
+                        failure: 'Insulted, draws weapon'
+                    },
+                    {
+                        name: 'Use Daughter Letter',
+                        dc: 12,
+                        skill: 'Persuasion',
+                        success: 'Becomes ally, unlocks cells',
+                        failure: 'Becomes emotional but stays at post'
+                    }
+                ],
+                enemies: ['gus']
+            },
+            'old-barracks-floor2': {
+                name: 'Cell Block - Prisoner Rescue',
+                subtitle: 'Second Floor - Prison Cells',
+                readAloud: `The narrow corridor reeks of damp stone and unwashed bodies. Four iron-barred cells line the left wall. Most are empty, straw-covered floors visible through the bars. In the far cell—marked with a crude "4" scratched into the frame—you see a figure huddled against the wall. A Hessian guard patrols the corridor, musket shouldered.`,
+                dmNotes: `Cell #4 holds A.G. Achilles (Continental soldier). Lock is DC 15 Thieves' Tools. Achilles is weak but conscious. Guard is alert (passive Perception 13). Noise attracts more guards.`,
+                skillChallenges: [
+                    {
+                        name: 'Pick Cell Lock',
+                        dc: 15,
+                        skill: 'Thieves\' Tools',
+                        success: 'Cell opens silently',
+                        failure: 'Lock jams, makes noise - guard investigates'
+                    },
+                    {
+                        name: 'Distract Guard',
+                        dc: 14,
+                        skill: 'Deception',
+                        success: 'Guard moves away for 1 minute',
+                        failure: 'Guard becomes suspicious, calls backup'
+                    }
+                ],
+                enemies: ['hessian_guard_3']
+            },
+            'old-barracks-floor3': {
+                name: 'Officers\' Quarters - Colonel Rall',
+                subtitle: 'Third Floor - Command',
+                readAloud: `Rich mahogany furniture fills this well-appointed room. Maps cover a large oak desk, weighted down with an ornate Hessian helmet. A portrait of King George III hangs above a fireplace where logs crackle warmly. Colonel Johann Rall sits at the desk, a glass of wine in hand, reviewing troop dispositions. His aide stands at attention nearby.`,
+                dmNotes: `Rall is overconfident, slightly drunk. Won't believe Americans would attack on Christmas. Documents on desk include patrol schedules. Rall carries armory key. Window provides escape (15ft drop, DC 12 Acrobatics to avoid damage).`,
+                skillChallenges: [
+                    {
+                        name: 'Steal Documents',
+                        dc: 18,
+                        skill: 'Sleight of Hand',
+                        success: 'Documents obtained unnoticed',
+                        failure: 'Rall notices, calls guards'
+                    }
+                ],
+                enemies: ['rall', 'hessian_guard_4']
+            }
+        };
 
         // TACTICAL GRID SYSTEM
         class TacticalGrid {
@@ -1475,6 +1537,125 @@
                 } else {
                     floorTabs.classList.remove('active');
                 }
+
+                // Load encounter data
+                this.renderEncounter(locationKey);
+
+                // Load combat tracker
+                this.renderCombatTracker(locationKey);
+            }
+
+            renderEncounter(locationKey) {
+                const container = document.getElementById('encounters-content');
+                if (!container) return;
+
+                const encounter = ENCOUNTERS[locationKey];
+                if (!encounter) {
+                    container.innerHTML = '<p style="opacity: 0.7; font-size: 0.9rem; padding: 2rem;">No encounter data for this location</p>';
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div style="margin-bottom: 1.5rem;">
+                        <h2 style="color: var(--secondary); margin: 0;">${encounter.name}</h2>
+                        <p style="font-style: italic; opacity: 0.8; margin: 0.3rem 0 0 0;">${encounter.subtitle}</p>
+                    </div>
+
+                    <div style="background: #f4e8c8; border: 3px solid var(--secondary); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                            <span style="font-size: 1.2rem;">📖</span>
+                            <strong style="color: #1e3a5f; font-size: 1.1rem;">READ ALOUD TO PLAYERS</strong>
+                        </div>
+                        <p style="color: #1e3a5f; line-height: 1.6; margin: 0;">${encounter.readAloud}</p>
+                    </div>
+
+                    <div style="background: rgba(200, 200, 220, 0.3); border: 2px solid rgba(100, 100, 150, 0.5); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                            <span style="font-size: 1.2rem;">🔒</span>
+                            <strong style="color: var(--text); font-size: 1.1rem;">DM Notes (Hidden Info)</strong>
+                        </div>
+                        <p style="line-height: 1.6; margin: 0; opacity: 0.9;">${encounter.dmNotes}</p>
+                    </div>
+
+                    ${encounter.skillChallenges && encounter.skillChallenges.length > 0 ? `
+                        <div style="background: rgba(59, 130, 246, 0.1); border: 2px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 1.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                                <span style="font-size: 1.2rem;">🎯</span>
+                                <strong style="font-size: 1.1rem;">Skill Challenges</strong>
+                            </div>
+                            ${encounter.skillChallenges.map(challenge => `
+                                <div style="background: rgba(22, 163, 74, 0.1); border-left: 4px solid #16a34a; padding: 1rem; margin-bottom: 1rem; border-radius: 4px;">
+                                    <div style="font-weight: bold; margin-bottom: 0.5rem;">${challenge.name}</div>
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <strong>DC:</strong> <span style="background: #dc2626; color: white; padding: 0.2rem 0.6rem; border-radius: 4px; font-weight: bold;">${challenge.dc}</span>
+                                        <strong style="margin-left: 1rem;">${challenge.skill}</strong>
+                                    </div>
+                                    <div style="font-size: 0.9rem; opacity: 0.9;">
+                                        <strong style="color: #16a34a;">Success:</strong> ${challenge.success}<br>
+                                        <strong style="color: #dc2626;">Failure:</strong> ${challenge.failure}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                `;
+            }
+
+            renderCombatTracker(locationKey) {
+                const container = document.getElementById('combat-content');
+                if (!container) return;
+
+                const encounter = ENCOUNTERS[locationKey];
+                if (!encounter || !encounter.enemies) {
+                    container.innerHTML = '<p style="opacity: 0.7; font-size: 0.9rem; padding: 2rem;">No combat encounter</p>';
+                    return;
+                }
+
+                const enemyIds = encounter.enemies;
+                const enemies = enemyIds.map(id => CHARACTERS[id]).filter(e => e);
+
+                container.innerHTML = `
+                    <div style="background: #dc2626; padding: 1rem; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
+                        <h3 style="margin: 0; color: white;">⚔️ Combat Tracker - ${encounter.name}</h3>
+                        <button onclick="rollAllInitiative()" style="background: var(--secondary); color: var(--primary); border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">Roll All Initiative</button>
+                    </div>
+
+                    <div style="background: rgba(0,0,0,0.2); padding: 1.5rem;">
+                        ${enemies.map(enemy => {
+                            const hp = enemy.hp || 58;
+                            const maxHp = enemy.maxHp || hp;
+                            const ac = enemy.ac || 15;
+                            return `
+                                <div style="background: rgba(30, 30, 30, 0.6); border: 3px solid var(--secondary); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                        <div style="display: flex; align-items: center; gap: 1rem;">
+                                            <div style="font-size: 2rem;">▲</div>
+                                            <strong style="font-size: 1.3rem;">${enemy.name}</strong>
+                                        </div>
+                                        <div style="display: flex; gap: 1rem; align-items: center;">
+                                            <div style="text-align: center;">
+                                                <div style="font-size: 0.8rem; opacity: 0.7;">HP</div>
+                                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                                    <input type="number" value="${hp}" max="${maxHp}"
+                                                           style="width: 60px; padding: 0.4rem; background: rgba(0,0,0,0.5); border: 2px solid var(--secondary); color: white; text-align: center; font-size: 1.2rem; font-weight: bold; border-radius: 4px;"
+                                                           onchange="updateHP('${enemy.id}', this.value)">
+                                                    <span style="font-size: 1.2rem; font-weight: bold;">/ ${maxHp}</span>
+                                                </div>
+                                            </div>
+                                            <div style="text-align: center; padding: 0 1rem;">
+                                                <div style="font-size: 0.8rem; opacity: 0.7;">AC</div>
+                                                <div style="font-size: 1.5rem; font-weight: bold;">${ac}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <button onclick="attackRoll('${enemy.id}', '${enemy.name}')" style="flex: 1; background: #dc2626; color: white; border: none; padding: 0.6rem; border-radius: 6px; font-weight: bold; cursor: pointer;">Attack</button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
             }
 
             loadBackground(key, location) {
@@ -2505,21 +2686,43 @@
 
         function rollDice(sides) {
             const result = Math.floor(Math.random() * sides) + 1;
-            const container = document.getElementById('dice-results');
-            const time = new Date().toLocaleTimeString();
-            const resultHTML = `
-                <div style="padding: 0.5rem; margin-bottom: 0.5rem; background: rgba(212, 175, 55, 0.2); border-left: 3px solid #d4af37; border-radius: 4px;">
-                    <strong style="font-size: 1.2rem; color: #d4af37;">d${sides}: ${result}</strong>
-                    <span style="opacity: 0.7; font-size: 0.8rem; margin-left: 1rem;">${time}</span>
-                </div>
-            `;
-            if (container.children.length > 0 && container.children[0].style.opacity === '0.5') {
-                container.innerHTML = resultHTML;
-            } else {
-                container.innerHTML = resultHTML + container.innerHTML;
-            }
             if (window.tactical) {
                 tactical.addLog(`Rolled d${sides}: ${result}`, 'combat');
+            }
+            return result;
+        }
+
+        function rollAllInitiative() {
+            if (!window.tactical) return;
+            const encounter = ENCOUNTERS[tactical.currentLocation];
+            if (!encounter || !encounter.enemies) return;
+
+            encounter.enemies.forEach(enemyId => {
+                const enemy = CHARACTERS[enemyId];
+                if (enemy) {
+                    const roll = rollDice(20);
+                    tactical.addLog(`${enemy.name}: Initiative ${roll}`, 'combat');
+                }
+            });
+        }
+
+        function updateHP(enemyId, newHP) {
+            if (!window.tactical) return;
+            const enemy = CHARACTERS[enemyId];
+            if (enemy) {
+                tactical.addLog(`${enemy.name}: HP changed to ${newHP}`, 'info');
+            }
+        }
+
+        function attackRoll(enemyId, enemyName) {
+            const roll = rollDice(20);
+            const damage = rollDice(8) + 5;
+            if (window.tactical) {
+                if (roll >= 15) {
+                    tactical.addLog(`${enemyName}: CRITICAL HIT! ${roll}+5=${roll+5} to hit → ${damage} damage`, 'combat');
+                } else {
+                    tactical.addLog(`${enemyName}: Attack roll ${roll}+5=${roll+5} to hit`, 'combat');
+                }
             }
         }
 
