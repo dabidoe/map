@@ -1267,6 +1267,15 @@
                     <button class="control-btn active" id="grid-toggle-btn" onclick="tactical.toggleGrid()">Hide Grid</button>
                     <button class="control-btn" id="snap-toggle-btn" onclick="tactical.toggleSnap()">Snap: ON</button>
                     <div style="margin-top: 0.5rem; font-size: 0.75rem; opacity: 0.7;">Grid: <span id="grid-info">5ft • 30×20</span></div>
+
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(251, 191, 36, 0.3);">
+                        <div class="control-title">Background Image</div>
+                        <input type="text" id="bg-image-url" placeholder="Image URL" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px; margin-bottom: 0.5rem; font-size: 0.8rem;">
+                        <button class="control-btn" onclick="document.getElementById('bg-image-file').click()">📁 Upload</button>
+                        <input type="file" id="bg-image-file" accept="image/*" style="display: none;" onchange="tactical.uploadBackgroundImage(this)">
+                        <button class="control-btn" onclick="tactical.setBackgroundFromURL()">Set URL</button>
+                        <button class="control-btn" onclick="tactical.clearBackground()">Clear BG</button>
+                    </div>
                 </div>
                 <div class="token-controls">
                     <button class="token-btn" onclick="tactical.openCharacterLibrary('player')">Add Player</button>
@@ -1956,6 +1965,49 @@
                 const btn = document.getElementById('snap-toggle-btn');
                 btn.textContent = `Snap: ${this.snapToGrid ? 'ON' : 'OFF'}`;
                 btn.classList.toggle('active', this.snapToGrid);
+            }
+
+            setBackgroundFromURL() {
+                const url = document.getElementById('bg-image-url').value;
+                if (!url || !url.trim()) {
+                    alert('Please enter an image URL');
+                    return;
+                }
+
+                const img = new Image();
+                img.onload = () => {
+                    this.backgroundImage = img;
+                    this.draw();
+                    this.addLog('Background image loaded from URL', 'info');
+                };
+                img.onerror = () => {
+                    alert('Failed to load image from URL. Please check the URL and try again.');
+                };
+                img.src = url;
+            }
+
+            uploadBackgroundImage(input) {
+                if (input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            this.backgroundImage = img;
+                            this.draw();
+                            this.addLog('Background image uploaded', 'info');
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(input.files[0]);
+                }
+            }
+
+            clearBackground() {
+                this.backgroundImage = null;
+                this.draw();
+                this.addLog('Background image cleared', 'info');
+                document.getElementById('bg-image-url').value = '';
+                document.getElementById('bg-image-file').value = '';
             }
 
             addToken(type) {
