@@ -459,7 +459,8 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: #1a1410;
+            background: #f4e4c1; /* Parchment background */
+            color: #2c1810; /* Dark ink color */
             z-index: 5000;
         }
 
@@ -469,7 +470,7 @@
         }
 
         .tactical-header {
-            background: linear-gradient(135deg, var(--primary), #0f1f3a);
+            background: linear-gradient(135deg, #8b6f47, #6b5537); /* Brown leather */
             border-bottom: 3px solid var(--secondary);
             padding: 1rem 1.5rem;
             display: flex;
@@ -480,13 +481,13 @@
         .tactical-title {
             font-size: 1.3rem;
             font-weight: bold;
-            color: var(--secondary);
+            color: #f4e4c1; /* Light parchment text on dark header */
         }
 
         .tactical-close {
-            background: var(--accent);
-            color: white;
-            border: none;
+            background: #8b4513; /* Saddle brown */
+            color: #f4e4c1;
+            border: 2px solid var(--secondary);
             padding: 0.6rem 1.2rem;
             border-radius: 6px;
             cursor: pointer;
@@ -497,14 +498,15 @@
         }
 
         .tactical-close:hover {
-            background: #b91c1c;
+            background: var(--secondary);
+            color: #2c1810;
             transform: scale(1.05);
         }
 
         .tactical-tabs {
             display: flex;
-            background: rgba(30, 58, 95, 0.3);
-            border-bottom: 3px solid var(--secondary);
+            background: rgba(139, 111, 71, 0.2); /* Light brown tint */
+            border-bottom: 3px solid #8b6f47;
             padding: 0 1rem;
             justify-content: space-between;
         }
@@ -524,23 +526,23 @@
             cursor: pointer;
             font-weight: bold;
             font-size: 0.8rem;
-            background: rgba(0, 0, 0, 0.4);
-            border: 2px solid rgba(212, 175, 55, 0.3);
+            background: rgba(139, 111, 71, 0.3);
+            border: 2px solid #8b6f47;
             border-radius: 6px;
             transition: all 0.2s;
-            color: rgba(244, 232, 208, 0.8);
+            color: #2c1810;
         }
 
         .floor-tab:hover {
-            background: rgba(212, 175, 55, 0.2);
-            border-color: rgba(212, 175, 55, 0.6);
-            color: var(--text);
+            background: rgba(212, 175, 55, 0.4);
+            border-color: var(--secondary);
+            color: #2c1810;
         }
 
         .floor-tab.active {
             background: var(--secondary);
             border-color: var(--secondary);
-            color: var(--primary);
+            color: #2c1810;
         }
 
         .tactical-tab {
@@ -551,18 +553,18 @@
             border-bottom: 3px solid transparent;
             margin-bottom: -3px;
             transition: all 0.3s;
-            color: rgba(244, 232, 208, 0.7);
+            color: #2c1810;
         }
 
         .tactical-tab:hover {
-            background: rgba(212, 175, 55, 0.2);
-            color: var(--text);
+            background: rgba(212, 175, 55, 0.3);
+            color: #2c1810;
         }
 
         .tactical-tab.active {
-            background: rgba(212, 175, 55, 0.3);
-            border-bottom-color: var(--secondary);
-            color: var(--secondary);
+            background: rgba(212, 175, 55, 0.4);
+            border-bottom-color: #8b6f47;
+            color: #2c1810;
         }
 
         .tactical-body {
@@ -594,28 +596,29 @@
             position: absolute;
             top: 10px;
             right: 10px;
-            background: rgba(26, 20, 16, 0.95);
-            border: 2px solid var(--secondary);
+            background: rgba(244, 228, 193, 0.95); /* Light parchment */
+            border: 3px solid #8b6f47;
             border-radius: 8px;
             padding: 1rem;
             max-width: 250px;
             z-index: 100;
+            box-shadow: 0 4px 12px rgba(74, 37, 17, 0.3);
         }
 
         .control-title {
             font-weight: bold;
-            color: var(--secondary);
+            color: #2c1810;
             margin-bottom: 0.8rem;
             font-size: 0.9rem;
-            border-bottom: 2px solid var(--secondary);
+            border-bottom: 2px solid #8b6f47;
             padding-bottom: 0.5rem;
         }
 
         .control-btn {
             width: 100%;
-            background: rgba(30, 58, 95, 0.5);
-            border: 1px solid var(--secondary);
-            color: var(--text);
+            background: rgba(139, 111, 71, 0.3);
+            border: 2px solid #8b6f47;
+            color: #2c1810;
             padding: 0.5rem;
             border-radius: 4px;
             cursor: pointer;
