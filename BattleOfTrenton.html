@@ -2479,6 +2479,9 @@ ESCAPE: Window 10ft drop`
                 this.battleLog = [];
                 this.currentLocation = null;
                 this.portraitImages = {}; // Cache for loaded portrait images
+                this.spawnPoint = null; // Spawn point for this floor
+                this.isDraggingSpawn = false; // Track if dragging spawn point
+                this.spawnPoints = {}; // Store spawn points per location
             }
 
             init(locationKey, location) {
@@ -2491,6 +2494,16 @@ ESCAPE: Window 10ft drop`
                 this.canvas.height = this.rows * this.gridSize;
 
                 document.getElementById('grid-info').textContent = `${this.gridFeet}ft • ${this.cols}×${this.rows}`;
+
+                // Initialize spawn point (load saved or create default at bottom-center)
+                if (!this.spawnPoints[locationKey]) {
+                    this.spawnPoints[locationKey] = {
+                        x: (this.cols / 2) * this.gridSize,
+                        y: (this.rows - 2) * this.gridSize, // 2 squares from bottom
+                        type: 'door'
+                    };
+                }
+                this.spawnPoint = this.spawnPoints[locationKey];
 
                 // Try to load background image
                 this.loadBackground(locationKey, location);
@@ -2686,6 +2699,21 @@ ESCAPE: Window 10ft drop`
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
 
+                // Check if clicking on spawn point
+                if (this.spawnPoint) {
+                    const dx = x - this.spawnPoint.x;
+                    const dy = y - this.spawnPoint.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < this.gridSize * 0.5) {
+                        this.isDraggingSpawn = true;
+                        this.dragOffset = { x: dx, y: dy };
+                        this.selectedToken = null; // Deselect any token
+                        this.draw();
+                        return;
+                    }
+                }
+
                 // Check if clicking on a token
                 for (let i = this.tokens.length - 1; i >= 0; i--) {
                     const token = this.tokens[i];
@@ -2719,7 +2747,24 @@ ESCAPE: Window 10ft drop`
                 const mouseX = e.clientX - rect.left;
                 const mouseY = e.clientY - rect.top;
 
-                // Handle dragging
+                // Handle spawn point dragging
+                if (this.isDraggingSpawn && this.spawnPoint) {
+                    let x = mouseX - this.dragOffset.x;
+                    let y = mouseY - this.dragOffset.y;
+
+                    if (this.snapToGrid) {
+                        // Snap to center of grid squares
+                        x = Math.round(x / this.gridSize) * this.gridSize;
+                        y = Math.round(y / this.gridSize) * this.gridSize;
+                    }
+
+                    this.spawnPoint.x = x;
+                    this.spawnPoint.y = y;
+                    this.draw();
+                    return;
+                }
+
+                // Handle token dragging
                 if (this.selectedToken && this.isDragging) {
                     let x = mouseX - this.dragOffset.x;
                     let y = mouseY - this.dragOffset.y;
@@ -2763,6 +2808,7 @@ ESCAPE: Window 10ft drop`
 
             onMouseUp() {
                 this.isDragging = false;
+                this.isDraggingSpawn = false;
                 this.draw();
             }
 
@@ -2860,9 +2906,16 @@ ESCAPE: Window 10ft drop`
                 PARTY_CHARACTERS.forEach((char, index) => {
                     // Check if already on map
                     if (!this.tokens.find(t => t.id === char.id)) {
-                        // Place party members in a row
-                        const x = ((index % 5) + 1) * this.gridSize + this.gridSize / 2;
-                        const y = (Math.floor(index / 5) + 1) * this.gridSize + this.gridSize / 2;
+                        // Place party members at spawn point in a cluster
+                        const spawnX = this.spawnPoint ? this.spawnPoint.x : (this.cols / 2) * this.gridSize;
+                        const spawnY = this.spawnPoint ? this.spawnPoint.y : (this.rows - 2) * this.gridSize;
+
+                        // Arrange in a small cluster around spawn point
+                        const offsetX = ((index % 3) - 1) * this.gridSize; // -1, 0, 1 grid squares
+                        const offsetY = (Math.floor(index / 3) - 1) * this.gridSize;
+
+                        const x = spawnX + offsetX;
+                        const y = spawnY + offsetY;
 
                         this.tokens.push({
                             id: char.id,
@@ -2875,6 +2928,8 @@ ESCAPE: Window 10ft drop`
                             hp: char.hp,
                             maxHp: char.maxHp,
                             ac: char.ac,
+                            portrait: char.portrait || null, // Use character portrait if available
+                            character: char, // Store full character reference
                             selected: false
                         });
                         loaded++;
@@ -2934,6 +2989,11 @@ ESCAPE: Window 10ft drop`
 
                 // Draw tokens
                 this.tokens.forEach(token => this.drawToken(token));
+
+                // Draw spawn point
+                if (this.spawnPoint) {
+                    this.drawSpawnPoint();
+                }
             }
 
             drawRooms() {
@@ -3006,6 +3066,43 @@ ESCAPE: Window 10ft drop`
                     this.ctx.font = 'bold 14px Arial';
                     this.ctx.fillText('HQ', 14*g, 10.5*g);
                 }
+            }
+
+            drawSpawnPoint() {
+                if (!this.spawnPoint) return;
+
+                const g = this.gridSize;
+                const x = this.spawnPoint.x;
+                const y = this.spawnPoint.y;
+                const size = g * 0.9;
+
+                this.ctx.save();
+
+                // Draw spawn marker [_*_]
+                this.ctx.shadowColor = 'rgba(212, 175, 55, 0.8)';
+                this.ctx.shadowBlur = 15;
+
+                // Outer square
+                this.ctx.strokeStyle = '#d4af37';
+                this.ctx.fillStyle = 'rgba(212, 175, 55, 0.2)';
+                this.ctx.lineWidth = 3;
+                this.ctx.strokeRect(x - size/2, y - size/2, size, size);
+                this.ctx.fillRect(x - size/2, y - size/2, size, size);
+
+                // Draw door icon
+                this.ctx.fillStyle = '#d4af37';
+                this.ctx.font = `bold ${g * 0.6}px Arial`;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText('🚪', x, y);
+
+                // Label
+                this.ctx.shadowBlur = 0;
+                this.ctx.fillStyle = '#d4af37';
+                this.ctx.font = 'bold 10px Arial';
+                this.ctx.fillText('SPAWN', x, y + size/2 + 12);
+
+                this.ctx.restore();
             }
 
             drawGrid() {
