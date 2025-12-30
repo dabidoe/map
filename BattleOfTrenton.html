@@ -1909,6 +1909,71 @@
 
         console.log('Characters loaded:', Object.keys(CHARACTERS).length);
 
+        // LOCATION NOTES - Auto-populated in NOTES tab for each location
+        const LOCATION_NOTES = {
+            "washington-camp": `WASHINGTON'S ENCAMPMENT - December 25, 1776
+
+READ ALOUD:
+"The password tonight is 'Victory or Death.' General Washington stands before his officers in the command tent. Maps of Trenton spread across a makeshift table. His weathered face catches candlelight: 'Gentlemen, we strike at dawn. The Hessians celebrate Christmas - they will not expect us.'"
+
+KEY NPCS: Washington (Commander), Greene (tactical genius), Sullivan (aggressive), Knox (artillery chief)
+
+OBJECTIVES:
+1. Meet Washington for mission briefing
+2. Choose division (Greene south / Sullivan north)
+3. Prepare for river crossing
+4. Optional: Scout / gather intelligence
+
+NOTES: Players can request supplies. Mood is desperate but determined.`,
+
+            "old-barracks-floor1": `OLD BARRACKS - GROUND FLOOR
+
+READ ALOUD:
+"Oil lamp flickers. Middle-aged Hessian (Gus) reads a letter at wooden table, blue coat unbuttoned, musket against wall. Four iron cell doors. Half-empty schnapps. He looks tired, melancholy."
+
+GUS (age 47, daughter Elisabeth age 12):
+• BRIBE 10gp DC 14 - turns away 10min
+• LETTER DC 12 - becomes ally
+• STEALTH DC 16 - knockout
+• COMBAT - alerts upstairs
+
+PRISONER: A.G. Achilles in Cell #4, weak but conscious
+LOCK: DC 15, keys on Gus's belt
+NOISE carries upstairs`,
+
+            "old-barracks-floor2": `OLD BARRACKS - SECOND FLOOR
+
+READ ALOUD:
+"Corridor reeks of damp stone. Four cells, mostly empty. Cell #4 has figure huddled against wall. Hessian guard patrols, musket shouldered."
+
+A.G. ACHILLES (Continental, age 23, beaten but resilient):
+• Intel: "Guard rotation at dawn"
+• Injured - movement halved
+
+CHALLENGES:
+• Pick lock DC 15 (1 min, noisy)
+• Distract guard DC 14
+• Alarm brings floor 3 reinforcements`,
+
+            "old-barracks-floor3": `OLD BARRACKS - THIRD FLOOR
+
+READ ALOUD:
+"Warmer, well-furnished. Officers' bunks. Ornate door: 'Oberst Rall.' Light beneath. German voices laughing. Glass clinking. Christmas celebration."
+
+COLONEL RALL (Hessian commander, DANGEROUS):
+• Drinking with officers
+• Elite fighter
+• History: dies tomorrow with unread warning
+
+OPTIONS:
+1. ASSASSINATION (HIGH RISK) - changes history
+2. INTEL - steal maps/schedules DC 18
+3. SABOTAGE - poison/false orders
+
+LOOT: Rall's saber (+1), maps, 150gp
+ESCAPE: Window 10ft drop`
+        };
+
         // ENCOUNTER DATA
         const ENCOUNTERS = {
             'old-barracks-floor1': {
@@ -3345,6 +3410,12 @@
             document.getElementById('tactical-location-name').textContent = `⚔️ ${floorNames[floorKey]}`;
             tactical.cleanup();
             tactical.init(floorKey, { name: floorNames[floorKey] });
+
+            // Populate NOTES tab with location-specific notes
+            const notesTextarea = document.getElementById('tactical-notes');
+            if (notesTextarea && LOCATION_NOTES[floorKey]) {
+                notesTextarea.value = LOCATION_NOTES[floorKey];
+            }
         }
 
         // CHARACTER MANAGEMENT
