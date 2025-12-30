@@ -4054,7 +4054,10 @@
         function addEnemyToCombat() {
             const enemies = Object.values(CHARACTERS).filter(c => c.type === 'enemy');
             if (enemies.length === 0) {
-                alert('No enemies available. Add enemies in the CHARACTERS tab first.');
+                // Switch to CHARACTERS tab to add enemies
+                if (confirm('No enemies available. Switch to CHARACTERS tab to add enemies?')) {
+                    switchTacticalTab('encounters');
+                }
                 return;
             }
 
