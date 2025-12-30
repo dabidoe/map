@@ -3367,7 +3367,11 @@
         let currentDetailCharId = null;
 
         function showCharacterDetail(charId) {
-            const char = CHARACTERS[charId];
+            // Look in CHARACTERS object first, then PARTY_CHARACTERS
+            let char = CHARACTERS[charId];
+            if (!char) {
+                char = PARTY_CHARACTERS.find(c => c.id === charId);
+            }
             if (!char) return;
 
             currentDetailCharId = charId;
@@ -3750,7 +3754,7 @@
             const hasImage = imgSrc && imgSrc.trim();
 
             return `
-                <div style="background: rgba(30, 58, 95, 0.3); border: 3px solid var(--secondary); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; display: grid; grid-template-columns: 150px 1fr; gap: 1.5rem;">
+                <div onclick="showCharacterDetail('${char.id}')" style="background: rgba(30, 58, 95, 0.3); border: 3px solid var(--secondary); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem; display: grid; grid-template-columns: 150px 1fr; gap: 1.5rem; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(30, 58, 95, 0.5)'" onmouseout="this.style.background='rgba(30, 58, 95, 0.3)'">
                     <!-- Image -->
                     <div style="width: 150px; height: 150px; background: rgba(0,0,0,0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                         ${hasImage ? `<img src="${imgSrc}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="font-size: 4rem; opacity: 0.5;">👤</div>'}
@@ -3761,12 +3765,12 @@
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                             <div>
                                 <h3 style="margin: 0; color: var(--secondary); font-size: 1.5rem;">${char.name}</h3>
-                                ${char.class ? `<div style="opacity: 0.8; font-style: italic; margin-top: 0.3rem;">${char.class}</div>` : ''}
+                                ${char.class || char.title ? `<div style="opacity: 0.8; font-style: italic; margin-top: 0.3rem;">${char.class || char.title}</div>` : ''}
                             </div>
-                            <button onclick="deleteCharacter('${char.id}')" style="background: #dc2626; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Remove</button>
+                            <button onclick="event.stopPropagation(); deleteCharacter('${char.id}')" style="background: #dc2626; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Remove</button>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1rem;">
+                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; margin-bottom: 1rem;">
                             <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 6px;">
                                 <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">HP</div>
                                 <div style="font-size: 1.5rem; font-weight: bold; color: #16a34a;">${char.hp}/${char.maxHp}</div>
@@ -3780,21 +3784,49 @@
                                 <div style="font-size: 1.5rem; font-weight: bold;">${char.speed}ft</div>
                             </div>
                             <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 6px;">
-                                <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Initiative</div>
+                                <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Init</div>
                                 <div style="font-size: 1.5rem; font-weight: bold;">${char.initiative}</div>
+                            </div>
+                            <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 6px;">
+                                <div style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 0.3rem;">Prof</div>
+                                <div style="font-size: 1.5rem; font-weight: bold;">+${char.proficiency || 2}</div>
                             </div>
                         </div>
 
-                        ${char.attacks && char.attacks.length > 0 ? `
-                            <div>
-                                <div style="font-weight: bold; margin-bottom: 0.5rem; opacity: 0.9;">⚔️ Attacks</div>
-                                ${char.attacks.map(attack => `
-                                    <div style="background: rgba(220, 38, 38, 0.2); padding: 0.6rem; border-left: 3px solid #dc2626; margin-bottom: 0.5rem; border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
-                                        ${attack}
+                        <!-- Ability Scores Preview -->
+                        ${char.str !== undefined ? `
+                            <div style="margin-bottom: 1rem;">
+                                <div style="font-weight: bold; margin-bottom: 0.5rem; opacity: 0.9;">Abilities</div>
+                                <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem;">
+                                    <div style="text-align: center; padding: 0.5rem; background: rgba(0,0,0,0.3); border-radius: 4px;">
+                                        <div style="font-size: 0.65rem; opacity: 0.7;">STR</div>
+                                        <div style="font-weight: bold;">${char.str}</div>
                                     </div>
-                                `).join('')}
+                                    <div style="text-align: center; padding: 0.5rem; background: rgba(0,0,0,0.3); border-radius: 4px;">
+                                        <div style="font-size: 0.65rem; opacity: 0.7;">DEX</div>
+                                        <div style="font-weight: bold;">${char.dex}</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 0.5rem; background: rgba(0,0,0,0.3); border-radius: 4px;">
+                                        <div style="font-size: 0.65rem; opacity: 0.7;">CON</div>
+                                        <div style="font-weight: bold;">${char.con}</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 0.5rem; background: rgba(0,0,0,0.3); border-radius: 4px;">
+                                        <div style="font-size: 0.65rem; opacity: 0.7;">INT</div>
+                                        <div style="font-weight: bold;">${char.int}</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 0.5rem; background: rgba(0,0,0,0.3); border-radius: 4px;">
+                                        <div style="font-size: 0.65rem; opacity: 0.7;">WIS</div>
+                                        <div style="font-weight: bold;">${char.wis}</div>
+                                    </div>
+                                    <div style="text-align: center; padding: 0.5rem; background: rgba(0,0,0,0.3); border-radius: 4px;">
+                                        <div style="font-size: 0.65rem; opacity: 0.7;">CHA</div>
+                                        <div style="font-weight: bold;">${char.cha}</div>
+                                    </div>
+                                </div>
                             </div>
                         ` : ''}
+
+                        <div style="font-size: 0.85rem; opacity: 0.7; font-style: italic;">Click for full stats, saves & skills</div>
                     </div>
                 </div>
             `;
