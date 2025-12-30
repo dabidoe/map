@@ -2041,8 +2041,9 @@
                     floorTabs.classList.remove('active');
                 }
 
-                // Load encounter data
-                this.renderEncounter(locationKey);
+                // DON'T render encounter data - it overwrites CHARACTERS tab
+                // Move encounter data to INFO tab instead
+                // this.renderEncounter(locationKey);
 
                 // Load combat tracker
                 this.renderCombatTracker(locationKey);
