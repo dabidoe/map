@@ -1143,7 +1143,7 @@
                                 </div>
                             </div>
 
-                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+                            <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem;">
                                 <div>
                                     <label style="display: block; margin-bottom: 0.3rem; opacity: 0.8; font-size: 0.9rem;">HP *</label>
                                     <input type="number" id="char-hp" required value="30" style="width: 100%; padding: 0.6rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px;">
@@ -1158,8 +1158,81 @@
                                 </div>
                                 <div>
                                     <label style="display: block; margin-bottom: 0.3rem; opacity: 0.8; font-size: 0.9rem;">Initiative</label>
-                                    <input type="number" id="char-initiative" value="+0" style="width: 100%; padding: 0.6rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px;">
+                                    <input type="text" id="char-initiative" value="+0" placeholder="+2" style="width: 100%; padding: 0.6rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px;">
                                 </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 0.3rem; opacity: 0.8; font-size: 0.9rem;">Prof Bonus</label>
+                                    <input type="number" id="char-proficiency" value="2" style="width: 100%; padding: 0.6rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px;">
+                                </div>
+                            </div>
+
+                            <!-- Ability Scores -->
+                            <div>
+                                <div style="font-weight: bold; margin-bottom: 0.5rem; color: var(--secondary);">Ability Scores</div>
+                                <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem;">
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.3rem; opacity: 0.8; font-size: 0.75rem; text-align: center;">STR</label>
+                                        <input type="number" id="char-str" value="10" min="1" max="30" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px; text-align: center;">
+                                    </div>
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.3rem; opacity: 0.8; font-size: 0.75rem; text-align: center;">DEX</label>
+                                        <input type="number" id="char-dex" value="10" min="1" max="30" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px; text-align: center;">
+                                    </div>
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.3rem; opacity: 0.8; font-size: 0.75rem; text-align: center;">CON</label>
+                                        <input type="number" id="char-con" value="10" min="1" max="30" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px; text-align: center;">
+                                    </div>
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.3rem; opacity: 0.8; font-size: 0.75rem; text-align: center;">INT</label>
+                                        <input type="number" id="char-int" value="10" min="1" max="30" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px; text-align: center;">
+                                    </div>
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.3rem; opacity: 0.8; font-size: 0.75rem; text-align: center;">WIS</label>
+                                        <input type="number" id="char-wis" value="10" min="1" max="30" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px; text-align: center;">
+                                    </div>
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.3rem; opacity: 0.8; font-size: 0.75rem; text-align: center;">CHA</label>
+                                        <input type="number" id="char-cha" value="10" min="1" max="30" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px; text-align: center;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Saving Throws -->
+                            <div>
+                                <div style="font-weight: bold; margin-bottom: 0.5rem; color: var(--secondary);">Saving Throws (e.g., "+3" or "-1")</div>
+                                <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem;">
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.3rem; opacity: 0.8; font-size: 0.75rem; text-align: center;">STR</label>
+                                        <input type="text" id="char-str-save" value="+0" placeholder="+2" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px; text-align: center;">
+                                    </div>
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.3rem; opacity: 0.8; font-size: 0.75rem; text-align: center;">DEX</label>
+                                        <input type="text" id="char-dex-save" value="+0" placeholder="+2" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px; text-align: center;">
+                                    </div>
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.3rem; opacity: 0.8; font-size: 0.75rem; text-align: center;">CON</label>
+                                        <input type="text" id="char-con-save" value="+0" placeholder="+2" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px; text-align: center;">
+                                    </div>
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.3rem; opacity: 0.8; font-size: 0.75rem; text-align: center;">INT</label>
+                                        <input type="text" id="char-int-save" value="+0" placeholder="+2" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px; text-align: center;">
+                                    </div>
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.3rem; opacity: 0.8; font-size: 0.75rem; text-align: center;">WIS</label>
+                                        <input type="text" id="char-wis-save" value="+0" placeholder="+2" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px; text-align: center;">
+                                    </div>
+                                    <div>
+                                        <label style="display: block; margin-bottom: 0.3rem; opacity: 0.8; font-size: 0.75rem; text-align: center;">CHA</label>
+                                        <input type="text" id="char-cha-save" value="+0" placeholder="+2" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px; text-align: center;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Skills -->
+                            <div>
+                                <div style="font-weight: bold; margin-bottom: 0.5rem; color: var(--secondary);">Skills (JSON format)</div>
+                                <textarea id="char-skills" rows="3" placeholder='{"Athletics": "+5", "Perception": "+3", "Stealth": "+4"}' style="width: 100%; padding: 0.6rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px; font-family: monospace; font-size: 0.85rem;"></textarea>
+                                <div style="font-size: 0.75rem; opacity: 0.6; margin-top: 0.3rem;">Enter skills as JSON. Common skills: Athletics, Acrobatics, Sleight of Hand, Stealth, Arcana, History, Investigation, Nature, Religion, Animal Handling, Insight, Medicine, Perception, Survival, Deception, Intimidation, Performance, Persuasion</div>
                             </div>
 
                             <div>
@@ -1360,9 +1433,26 @@
                     <!-- Add Combatants -->
                     <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(30, 58, 95, 0.2); border-radius: 8px;">
                         <div style="font-weight: bold; margin-bottom: 0.8rem; opacity: 0.9;">Add to Combat:</div>
+                        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.8rem;">
+                            <button onclick="addAllCombatantsToCombat()" style="flex: 1; padding: 0.8rem; background: #16a34a; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">➕ Add ALL Combatants</button>
+                        </div>
                         <div style="display: flex; gap: 0.5rem;">
                             <button onclick="addPartyToCombat()" style="flex: 1; padding: 0.6rem; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">+ All Party Members</button>
                             <button onclick="addEnemyToCombat()" style="flex: 1; padding: 0.6rem; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer;">+ Select Enemy</button>
+                        </div>
+                    </div>
+
+                    <!-- Turn Tracker -->
+                    <div id="turn-tracker" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: rgba(251, 191, 36, 0.2); border: 3px solid var(--secondary); border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 0.3rem;">Current Turn:</div>
+                                <div id="current-turn-name" style="font-size: 1.5rem; font-weight: bold; color: var(--secondary);">—</div>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button onclick="previousTurn()" style="padding: 0.8rem 1.2rem; background: rgba(100, 100, 100, 0.3); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">← Prev</button>
+                                <button onclick="nextTurn()" style="padding: 0.8rem 1.2rem; background: var(--secondary); color: var(--primary); border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Next →</button>
+                            </div>
                         </div>
                     </div>
 
@@ -1488,6 +1578,27 @@
                 "maxHp": 95,
                 "ac": 18,
                 "initiative": "+2",
+                "proficiency": 4,
+                "str": 16,
+                "dex": 14,
+                "con": 16,
+                "int": 14,
+                "wis": 16,
+                "cha": 18,
+                "strSave": "+7",
+                "dexSave": "+2",
+                "conSave": "+7",
+                "intSave": "+2",
+                "wisSave": "+7",
+                "chaSave": "+8",
+                "skills": {
+                    "Athletics": "+7",
+                    "History": "+6",
+                    "Insight": "+7",
+                    "Intimidation": "+8",
+                    "Perception": "+7",
+                    "Persuasion": "+8"
+                },
                 "attacks": ["Saber +7 to hit, 1d8+4 slashing", "Pistol +5 to hit, 1d10+2 piercing"],
                 "description": "Commander-in-Chief of the Continental Army. Led the daring Christmas night attack on Trenton."
             },
@@ -1503,6 +1614,27 @@
                 "maxHp": 85,
                 "ac": 17,
                 "initiative": "+3",
+                "proficiency": 4,
+                "str": 15,
+                "dex": 16,
+                "con": 14,
+                "int": 16,
+                "wis": 15,
+                "cha": 14,
+                "strSave": "+6",
+                "dexSave": "+3",
+                "conSave": "+6",
+                "intSave": "+7",
+                "wisSave": "+6",
+                "chaSave": "+2",
+                "skills": {
+                    "Athletics": "+6",
+                    "History": "+7",
+                    "Investigation": "+7",
+                    "Perception": "+6",
+                    "Persuasion": "+6",
+                    "Survival": "+6"
+                },
                 "attacks": ["Sword +6 to hit, 1d8+3 slashing", "Pistol +5 to hit, 1d10+2 piercing"],
                 "description": "Washington's most trusted general. Commanded the southern division during the attack."
             },
@@ -1518,6 +1650,25 @@
                 "maxHp": 80,
                 "ac": 16,
                 "initiative": "+2",
+                "proficiency": 4,
+                "str": 16,
+                "dex": 14,
+                "con": 15,
+                "int": 12,
+                "wis": 14,
+                "cha": 13,
+                "strSave": "+7",
+                "dexSave": "+2",
+                "conSave": "+6",
+                "intSave": "+1",
+                "wisSave": "+6",
+                "chaSave": "+1",
+                "skills": {
+                    "Athletics": "+7",
+                    "Intimidation": "+5",
+                    "Perception": "+6",
+                    "Survival": "+6"
+                },
                 "attacks": ["Sword +6 to hit, 1d8+3 slashing", "Musket +4 to hit, 1d12+1 piercing"],
                 "description": "Led the northern division during the Trenton attack."
             },
@@ -1533,6 +1684,25 @@
                 "maxHp": 75,
                 "ac": 15,
                 "initiative": "+1",
+                "proficiency": 3,
+                "str": 14,
+                "dex": 12,
+                "con": 14,
+                "int": 16,
+                "wis": 13,
+                "cha": 14,
+                "strSave": "+5",
+                "dexSave": "+1",
+                "conSave": "+2",
+                "intSave": "+6",
+                "wisSave": "+4",
+                "chaSave": "+2",
+                "skills": {
+                    "Arcana": "+6",
+                    "History": "+6",
+                    "Investigation": "+6",
+                    "Perception": "+4"
+                },
                 "attacks": ["Sword +4 to hit, 1d8+2 slashing", "Pistol +3 to hit, 1d10+1 piercing"],
                 "description": "Former bookseller who became Washington's artillery chief."
             },
@@ -1548,6 +1718,25 @@
                 "maxHp": 45,
                 "ac": 12,
                 "initiative": "+2",
+                "proficiency": 2,
+                "str": 12,
+                "dex": 14,
+                "con": 11,
+                "int": 10,
+                "wis": 12,
+                "cha": 10,
+                "strSave": "+1",
+                "dexSave": "+2",
+                "conSave": "+0",
+                "intSave": "+0",
+                "wisSave": "+1",
+                "chaSave": "+0",
+                "skills": {
+                    "Athletics": "+3",
+                    "Perception": "+3",
+                    "Stealth": "+4",
+                    "Survival": "+3"
+                },
                 "attacks": ["Unarmed Strike +3 to hit, 1d4+1 bludgeoning"],
                 "description": "Continental soldier imprisoned in Cell #4 on the second floor"
             },
@@ -1563,6 +1752,26 @@
                 "maxHp": 75,
                 "ac": 18,
                 "initiative": "+3",
+                "proficiency": 4,
+                "str": 18,
+                "dex": 16,
+                "con": 16,
+                "int": 14,
+                "wis": 13,
+                "cha": 16,
+                "strSave": "+8",
+                "dexSave": "+3",
+                "conSave": "+7",
+                "intSave": "+2",
+                "wisSave": "+5",
+                "chaSave": "+7",
+                "skills": {
+                    "Athletics": "+8",
+                    "History": "+6",
+                    "Intimidation": "+7",
+                    "Perception": "+5",
+                    "Persuasion": "+7"
+                },
                 "attacks": ["Greatsword +8 to hit, 2d6+5 slashing", "Command: Rally troops (allies gain +2 AC for 1 round)"],
                 "description": "Commander of Hessian forces. In the officers' quarters on third floor."
             },
@@ -1578,6 +1787,24 @@
                 "maxHp": 58,
                 "ac": 17,
                 "initiative": "+1",
+                "proficiency": 3,
+                "str": 15,
+                "dex": 13,
+                "con": 14,
+                "int": 10,
+                "wis": 12,
+                "cha": 11,
+                "strSave": "+2",
+                "dexSave": "+4",
+                "conSave": "+5",
+                "intSave": "+0",
+                "wisSave": "+1",
+                "chaSave": "+0",
+                "skills": {
+                    "Athletics": "+5",
+                    "Intimidation": "+3",
+                    "Perception": "+4"
+                },
                 "attacks": ["Musket +5 to hit, 1d12+2 piercing (range 80/240)", "Bayonet +4 to hit, 1d8+2 piercing"],
                 "description": "Hessian guard stationed outside the Old Barracks main entrance."
             },
@@ -1593,6 +1820,23 @@
                 "maxHp": 45,
                 "ac": 15,
                 "initiative": "+1",
+                "proficiency": 2,
+                "str": 13,
+                "dex": 12,
+                "con": 14,
+                "int": 9,
+                "wis": 11,
+                "cha": 10,
+                "strSave": "+3",
+                "dexSave": "+1",
+                "conSave": "+4",
+                "intSave": "-1",
+                "wisSave": "+0",
+                "chaSave": "+0",
+                "skills": {
+                    "Athletics": "+3",
+                    "Perception": "+2"
+                },
                 "attacks": ["Musket +4 to hit, 1d12+1 piercing (range 80/240)", "Bayonet +3 to hit, 1d8+1 piercing"],
                 "description": "Hessian guard on patrol duty, first floor."
             },
@@ -1608,6 +1852,23 @@
                 "maxHp": 45,
                 "ac": 15,
                 "initiative": "+1",
+                "proficiency": 2,
+                "str": 13,
+                "dex": 12,
+                "con": 14,
+                "int": 9,
+                "wis": 11,
+                "cha": 10,
+                "strSave": "+3",
+                "dexSave": "+1",
+                "conSave": "+4",
+                "intSave": "-1",
+                "wisSave": "+0",
+                "chaSave": "+0",
+                "skills": {
+                    "Athletics": "+3",
+                    "Perception": "+2"
+                },
                 "attacks": ["Musket +4 to hit, 1d12+1 piercing (range 80/240)", "Bayonet +3 to hit, 1d8+1 piercing"],
                 "description": "Hessian guard stationed near Cell #4, second floor."
             },
@@ -1623,6 +1884,24 @@
                 "maxHp": 52,
                 "ac": 16,
                 "initiative": "+2",
+                "proficiency": 3,
+                "str": 14,
+                "dex": 14,
+                "con": 14,
+                "int": 10,
+                "wis": 12,
+                "cha": 11,
+                "strSave": "+4",
+                "dexSave": "+2",
+                "conSave": "+5",
+                "intSave": "+0",
+                "wisSave": "+1",
+                "chaSave": "+0",
+                "skills": {
+                    "Athletics": "+4",
+                    "Intimidation": "+4",
+                    "Perception": "+4"
+                },
                 "attacks": ["Musket +5 to hit, 1d12+2 piercing (range 80/240)", "Saber +4 to hit, 1d8+2 slashing"],
                 "description": "Hessian sergeant in the officers' quarters, third floor."
             }
@@ -3144,6 +3423,93 @@
                         </div>
                     </div>
 
+                    <!-- Ability Scores -->
+                    ${char.str !== undefined ? `
+                        <div>
+                            <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 0.8rem; color: var(--secondary);">💪 Ability Scores</div>
+                            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.8rem;">
+                                <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                    <div style="font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.3rem;">STR</div>
+                                    <div style="font-size: 1.5rem; font-weight: bold;">${char.str || 10}</div>
+                                    <div style="font-size: 0.8rem; opacity: 0.8;">(${Math.floor((char.str - 10) / 2) >= 0 ? '+' : ''}${Math.floor((char.str - 10) / 2)})</div>
+                                </div>
+                                <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                    <div style="font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.3rem;">DEX</div>
+                                    <div style="font-size: 1.5rem; font-weight: bold;">${char.dex || 10}</div>
+                                    <div style="font-size: 0.8rem; opacity: 0.8;">(${Math.floor((char.dex - 10) / 2) >= 0 ? '+' : ''}${Math.floor((char.dex - 10) / 2)})</div>
+                                </div>
+                                <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                    <div style="font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.3rem;">CON</div>
+                                    <div style="font-size: 1.5rem; font-weight: bold;">${char.con || 10}</div>
+                                    <div style="font-size: 0.8rem; opacity: 0.8;">(${Math.floor((char.con - 10) / 2) >= 0 ? '+' : ''}${Math.floor((char.con - 10) / 2)})</div>
+                                </div>
+                                <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                    <div style="font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.3rem;">INT</div>
+                                    <div style="font-size: 1.5rem; font-weight: bold;">${char.int || 10}</div>
+                                    <div style="font-size: 0.8rem; opacity: 0.8;">(${Math.floor((char.int - 10) / 2) >= 0 ? '+' : ''}${Math.floor((char.int - 10) / 2)})</div>
+                                </div>
+                                <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                    <div style="font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.3rem;">WIS</div>
+                                    <div style="font-size: 1.5rem; font-weight: bold;">${char.wis || 10}</div>
+                                    <div style="font-size: 0.8rem; opacity: 0.8;">(${Math.floor((char.wis - 10) / 2) >= 0 ? '+' : ''}${Math.floor((char.wis - 10) / 2)})</div>
+                                </div>
+                                <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                    <div style="font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.3rem;">CHA</div>
+                                    <div style="font-size: 1.5rem; font-weight: bold;">${char.cha || 10}</div>
+                                    <div style="font-size: 0.8rem; opacity: 0.8;">(${Math.floor((char.cha - 10) / 2) >= 0 ? '+' : ''}${Math.floor((char.cha - 10) / 2)})</div>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Saving Throws -->
+                    ${char.strSave !== undefined ? `
+                        <div>
+                            <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 0.8rem; color: var(--secondary);">🛡️ Saving Throws</div>
+                            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.8rem;">
+                                <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                    <div style="font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.3rem;">STR</div>
+                                    <div style="font-size: 1.3rem; font-weight: bold;">${char.strSave || '+0'}</div>
+                                </div>
+                                <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                    <div style="font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.3rem;">DEX</div>
+                                    <div style="font-size: 1.3rem; font-weight: bold;">${char.dexSave || '+0'}</div>
+                                </div>
+                                <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                    <div style="font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.3rem;">CON</div>
+                                    <div style="font-size: 1.3rem; font-weight: bold;">${char.conSave || '+0'}</div>
+                                </div>
+                                <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                    <div style="font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.3rem;">INT</div>
+                                    <div style="font-size: 1.3rem; font-weight: bold;">${char.intSave || '+0'}</div>
+                                </div>
+                                <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                    <div style="font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.3rem;">WIS</div>
+                                    <div style="font-size: 1.3rem; font-weight: bold;">${char.wisSave || '+0'}</div>
+                                </div>
+                                <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                                    <div style="font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.3rem;">CHA</div>
+                                    <div style="font-size: 1.3rem; font-weight: bold;">${char.chaSave || '+0'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <!-- Skills -->
+                    ${char.skills && Object.keys(char.skills).length > 0 ? `
+                        <div>
+                            <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 0.8rem; color: var(--secondary);">⭐ Skills</div>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+                                ${Object.entries(char.skills).map(([skill, bonus]) => `
+                                    <div style="padding: 0.6rem; background: rgba(0,0,0,0.3); border-radius: 6px; display: flex; justify-content: space-between;">
+                                        <span style="opacity: 0.9;">${skill}</span>
+                                        <span style="font-weight: bold; color: var(--secondary);">${bonus}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+
                     ${char.description ? `
                         <div>
                             <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--secondary);">📝 Notes</div>
@@ -3193,6 +3559,20 @@
             document.getElementById('char-ac').value = char.ac || 15;
             document.getElementById('char-speed').value = char.speed || 30;
             document.getElementById('char-initiative').value = char.initiative || '+0';
+            document.getElementById('char-proficiency').value = char.proficiency || 2;
+            document.getElementById('char-str').value = char.str || 10;
+            document.getElementById('char-dex').value = char.dex || 10;
+            document.getElementById('char-con').value = char.con || 10;
+            document.getElementById('char-int').value = char.int || 10;
+            document.getElementById('char-wis').value = char.wis || 10;
+            document.getElementById('char-cha').value = char.cha || 10;
+            document.getElementById('char-str-save').value = char.strSave || '+0';
+            document.getElementById('char-dex-save').value = char.dexSave || '+0';
+            document.getElementById('char-con-save').value = char.conSave || '+0';
+            document.getElementById('char-int-save').value = char.intSave || '+0';
+            document.getElementById('char-wis-save').value = char.wisSave || '+0';
+            document.getElementById('char-cha-save').value = char.chaSave || '+0';
+            document.getElementById('char-skills').value = char.skills ? JSON.stringify(char.skills, null, 2) : '';
             document.getElementById('char-attacks').value = (char.attacks || []).join('\n');
             document.getElementById('char-image-url').value = char.image || '';
 
@@ -3209,6 +3589,18 @@
             form.onsubmit = function(event) {
                 event.preventDefault();
 
+                // Parse skills JSON
+                let skills = {};
+                const skillsInput = document.getElementById('char-skills').value.trim();
+                if (skillsInput) {
+                    try {
+                        skills = JSON.parse(skillsInput);
+                    } catch (e) {
+                        alert('Invalid JSON format for skills. Please use format: {"Athletics": "+5", "Perception": "+3"}');
+                        return;
+                    }
+                }
+
                 // Update existing character
                 char.name = document.getElementById('char-name').value;
                 char.class = document.getElementById('char-class').value;
@@ -3217,6 +3609,20 @@
                 char.ac = parseInt(document.getElementById('char-ac').value);
                 char.speed = parseInt(document.getElementById('char-speed').value);
                 char.initiative = document.getElementById('char-initiative').value;
+                char.proficiency = parseInt(document.getElementById('char-proficiency').value) || 2;
+                char.str = parseInt(document.getElementById('char-str').value) || 10;
+                char.dex = parseInt(document.getElementById('char-dex').value) || 10;
+                char.con = parseInt(document.getElementById('char-con').value) || 10;
+                char.int = parseInt(document.getElementById('char-int').value) || 10;
+                char.wis = parseInt(document.getElementById('char-wis').value) || 10;
+                char.cha = parseInt(document.getElementById('char-cha').value) || 10;
+                char.strSave = document.getElementById('char-str-save').value || '+0';
+                char.dexSave = document.getElementById('char-dex-save').value || '+0';
+                char.conSave = document.getElementById('char-con-save').value || '+0';
+                char.intSave = document.getElementById('char-int-save').value || '+0';
+                char.wisSave = document.getElementById('char-wis-save').value || '+0';
+                char.chaSave = document.getElementById('char-cha-save').value || '+0';
+                char.skills = skills;
                 char.attacks = document.getElementById('char-attacks').value.split('\n').filter(a => a.trim());
                 char.image = document.getElementById('char-image-url').value || null;
 
@@ -3259,6 +3665,18 @@
         function saveCharacter(event) {
             event.preventDefault();
 
+            // Parse skills JSON
+            let skills = {};
+            const skillsInput = document.getElementById('char-skills').value.trim();
+            if (skillsInput) {
+                try {
+                    skills = JSON.parse(skillsInput);
+                } catch (e) {
+                    alert('Invalid JSON format for skills. Please use format: {"Athletics": "+5", "Perception": "+3"}');
+                    return;
+                }
+            }
+
             const character = {
                 id: 'char_' + Date.now(),
                 name: document.getElementById('char-name').value,
@@ -3268,6 +3686,20 @@
                 ac: parseInt(document.getElementById('char-ac').value),
                 speed: parseInt(document.getElementById('char-speed').value),
                 initiative: document.getElementById('char-initiative').value,
+                proficiency: parseInt(document.getElementById('char-proficiency').value) || 2,
+                str: parseInt(document.getElementById('char-str').value) || 10,
+                dex: parseInt(document.getElementById('char-dex').value) || 10,
+                con: parseInt(document.getElementById('char-con').value) || 10,
+                int: parseInt(document.getElementById('char-int').value) || 10,
+                wis: parseInt(document.getElementById('char-wis').value) || 10,
+                cha: parseInt(document.getElementById('char-cha').value) || 10,
+                strSave: document.getElementById('char-str-save').value || '+0',
+                dexSave: document.getElementById('char-dex-save').value || '+0',
+                conSave: document.getElementById('char-con-save').value || '+0',
+                intSave: document.getElementById('char-int-save').value || '+0',
+                wisSave: document.getElementById('char-wis-save').value || '+0',
+                chaSave: document.getElementById('char-cha-save').value || '+0',
+                skills: skills,
                 attacks: document.getElementById('char-attacks').value.split('\n').filter(a => a.trim()),
                 image: document.getElementById('char-image-url').value || null,
                 type: currentCharacterType
@@ -3448,16 +3880,11 @@
             const container = document.getElementById('enemies-cards');
             if (!container) return;
 
-            // Filter by current location if in tactical view
-            const currentLoc = window.tactical ? window.tactical.currentLocation : null;
-            const enemies = Object.values(CHARACTERS).filter(c => {
-                if (c.type !== 'enemy') return false;
-                if (currentLoc && c.location !== currentLoc) return false;
-                return true;
-            });
+            // Show ALL enemies - let DM choose what to use
+            const enemies = Object.values(CHARACTERS).filter(c => c.type === 'enemy');
 
             if (enemies.length === 0) {
-                container.innerHTML = '<p style="opacity: 0.7; text-align: center; padding: 2rem;">No enemies at this location.</p>';
+                container.innerHTML = '<p style="opacity: 0.7; text-align: center; padding: 2rem;">No enemies yet. Add enemies above.</p>';
                 return;
             }
 
@@ -3469,16 +3896,11 @@
             const container = document.getElementById('npcs-cards');
             if (!container) return;
 
-            // Filter by current location if in tactical view
-            const currentLoc = window.tactical ? window.tactical.currentLocation : null;
-            const npcs = Object.values(CHARACTERS).filter(c => {
-                if (c.type === 'enemy') return false;
-                if (currentLoc && c.location !== currentLoc) return false;
-                return true;
-            });
+            // Show ALL NPCs - let DM choose what to use
+            const npcs = Object.values(CHARACTERS).filter(c => c.type !== 'enemy');
 
             if (npcs.length === 0) {
-                container.innerHTML = '<p style="opacity: 0.7; text-align: center; padding: 2rem;">No NPCs at this location.</p>';
+                container.innerHTML = '<p style="opacity: 0.7; text-align: center; padding: 2rem;">No NPCs yet. Add NPCs above.</p>';
                 return;
             }
 
@@ -3578,6 +4000,7 @@
 
         // COMBAT TRACKER
         let COMBAT_TRACKER = [];
+        let currentTurnIndex = 0;
 
         function addPartyToCombat() {
             PARTY_CHARACTERS.forEach(char => {
@@ -3622,6 +4045,86 @@
             }
         }
 
+        function addAllCombatantsToCombat() {
+            // Add all party members
+            PARTY_CHARACTERS.forEach(char => {
+                if (!COMBAT_TRACKER.find(c => c.id === char.id)) {
+                    COMBAT_TRACKER.push({
+                        ...char,
+                        initiative: null,
+                        initiativeRoll: null
+                    });
+                }
+            });
+
+            // Add all characters from tactical map tokens
+            if (window.tactical && window.tactical.tokens) {
+                window.tactical.tokens.forEach(token => {
+                    if (token.character && !COMBAT_TRACKER.find(c => c.id === token.character.id)) {
+                        COMBAT_TRACKER.push({
+                            ...token.character,
+                            initiative: null,
+                            initiativeRoll: null
+                        });
+                    }
+                });
+            }
+
+            // Also add all enemies from CHARACTERS
+            Object.values(CHARACTERS).forEach(char => {
+                if (!COMBAT_TRACKER.find(c => c.id === char.id)) {
+                    COMBAT_TRACKER.push({
+                        ...char,
+                        initiative: null,
+                        initiativeRoll: null
+                    });
+                }
+            });
+
+            renderInitiativeList();
+            if (window.tactical) {
+                tactical.addLog(`Added ${COMBAT_TRACKER.length} total combatants to combat`, 'info');
+            }
+        }
+
+        function nextTurn() {
+            if (COMBAT_TRACKER.length === 0) return;
+
+            currentTurnIndex = (currentTurnIndex + 1) % COMBAT_TRACKER.length;
+            updateTurnDisplay();
+            renderInitiativeList();
+
+            if (window.tactical) {
+                tactical.addLog(`Turn: ${COMBAT_TRACKER[currentTurnIndex].name}`, 'combat');
+            }
+        }
+
+        function previousTurn() {
+            if (COMBAT_TRACKER.length === 0) return;
+
+            currentTurnIndex = currentTurnIndex - 1;
+            if (currentTurnIndex < 0) currentTurnIndex = COMBAT_TRACKER.length - 1;
+            updateTurnDisplay();
+            renderInitiativeList();
+
+            if (window.tactical) {
+                tactical.addLog(`Turn: ${COMBAT_TRACKER[currentTurnIndex].name}`, 'combat');
+            }
+        }
+
+        function updateTurnDisplay() {
+            const turnTracker = document.getElementById('turn-tracker');
+            const currentTurnName = document.getElementById('current-turn-name');
+
+            if (COMBAT_TRACKER.length > 0) {
+                turnTracker.style.display = 'block';
+                currentTurnName.textContent = COMBAT_TRACKER[currentTurnIndex].name;
+            } else {
+                turnTracker.style.display = 'none';
+                currentTurnName.textContent = '—';
+            }
+        }
+
         function rollAllCombatInitiative() {
             if (COMBAT_TRACKER.length === 0) {
                 alert('Add combatants to combat first!');
@@ -3641,7 +4144,14 @@
             // Sort by initiative (highest first)
             COMBAT_TRACKER.sort((a, b) => (b.initiativeRoll || 0) - (a.initiativeRoll || 0));
 
+            // Start turn tracker
+            currentTurnIndex = 0;
+            updateTurnDisplay();
             renderInitiativeList();
+
+            if (window.tactical) {
+                tactical.addLog(`Combat started! Turn: ${COMBAT_TRACKER[0].name}`, 'combat');
+            }
         }
 
         function renderInitiativeList() {
@@ -3657,9 +4167,13 @@
                 const hasImage = imgSrc && imgSrc.trim();
                 const borderColor = combatant.type === 'enemy' ? '#dc2626' : '#3b82f6';
                 const initiativeDisplay = combatant.initiativeRoll !== null ? combatant.initiativeRoll : '—';
+                const isCurrentTurn = index === currentTurnIndex;
+                const bgColor = isCurrentTurn ? 'rgba(251, 191, 36, 0.3)' : 'rgba(30, 58, 95, 0.3)';
+                const borderStyle = isCurrentTurn ? '5px solid var(--secondary)' : `5px solid ${borderColor}`;
+                const bgHover = isCurrentTurn ? 'rgba(251, 191, 36, 0.5)' : 'rgba(30, 58, 95, 0.5)';
 
                 return `
-                    <div onclick="openCombatantActions('${combatant.id}')" style="background: rgba(30, 58, 95, 0.3); border-left: 5px solid ${borderColor}; border-radius: 8px; padding: 1rem; margin-bottom: 0.8rem; display: grid; grid-template-columns: 60px 80px 1fr 120px 100px auto; gap: 1rem; align-items: center; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(30, 58, 95, 0.5)'" onmouseout="this.style.background='rgba(30, 58, 95, 0.3)'">
+                    <div onclick="openCombatantActions('${combatant.id}')" style="background: ${bgColor}; border-left: ${borderStyle}; border-radius: 8px; padding: 1rem; margin-bottom: 0.8rem; display: grid; grid-template-columns: 60px 80px 1fr 120px 100px auto; gap: 1rem; align-items: center; cursor: pointer; transition: background 0.2s; ${isCurrentTurn ? 'box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);' : ''}" onmouseover="this.style.background='${bgHover}'" onmouseout="this.style.background='${bgColor}'"${isCurrentTurn ? ' data-current-turn="true"' : ''}>
                         <!-- Initiative # -->
                         <div style="text-align: center; font-size: 2rem; font-weight: bold; color: var(--secondary);">
                             ${index + 1}
@@ -3779,6 +4293,8 @@
         function clearCombatTracker() {
             if (confirm('Clear all combatants from initiative?')) {
                 COMBAT_TRACKER = [];
+                currentTurnIndex = 0;
+                updateTurnDisplay();
                 renderInitiativeList();
                 if (window.tactical) {
                     tactical.addLog('Combat tracker cleared', 'info');
