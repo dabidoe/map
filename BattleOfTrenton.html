@@ -998,6 +998,11 @@
             display: block;
         }
 
+        /* Hide parchment overlay when tactical map is open */
+        body.fantasy-mode .tactical-overlay.active ~ .parchment-overlay {
+            display: none;
+        }
+
         /* Fantasy Map Styling */
         body.fantasy-mode #map {
             filter: sepia(0.6) contrast(1.15) brightness(1.1) saturate(0.7) hue-rotate(10deg);
@@ -1013,14 +1018,16 @@
             display: none;
         }
 
-        /* Exclude tactical overlay from fantasy styling */
+        /* Exclude tactical overlay from fantasy styling - KEEP TACTICAL MAP NORMAL */
         body.fantasy-mode .tactical-overlay {
             filter: none !important;
             background: #1a1410 !important;
+            font-family: Georgia, serif !important;
         }
 
         body.fantasy-mode .tactical-overlay * {
             filter: none !important;
+            font-family: inherit !important;
         }
 
         /* Keep tactical overlay dark and readable */
@@ -1029,6 +1036,16 @@
         body.fantasy-mode .tactical-overlay input {
             background: rgba(26, 20, 16, 0.95) !important;
             color: #f4e8d0 !important;
+        }
+
+        /* Override fantasy fonts for tactical elements */
+        body.fantasy-mode .tactical-title,
+        body.fantasy-mode .tactical-tab,
+        body.fantasy-mode .tactical-overlay h1,
+        body.fantasy-mode .tactical-overlay h2,
+        body.fantasy-mode .tactical-overlay h3,
+        body.fantasy-mode .tactical-overlay button {
+            font-family: Georgia, serif !important;
         }
 
         /* Decorative Corners */
@@ -1044,6 +1061,13 @@
 
         body.fantasy-mode .fantasy-corner {
             display: block;
+        }
+
+        /* Hide fantasy decorations when tactical map is open */
+        body.fantasy-mode .tactical-overlay.active ~ .fantasy-corner,
+        body.fantasy-mode .tactical-overlay.active ~ .compass-rose,
+        body.fantasy-mode .tactical-overlay.active ~ .fantasy-legend {
+            display: none !important;
         }
 
         .fantasy-corner.top-left {
