@@ -2010,6 +2010,101 @@
             }
         };
 
+        // CHARACTER TEMPLATES - Quick enemy/player presets
+        const CHARACTER_TEMPLATES = {
+            "hessian-soldier": {
+                name: "Hessian Soldier",
+                title: "Musketeer",
+                faction: "Hessian",
+                type: "enemy",
+                speed: 30,
+                hp: 22,
+                maxHp: 22,
+                ac: 13,
+                initiative: "+1",
+                proficiency: 2,
+                str: 13, dex: 12, con: 14, int: 10, wis: 11, cha: 10
+            },
+            "hessian-grenadier": {
+                name: "Hessian Grenadier",
+                title: "Elite Infantry",
+                faction: "Hessian",
+                type: "enemy",
+                speed: 30,
+                hp: 32,
+                maxHp: 32,
+                ac: 15,
+                initiative: "+1",
+                proficiency: 2,
+                str: 15, dex: 12, con: 15, int: 10, wis: 12, cha: 11
+            },
+            "hessian-officer": {
+                name: "Hessian Officer",
+                title: "Lieutenant",
+                faction: "Hessian",
+                type: "enemy",
+                speed: 30,
+                hp: 45,
+                maxHp: 45,
+                ac: 16,
+                initiative: "+2",
+                proficiency: 3,
+                str: 14, dex: 14, con: 14, int: 12, wis: 13, cha: 14
+            },
+            "dwarf-fighter-4": {
+                name: "Dwarf Fighter",
+                title: "Level 4 Warrior",
+                faction: "Adventurer",
+                type: "player",
+                speed: 25,
+                hp: 38,
+                maxHp: 38,
+                ac: 18,
+                initiative: "+2",
+                proficiency: 2,
+                str: 16, dex: 14, con: 16, int: 10, wis: 12, cha: 10
+            },
+            "elf-ranger-4": {
+                name: "Elf Ranger",
+                title: "Level 4 Scout",
+                faction: "Adventurer",
+                type: "player",
+                speed: 35,
+                hp: 32,
+                maxHp: 32,
+                ac: 15,
+                initiative: "+3",
+                proficiency: 2,
+                str: 12, dex: 16, con: 14, int: 12, wis: 15, cha: 11
+            },
+            "human-cleric-4": {
+                name: "Human Cleric",
+                title: "Level 4 Healer",
+                faction: "Adventurer",
+                type: "player",
+                speed: 30,
+                hp: 30,
+                maxHp: 30,
+                ac: 16,
+                initiative: "+1",
+                proficiency: 2,
+                str: 14, dex: 12, con: 14, int: 12, wis: 16, cha: 13
+            },
+            "halfling-rogue-4": {
+                name: "Halfling Rogue",
+                title: "Level 4 Thief",
+                faction: "Adventurer",
+                type: "player",
+                speed: 25,
+                hp: 28,
+                maxHp: 28,
+                ac: 15,
+                initiative: "+4",
+                proficiency: 2,
+                str: 10, dex: 18, con: 12, int: 14, wis: 13, cha: 12
+            }
+        };
+
         // CHARACTER LIBRARY - Embedded directly for file:// compatibility
         const CHARACTERS = {
             "washington": {
