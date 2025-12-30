@@ -6,6 +6,9 @@
     <title>Battle of Trenton - Campaign Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -17,6 +20,18 @@
             --bg-dark: #0a0a0a;
             --bg-light: #1a1410;
             --text: #f4e8d0;
+
+            /* Fantasy mode colors */
+            --fantasy-parchment: #f4e4c1;
+            --fantasy-shadow: #4a2511;
+            --fantasy-water: #5b8fa3;
+            --fantasy-ink: #2c1810;
+            --fantasy-border: #8b6f47;
+        }
+
+        /* Fantasy Mode Active */
+        body.fantasy-mode {
+            --text: #2c1810;
         }
 
         body {
@@ -967,6 +982,437 @@
             max-height: 85vh;
             overflow-y: auto;
         }
+
+        /* FANTASY MODE STYLES */
+
+        /* Parchment Overlay */
+        .parchment-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 2;
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(74, 37, 17, 0.03) 2px, rgba(74, 37, 17, 0.03) 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(74, 37, 17, 0.03) 2px, rgba(74, 37, 17, 0.03) 4px);
+            mix-blend-mode: multiply;
+            opacity: 0.4;
+        }
+
+        body.fantasy-mode .parchment-overlay {
+            display: block;
+        }
+
+        /* Fantasy Map Styling */
+        body.fantasy-mode #map {
+            filter: sepia(0.3) contrast(1.1);
+        }
+
+        /* Decorative Corners */
+        .fantasy-corner {
+            display: none;
+            position: fixed;
+            width: 120px;
+            height: 120px;
+            pointer-events: none;
+            z-index: 2500;
+            opacity: 0.6;
+        }
+
+        body.fantasy-mode .fantasy-corner {
+            display: block;
+        }
+
+        .fantasy-corner.top-left {
+            top: 0;
+            left: 0;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M0,0 L100,0 L100,5 L5,5 L5,100 L0,100 Z M10,10 L90,10 L90,15 L15,15 L15,90 L10,90 Z" fill="%238b6f47" opacity="0.8"/><circle cx="50" cy="50" r="3" fill="%23d4af37"/></svg>') no-repeat;
+            background-size: contain;
+        }
+
+        .fantasy-corner.top-right {
+            top: 0;
+            right: 0;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M100,0 L0,0 L0,5 L95,5 L95,100 L100,100 Z M90,10 L10,10 L10,15 L85,15 L85,90 L90,90 Z" fill="%238b6f47" opacity="0.8"/><circle cx="50" cy="50" r="3" fill="%23d4af37"/></svg>') no-repeat;
+            background-size: contain;
+        }
+
+        .fantasy-corner.bottom-left {
+            bottom: 0;
+            left: 0;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M0,100 L100,100 L100,95 L5,95 L5,0 L0,0 Z M10,90 L90,90 L90,85 L15,85 L15,10 L10,10 Z" fill="%238b6f47" opacity="0.8"/><circle cx="50" cy="50" r="3" fill="%23d4af37"/></svg>') no-repeat;
+            background-size: contain;
+        }
+
+        .fantasy-corner.bottom-right {
+            bottom: 0;
+            right: 0;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M100,100 L0,100 L0,95 L95,95 L95,0 L100,0 Z M90,90 L10,90 L10,85 L85,85 L85,10 L90,10 Z" fill="%238b6f47" opacity="0.8"/><circle cx="50" cy="50" r="3" fill="%23d4af37"/></svg>') no-repeat;
+            background-size: contain;
+        }
+
+        /* Compass Rose */
+        .compass-rose {
+            display: none;
+            position: fixed;
+            bottom: 60px;
+            right: 20px;
+            width: 100px;
+            height: 100px;
+            z-index: 2500;
+            pointer-events: none;
+            opacity: 0.7;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+        }
+
+        body.fantasy-mode .compass-rose {
+            display: block;
+        }
+
+        /* Fantasy Mode Toggle Button */
+        .fantasy-toggle {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: linear-gradient(135deg, var(--primary), #0f1f3a);
+            color: var(--secondary);
+            border: 2px solid var(--secondary);
+            padding: 0.7rem 1.2rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            font-family: Georgia, serif;
+            z-index: 1500;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            transition: all 0.3s;
+        }
+
+        .fantasy-toggle:hover {
+            background: linear-gradient(135deg, var(--secondary), #b8941f);
+            color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        body.fantasy-mode .fantasy-toggle {
+            font-family: 'Cinzel', serif;
+            background: linear-gradient(135deg, #8b6f47, #6b5537);
+            border-color: var(--fantasy-border);
+        }
+
+        /* Fantasy Mode Font Changes */
+        body.fantasy-mode {
+            font-family: 'IM Fell English', serif;
+        }
+
+        body.fantasy-mode .campaign-title,
+        body.fantasy-mode .modal-title,
+        body.fantasy-mode .tactical-title,
+        body.fantasy-mode .section-title {
+            font-family: 'Cinzel', serif;
+        }
+
+        /* Fantasy Marker Styles */
+        body.fantasy-mode .marker-pin {
+            border-radius: 0;
+            transform: rotate(0deg);
+            border: 3px solid var(--fantasy-border);
+            box-shadow: 0 4px 10px rgba(74, 37, 17, 0.5), inset 0 0 20px rgba(212, 175, 55, 0.2);
+        }
+
+        body.fantasy-mode .marker-pin:hover {
+            transform: scale(1.4);
+            box-shadow: 0 6px 20px rgba(139, 111, 71, 0.8), inset 0 0 30px rgba(212, 175, 55, 0.4);
+        }
+
+        body.fantasy-mode .marker-icon {
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            filter: drop-shadow(1px 1px 2px rgba(74, 37, 17, 0.7));
+        }
+
+        /* Fantasy Popup Styling */
+        body.fantasy-mode .leaflet-popup-content-wrapper {
+            background: var(--fantasy-parchment);
+            color: var(--fantasy-ink);
+            border: 3px solid var(--fantasy-border);
+            box-shadow: 0 8px 30px rgba(74, 37, 17, 0.6), inset 0 0 40px rgba(139, 111, 71, 0.1);
+            font-family: 'IM Fell English', serif;
+        }
+
+        body.fantasy-mode .leaflet-popup-tip {
+            background: var(--fantasy-parchment);
+        }
+
+        body.fantasy-mode .popup-title {
+            font-family: 'Cinzel', serif;
+            color: var(--fantasy-shadow);
+            border-bottom: 2px solid var(--fantasy-border);
+        }
+
+        body.fantasy-mode .popup-btn {
+            background: linear-gradient(135deg, #8b6f47, #6b5537);
+            border-color: var(--fantasy-border);
+            color: var(--fantasy-parchment);
+        }
+
+        body.fantasy-mode .popup-btn:hover {
+            background: linear-gradient(135deg, var(--secondary), #b8941f);
+            color: var(--fantasy-shadow);
+        }
+
+        /* Fantasy Tooltip Styling */
+        body.fantasy-mode .leaflet-tooltip {
+            background: var(--fantasy-parchment);
+            color: var(--fantasy-ink);
+            border: 2px solid var(--fantasy-border);
+            box-shadow: 0 4px 15px rgba(74, 37, 17, 0.5);
+            font-family: 'IM Fell English', serif;
+        }
+
+        body.fantasy-mode .leaflet-tooltip::before {
+            border-top-color: var(--fantasy-border);
+        }
+
+        /* Fantasy Legend */
+        .fantasy-legend {
+            display: none;
+            position: fixed;
+            bottom: 130px;
+            right: 20px;
+            background: var(--fantasy-parchment);
+            border: 3px solid var(--fantasy-border);
+            border-radius: 8px;
+            padding: 1rem;
+            z-index: 2500;
+            box-shadow: 0 6px 20px rgba(74, 37, 17, 0.6);
+            font-family: 'IM Fell English', serif;
+            color: var(--fantasy-ink);
+            min-width: 180px;
+        }
+
+        body.fantasy-mode .fantasy-legend {
+            display: block;
+        }
+
+        .fantasy-legend-title {
+            font-family: 'Cinzel', serif;
+            font-weight: bold;
+            font-size: 0.95rem;
+            margin-bottom: 0.7rem;
+            text-align: center;
+            color: var(--fantasy-shadow);
+            border-bottom: 2px solid var(--fantasy-border);
+            padding-bottom: 0.4rem;
+        }
+
+        .fantasy-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .fantasy-legend-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--fantasy-border);
+            background: white;
+        }
+
+        .fantasy-legend-icon.quest { background: #dc2626; }
+        .fantasy-legend-icon.continental { background: #3b82f6; }
+        .fantasy-legend-icon.hessian { background: #f59e0b; }
+        .fantasy-legend-icon.crossing { background: #06b6d4; }
+
+        /* Fantasy Mode Sidebar Styling */
+        body.fantasy-mode .sidebar {
+            background: linear-gradient(180deg, #e8d4a8, #d4c4a0);
+            border-right: 4px solid var(--fantasy-border);
+            box-shadow: 4px 0 20px rgba(74, 37, 17, 0.5);
+        }
+
+        body.fantasy-mode .sidebar-header {
+            background: linear-gradient(135deg, #8b6f47, #6b5537);
+            border-bottom: 3px solid var(--fantasy-border);
+        }
+
+        body.fantasy-mode .campaign-title {
+            color: var(--fantasy-parchment);
+        }
+
+        body.fantasy-mode .campaign-meta {
+            color: rgba(244, 228, 193, 0.8);
+        }
+
+        body.fantasy-mode .sidebar-tabs {
+            background: rgba(139, 111, 71, 0.3);
+            border-bottom: 2px solid var(--fantasy-border);
+        }
+
+        body.fantasy-mode .tab {
+            color: var(--fantasy-ink);
+            border-right: 1px solid rgba(139, 111, 71, 0.5);
+        }
+
+        body.fantasy-mode .tab:hover {
+            background: rgba(212, 175, 55, 0.3);
+        }
+
+        body.fantasy-mode .tab.active {
+            background: rgba(212, 175, 55, 0.4);
+            color: var(--fantasy-shadow);
+        }
+
+        body.fantasy-mode .location-card {
+            background: rgba(139, 111, 71, 0.1);
+            border: 2px solid rgba(139, 111, 71, 0.3);
+            color: var(--fantasy-ink);
+        }
+
+        body.fantasy-mode .location-card:hover {
+            background: rgba(139, 111, 71, 0.2);
+            border-left-color: var(--secondary);
+        }
+
+        body.fantasy-mode .location-card.active {
+            background: rgba(212, 175, 55, 0.3);
+            border-color: var(--secondary);
+        }
+
+        body.fantasy-mode .btn {
+            background: linear-gradient(135deg, #8b6f47, #6b5537);
+            color: var(--fantasy-parchment);
+            border-color: var(--fantasy-border);
+        }
+
+        body.fantasy-mode .btn:hover {
+            background: linear-gradient(135deg, var(--secondary), #b8941f);
+            color: var(--fantasy-shadow);
+        }
+
+        body.fantasy-mode .layer-control {
+            background: linear-gradient(135deg, #8b6f47, #6b5537);
+            border-color: var(--fantasy-border);
+        }
+
+        body.fantasy-mode .layer-btn {
+            background: rgba(244, 228, 193, 0.3);
+            border-color: var(--fantasy-border);
+            color: var(--fantasy-ink);
+        }
+
+        body.fantasy-mode .layer-btn:hover,
+        body.fantasy-mode .layer-btn.active {
+            background: var(--secondary);
+            color: var(--fantasy-shadow);
+        }
+
+        body.fantasy-mode .toggle-btn {
+            background: linear-gradient(135deg, #8b6f47, #6b5537);
+            border-color: var(--fantasy-border);
+            color: var(--fantasy-parchment);
+        }
+
+        body.fantasy-mode .toggle-btn:hover {
+            background: linear-gradient(135deg, var(--secondary), #b8941f);
+            color: var(--fantasy-shadow);
+        }
+
+        /* Fantasy Mode Modal Styling */
+        body.fantasy-mode .modal-content {
+            background: var(--fantasy-parchment);
+            border-color: var(--fantasy-border);
+            box-shadow: 0 8px 40px rgba(74, 37, 17, 0.7);
+        }
+
+        body.fantasy-mode .modal-header {
+            border-bottom-color: var(--fantasy-border);
+        }
+
+        body.fantasy-mode .modal-title {
+            color: var(--fantasy-shadow);
+        }
+
+        body.fantasy-mode .modal-subtitle {
+            color: var(--fantasy-ink);
+        }
+
+        body.fantasy-mode .info-section {
+            background: rgba(139, 111, 71, 0.1);
+            border-color: var(--fantasy-border);
+        }
+
+        body.fantasy-mode .section-title {
+            color: var(--fantasy-shadow);
+        }
+
+        body.fantasy-mode .info-text {
+            color: var(--fantasy-ink);
+        }
+
+        body.fantasy-mode .info-list li {
+            color: var(--fantasy-ink);
+        }
+
+        body.fantasy-mode .info-list li:before {
+            color: var(--fantasy-shadow);
+        }
+
+        body.fantasy-mode .historical-fact {
+            background: rgba(212, 175, 55, 0.15);
+            border-left-color: var(--fantasy-shadow);
+            color: var(--fantasy-ink);
+        }
+
+        /* Fantasy Mode Tactical Overlay */
+        body.fantasy-mode .tactical-overlay {
+            background: var(--fantasy-parchment);
+        }
+
+        body.fantasy-mode .tactical-header {
+            background: linear-gradient(135deg, #8b6f47, #6b5537);
+            border-bottom-color: var(--fantasy-border);
+        }
+
+        body.fantasy-mode .tactical-title {
+            color: var(--fantasy-parchment);
+        }
+
+        body.fantasy-mode .tactical-tabs {
+            background: rgba(139, 111, 71, 0.2);
+            border-bottom-color: var(--fantasy-border);
+        }
+
+        body.fantasy-mode .tactical-tab {
+            color: var(--fantasy-ink);
+            border-right-color: rgba(139, 111, 71, 0.3);
+        }
+
+        body.fantasy-mode .tactical-tab:hover {
+            background: rgba(212, 175, 55, 0.2);
+        }
+
+        body.fantasy-mode .tactical-tab.active {
+            background: rgba(212, 175, 55, 0.3);
+            color: var(--fantasy-shadow);
+        }
+
+        body.fantasy-mode .stat-row {
+            background: rgba(139, 111, 71, 0.1);
+            color: var(--fantasy-ink);
+        }
+
+        body.fantasy-mode .stat-value {
+            color: var(--fantasy-shadow);
+        }
     </style>
 </head>
 <body>
@@ -983,6 +1429,7 @@
         <button class="layer-btn" id="layer-street" onclick="app.setLayer('street')">Street</button>
         <button class="layer-btn active" id="layer-satellite" onclick="app.setLayer('satellite')">Satellite</button>
         <button class="layer-btn" id="layer-terrain" onclick="app.setLayer('terrain')">Terrain</button>
+        <button class="layer-btn" id="layer-fantasy" onclick="app.setLayer('fantasy')">🗺️ Fantasy</button>
         <div style="border-top: 1px solid rgba(212, 175, 55, 0.3); margin: 0.5rem 0;"></div>
         <button class="layer-btn" id="dm-mode-toggle" onclick="app.toggleDMMode()">🎲 DM Mode</button>
     </div>
@@ -2932,6 +3379,10 @@ ESCAPE: Window 10ft drop`
                     }),
                     terrain: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
                         maxZoom: 17
+                    }),
+                    fantasy: L.tileLayer('https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg', {
+                        maxZoom: 18,
+                        attribution: '&copy; Stadia Maps &copy; Stamen Design'
                     })
                 };
 
@@ -4414,6 +4865,108 @@ ESCAPE: Window 10ft drop`
         } else {
             app.init();
         }
+    </script>
+
+    <!-- Fantasy Mode Elements -->
+    <div class="parchment-overlay"></div>
+    <div class="fantasy-corner top-left"></div>
+    <div class="fantasy-corner top-right"></div>
+    <div class="fantasy-corner bottom-left"></div>
+    <div class="fantasy-corner bottom-right"></div>
+
+    <svg class="compass-rose" viewBox="0 0 100 100">
+        <defs>
+            <radialGradient id="compassGrad">
+                <stop offset="0%" style="stop-color:#d4af37;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#8b6f47;stop-opacity:1" />
+            </radialGradient>
+        </defs>
+        <!-- Outer circle -->
+        <circle cx="50" cy="50" r="48" fill="none" stroke="#8b6f47" stroke-width="2"/>
+        <circle cx="50" cy="50" r="42" fill="none" stroke="#8b6f47" stroke-width="1"/>
+
+        <!-- Main directions -->
+        <polygon points="50,8 55,45 50,42 45,45" fill="url(#compassGrad)" stroke="#4a2511" stroke-width="1"/>
+        <polygon points="50,92 55,55 50,58 45,55" fill="#6b5537" stroke="#4a2511" stroke-width="1"/>
+        <polygon points="8,50 45,45 42,50 45,55" fill="#6b5537" stroke="#4a2511" stroke-width="1"/>
+        <polygon points="92,50 55,45 58,50 55,55" fill="#6b5537" stroke="#4a2511" stroke-width="1"/>
+
+        <!-- Diagonal directions -->
+        <polygon points="20,20 45,45 42,42" fill="#8b6f47" stroke="#4a2511" stroke-width="0.5"/>
+        <polygon points="80,20 55,45 58,42" fill="#8b6f47" stroke="#4a2511" stroke-width="0.5"/>
+        <polygon points="20,80 45,55 42,58" fill="#8b6f47" stroke="#4a2511" stroke-width="0.5"/>
+        <polygon points="80,80 55,55 58,58" fill="#8b6f47" stroke="#4a2511" stroke-width="0.5"/>
+
+        <!-- Center -->
+        <circle cx="50" cy="50" r="4" fill="#d4af37" stroke="#4a2511" stroke-width="1"/>
+
+        <!-- Direction letters -->
+        <text x="50" y="18" font-family="Cinzel, serif" font-size="10" font-weight="bold" text-anchor="middle" fill="#4a2511">N</text>
+        <text x="50" y="90" font-family="Cinzel, serif" font-size="8" text-anchor="middle" fill="#4a2511">S</text>
+        <text x="18" y="54" font-family="Cinzel, serif" font-size="8" text-anchor="middle" fill="#4a2511">W</text>
+        <text x="82" y="54" font-family="Cinzel, serif" font-size="8" text-anchor="middle" fill="#4a2511">E</text>
+    </svg>
+
+    <div class="fantasy-legend">
+        <div class="fantasy-legend-title">MAP KEY</div>
+        <div class="fantasy-legend-item">
+            <div class="fantasy-legend-icon quest">⚔️</div>
+            <span>Quest Location</span>
+        </div>
+        <div class="fantasy-legend-item">
+            <div class="fantasy-legend-icon continental">⛺</div>
+            <span>Continental</span>
+        </div>
+        <div class="fantasy-legend-item">
+            <div class="fantasy-legend-icon hessian">🏛️</div>
+            <span>Hessian</span>
+        </div>
+        <div class="fantasy-legend-item">
+            <div class="fantasy-legend-icon crossing">🚣</div>
+            <span>River Crossing</span>
+        </div>
+    </div>
+
+    <button class="fantasy-toggle" onclick="toggleFantasyMode()">
+        <span class="fantasy-toggle-text">🗺️ Fantasy Mode</span>
+    </button>
+
+    <script>
+        // Fantasy Mode Toggle
+        function toggleFantasyMode() {
+            const body = document.body;
+            const button = document.querySelector('.fantasy-toggle-text');
+            const isFantasyMode = body.classList.toggle('fantasy-mode');
+
+            button.textContent = isFantasyMode ? '📍 Realistic Mode' : '🗺️ Fantasy Mode';
+
+            // Switch map layer when toggling fantasy mode
+            if (window.app) {
+                if (isFantasyMode) {
+                    app.setLayer('fantasy');
+                } else {
+                    app.setLayer('satellite');
+                }
+            }
+
+            // Save preference
+            localStorage.setItem('fantasyMode', isFantasyMode);
+        }
+
+        // Load preference on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedMode = localStorage.getItem('fantasyMode') === 'true';
+            if (savedMode) {
+                document.body.classList.add('fantasy-mode');
+                document.querySelector('.fantasy-toggle-text').textContent = '📍 Realistic Mode';
+                // Apply fantasy layer after app initializes
+                setTimeout(() => {
+                    if (window.app) {
+                        app.setLayer('fantasy');
+                    }
+                }, 100);
+            }
+        });
     </script>
 </body>
 </html>
