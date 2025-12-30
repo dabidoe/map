@@ -724,22 +724,24 @@
         }
 
         .log-entry {
-            background: rgba(30, 58, 95, 0.2);
-            border-left: 3px solid var(--secondary);
+            background: rgba(139, 111, 71, 0.15);
+            border-left: 3px solid #8b6f47;
             padding: 0.5rem;
             margin-bottom: 0.5rem;
             border-radius: 4px;
             font-size: 0.8rem;
+            color: #2c1810;
         }
 
-        .log-entry.combat { border-left-color: var(--accent); }
+        .log-entry.combat { border-left-color: #dc2626; }
         .log-entry.movement { border-left-color: #3b82f6; }
-        .log-entry.info { border-left-color: var(--secondary); }
+        .log-entry.info { border-left-color: #8b6f47; }
 
         .log-time {
             font-size: 0.7rem;
             opacity: 0.6;
             font-family: 'Courier New', monospace;
+            color: #2c1810;
         }
 
         .tab-panel {
@@ -1021,34 +1023,20 @@
             display: none;
         }
 
-        /* Exclude tactical overlay from fantasy styling - KEEP TACTICAL MAP NORMAL */
-        body.fantasy-mode .tactical-overlay {
-            filter: none !important;
-            background: #1a1410 !important;
-            font-family: Georgia, serif !important;
-        }
-
-        body.fantasy-mode .tactical-overlay * {
+        /* Exclude tactical overlay from fantasy styling - KEEP PARCHMENT THEME ALWAYS */
+        body.fantasy-mode .tactical-overlay,
+        body.fantasy-mode .tactical-overlay *,
+        body.fantasy-mode .tactical-overlay::before,
+        body.fantasy-mode .tactical-overlay::after {
+            /* Remove all fantasy mode effects from tactical overlay */
             filter: none !important;
             font-family: inherit !important;
         }
 
-        /* Keep tactical overlay dark and readable */
-        body.fantasy-mode .tactical-overlay .combat-log,
-        body.fantasy-mode .tactical-overlay textarea,
-        body.fantasy-mode .tactical-overlay input {
-            background: rgba(26, 20, 16, 0.95) !important;
-            color: #f4e8d0 !important;
-        }
-
-        /* Override fantasy fonts for tactical elements */
-        body.fantasy-mode .tactical-title,
-        body.fantasy-mode .tactical-tab,
-        body.fantasy-mode .tactical-overlay h1,
-        body.fantasy-mode .tactical-overlay h2,
-        body.fantasy-mode .tactical-overlay h3,
-        body.fantasy-mode .tactical-overlay button {
-            font-family: Georgia, serif !important;
+        /* Ensure tactical overlay ALWAYS uses parchment theme regardless of fantasy mode */
+        body.fantasy-mode .tactical-overlay {
+            background: #f4e4c1 !important; /* Parchment background */
+            color: #2c1810 !important; /* Dark ink text */
         }
 
         /* Decorative Corners */
@@ -1868,17 +1856,17 @@
             <!-- COMBAT Tab -->
             <div class="tactical-content" id="tactical-tab-combat">
                 <div class="tab-panel" id="combat-content" style="max-width: 1200px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid var(--secondary);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #8b6f47;">
                         <div class="section-header" style="margin: 0;">⚔️ Initiative Tracker</div>
                         <div style="display: flex; gap: 0.5rem;">
                             <button onclick="rollAllCombatInitiative()" style="padding: 0.8rem 1.5rem; background: #dc2626; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">🎲 Roll All Initiative</button>
-                            <button onclick="clearCombatTracker()" style="padding: 0.8rem 1.5rem; background: rgba(100, 100, 100, 0.3); color: var(--text); border: none; border-radius: 6px; cursor: pointer;">Clear Combat</button>
+                            <button onclick="clearCombatTracker()" style="padding: 0.8rem 1.5rem; background: rgba(139, 111, 71, 0.3); color: #2c1810; border: 2px solid #8b6f47; border-radius: 6px; cursor: pointer; font-weight: bold;">Clear Combat</button>
                         </div>
                     </div>
 
                     <!-- Add Combatants -->
-                    <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(30, 58, 95, 0.2); border-radius: 8px;">
-                        <div style="font-weight: bold; margin-bottom: 0.8rem; opacity: 0.9;">Add to Combat:</div>
+                    <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(139, 111, 71, 0.15); border: 2px solid #8b6f47; border-radius: 8px;">
+                        <div style="font-weight: bold; margin-bottom: 0.8rem; color: #2c1810;">Add to Combat:</div>
                         <div style="display: flex; gap: 0.5rem; margin-bottom: 0.8rem;">
                             <button onclick="addAllCombatantsToCombat()" style="flex: 1; padding: 0.8rem; background: #16a34a; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">➕ Add ALL Combatants</button>
                         </div>
@@ -1889,22 +1877,22 @@
                     </div>
 
                     <!-- Turn Tracker -->
-                    <div id="turn-tracker" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: rgba(251, 191, 36, 0.2); border: 3px solid var(--secondary); border-radius: 8px;">
+                    <div id="turn-tracker" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: rgba(212, 175, 55, 0.2); border: 3px solid #d4af37; border-radius: 8px;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div>
-                                <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 0.3rem;">Current Turn:</div>
-                                <div id="current-turn-name" style="font-size: 1.5rem; font-weight: bold; color: var(--secondary);">—</div>
+                                <div style="font-size: 0.9rem; color: #2c1810; opacity: 0.8; margin-bottom: 0.3rem;">Current Turn:</div>
+                                <div id="current-turn-name" style="font-size: 1.5rem; font-weight: bold; color: #8b6f47;">—</div>
                             </div>
                             <div style="display: flex; gap: 0.5rem;">
-                                <button onclick="previousTurn()" style="padding: 0.8rem 1.2rem; background: rgba(100, 100, 100, 0.3); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">← Prev</button>
-                                <button onclick="nextTurn()" style="padding: 0.8rem 1.2rem; background: var(--secondary); color: var(--primary); border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Next →</button>
+                                <button onclick="previousTurn()" style="padding: 0.8rem 1.2rem; background: rgba(139, 111, 71, 0.3); color: #2c1810; border: 2px solid #8b6f47; border-radius: 6px; font-weight: bold; cursor: pointer;">← Prev</button>
+                                <button onclick="nextTurn()" style="padding: 0.8rem 1.2rem; background: #d4af37; color: #2c1810; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Next →</button>
                             </div>
                         </div>
                     </div>
 
                     <!-- Initiative Order List -->
                     <div id="initiative-list">
-                        <p style="opacity: 0.7; text-align: center; padding: 3rem;">No combatants in initiative. Add characters and roll initiative to begin.</p>
+                        <p style="opacity: 0.7; text-align: center; padding: 3rem; color: #2c1810;">No combatants in initiative. Add characters and roll initiative to begin.</p>
                     </div>
                 </div>
             </div>
@@ -1913,7 +1901,7 @@
             <div class="tactical-content" id="tactical-tab-notes">
                 <div class="tab-panel">
                     <div class="section-header">📝 Notes</div>
-                    <textarea id="tactical-notes" style="width: 100%; height: 400px; background: rgba(26, 20, 16, 0.5); border: 2px solid var(--secondary); color: var(--text); padding: 1rem; border-radius: 6px; font-family: Georgia, serif; font-size: 0.9rem;" placeholder="Campaign notes..."></textarea>
+                    <textarea id="tactical-notes" style="width: 100%; height: 400px; background: rgba(244, 228, 193, 0.5); border: 2px solid #8b6f47; color: #2c1810; padding: 1rem; border-radius: 6px; font-family: Georgia, serif; font-size: 0.9rem;" placeholder="Campaign notes..."></textarea>
                 </div>
             </div>
 
@@ -3547,7 +3535,7 @@ ESCAPE: Window 10ft drop`
                 if (!container) return;
 
                 if (this.battleLog.length === 0) {
-                    container.innerHTML = '<p style="opacity: 0.7; font-size: 0.8rem;">No combat events yet</p>';
+                    container.innerHTML = '<p style="opacity: 0.7; font-size: 0.8rem; color: #2c1810;">No combat events yet</p>';
                     return;
                 }
 
@@ -5021,7 +5009,7 @@ ESCAPE: Window 10ft drop`
             const container = document.getElementById('initiative-list');
 
             if (COMBAT_TRACKER.length === 0) {
-                container.innerHTML = '<p style="opacity: 0.7; text-align: center; padding: 3rem;">No combatants in initiative. Add characters and roll initiative to begin.</p>';
+                container.innerHTML = '<p style="opacity: 0.7; text-align: center; padding: 3rem; color: #2c1810;">No combatants in initiative. Add characters and roll initiative to begin.</p>';
                 return;
             }
 
@@ -5031,45 +5019,45 @@ ESCAPE: Window 10ft drop`
                 const borderColor = combatant.type === 'enemy' ? '#dc2626' : '#3b82f6';
                 const initiativeDisplay = combatant.initiativeRoll !== null ? combatant.initiativeRoll : '—';
                 const isCurrentTurn = index === currentTurnIndex;
-                const bgColor = isCurrentTurn ? 'rgba(251, 191, 36, 0.3)' : 'rgba(30, 58, 95, 0.3)';
-                const borderStyle = isCurrentTurn ? '5px solid var(--secondary)' : `5px solid ${borderColor}`;
-                const bgHover = isCurrentTurn ? 'rgba(251, 191, 36, 0.5)' : 'rgba(30, 58, 95, 0.5)';
+                const bgColor = isCurrentTurn ? 'rgba(212, 175, 55, 0.25)' : 'rgba(139, 111, 71, 0.15)';
+                const borderStyle = isCurrentTurn ? '5px solid #d4af37' : `5px solid ${borderColor}`;
+                const bgHover = isCurrentTurn ? 'rgba(212, 175, 55, 0.4)' : 'rgba(139, 111, 71, 0.25)';
 
                 return `
-                    <div onclick="openCombatantActions('${combatant.id}')" style="background: ${bgColor}; border-left: ${borderStyle}; border-radius: 8px; padding: 1rem; margin-bottom: 0.8rem; display: grid; grid-template-columns: 60px 80px 1fr 120px 100px auto; gap: 1rem; align-items: center; cursor: pointer; transition: background 0.2s; ${isCurrentTurn ? 'box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);' : ''}" onmouseover="this.style.background='${bgHover}'" onmouseout="this.style.background='${bgColor}'"${isCurrentTurn ? ' data-current-turn="true"' : ''}>
+                    <div onclick="openCombatantActions('${combatant.id}')" style="background: ${bgColor}; border-left: ${borderStyle}; border-radius: 8px; padding: 1rem; margin-bottom: 0.8rem; display: grid; grid-template-columns: 60px 80px 1fr 120px 100px auto; gap: 1rem; align-items: center; cursor: pointer; transition: background 0.2s; ${isCurrentTurn ? 'box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);' : ''}" onmouseover="this.style.background='${bgHover}'" onmouseout="this.style.background='${bgColor}'"${isCurrentTurn ? ' data-current-turn="true"' : ''}>
                         <!-- Initiative # -->
-                        <div style="text-align: center; font-size: 2rem; font-weight: bold; color: var(--secondary);">
+                        <div style="text-align: center; font-size: 2rem; font-weight: bold; color: #8b6f47;">
                             ${index + 1}
                         </div>
 
                         <!-- Portrait -->
-                        <div style="width: 60px; height: 60px; background: rgba(0,0,0,0.3); border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        <div style="width: 60px; height: 60px; background: rgba(139, 111, 71, 0.2); border: 2px solid #8b6f47; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                             ${hasImage ? `<img src="${imgSrc}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="font-size: 2rem; opacity: 0.5;">👤</div>'}
                         </div>
 
                         <!-- Name & Class -->
                         <div>
-                            <div style="font-size: 1.2rem; font-weight: bold; color: var(--secondary);">${combatant.name}</div>
-                            ${combatant.class ? `<div style="opacity: 0.7; font-size: 0.85rem;">${combatant.class}</div>` : ''}
+                            <div style="font-size: 1.2rem; font-weight: bold; color: #2c1810;">${combatant.name}</div>
+                            ${combatant.class ? `<div style="opacity: 0.7; font-size: 0.85rem; color: #2c1810;">${combatant.class}</div>` : ''}
                         </div>
 
                         <!-- HP -->
                         <div style="text-align: center;">
-                            <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem;">HP</div>
-                            <input type="number" value="${combatant.hp}" onchange="updateCombatantHP('${combatant.id}', this.value)" onclick="event.stopPropagation()" style="width: 100%; padding: 0.4rem; background: rgba(0,0,0,0.3); border: 2px solid #16a34a; color: #16a34a; border-radius: 4px; text-align: center; font-size: 1.2rem; font-weight: bold;">
-                            <div style="opacity: 0.6; font-size: 0.8rem; margin-top: 0.2rem;">/ ${combatant.maxHp}</div>
+                            <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem; color: #2c1810;">HP</div>
+                            <input type="number" value="${combatant.hp}" onchange="updateCombatantHP('${combatant.id}', this.value)" onclick="event.stopPropagation()" style="width: 100%; padding: 0.4rem; background: rgba(244, 228, 193, 0.8); border: 2px solid #16a34a; color: #16a34a; border-radius: 4px; text-align: center; font-size: 1.2rem; font-weight: bold;">
+                            <div style="opacity: 0.6; font-size: 0.8rem; margin-top: 0.2rem; color: #2c1810;">/ ${combatant.maxHp}</div>
                         </div>
 
                         <!-- AC -->
-                        <div style="text-align: center; padding: 0.8rem; background: rgba(0,0,0,0.3); border-radius: 6px;">
-                            <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem;">AC</div>
-                            <div style="font-size: 1.5rem; font-weight: bold;">${combatant.ac}</div>
+                        <div style="text-align: center; padding: 0.8rem; background: rgba(139, 111, 71, 0.2); border: 2px solid #8b6f47; border-radius: 6px;">
+                            <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem; color: #2c1810;">AC</div>
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #2c1810;">${combatant.ac}</div>
                         </div>
 
                         <!-- Initiative Roll -->
-                        <div style="text-align: center; padding: 0.8rem; background: rgba(251, 191, 36, 0.2); border: 2px solid var(--secondary); border-radius: 6px;">
-                            <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem;">Initiative</div>
-                            <div style="font-size: 1.8rem; font-weight: bold; color: var(--secondary);">${initiativeDisplay}</div>
+                        <div style="text-align: center; padding: 0.8rem; background: rgba(212, 175, 55, 0.25); border: 2px solid #d4af37; border-radius: 6px;">
+                            <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem; color: #2c1810;">Initiative</div>
+                            <div style="font-size: 1.8rem; font-weight: bold; color: #8b6f47;">${initiativeDisplay}</div>
                         </div>
                     </div>
                 `;
