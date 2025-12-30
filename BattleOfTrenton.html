@@ -793,43 +793,35 @@
             border: none;
         }
 
-        .marker-pin {
-            width: 40px;
-            height: 40px;
-            border-radius: 50% 50% 50% 0;
-            transform: rotate(-45deg);
-            border: 3px solid #fff;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        /* New Fantasy Marker Containers */
+        .marker-container {
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
         }
 
-        .marker-pin:hover {
-            transform: rotate(-45deg) scale(1.4);
-            z-index: 1000;
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.6);
+        .marker-container:hover {
+            transform: scale(1.15);
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5));
         }
 
-        .marker-pin.quest {
-            background: radial-gradient(circle, var(--accent), #991b1b);
-            animation: pulse 2s infinite;
+        .marker-container.quest {
+            animation: pulse-glow 2s ease-in-out infinite;
         }
 
-        .marker-pin.hessian { background: radial-gradient(circle, #f59e0b, #d97706); }
-        .marker-pin.continental { background: radial-gradient(circle, #3b82f6, #1e40af); }
-        .marker-pin.crossing { background: radial-gradient(circle, #06b6d4, #0891b2); }
-
-        @keyframes pulse {
-            0%, 100% { transform: rotate(-45deg) scale(1); }
-            50% { transform: rotate(-45deg) scale(1.2); }
+        @keyframes pulse-glow {
+            0%, 100% {
+                filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+                transform: scale(1);
+            }
+            50% {
+                filter: drop-shadow(0 6px 16px rgba(220, 38, 38, 0.6));
+                transform: scale(1.08);
+            }
         }
 
-        .marker-icon {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(45deg);
-            font-size: 1.2rem;
+        .marker-container svg {
+            display: block;
         }
 
         /* Leaflet Popup */
@@ -1143,23 +1135,14 @@
             font-family: 'Cinzel', serif;
         }
 
-        /* Fantasy Marker Styles */
-        body.fantasy-mode .marker-pin {
-            border-radius: 0;
-            transform: rotate(0deg);
-            border: 3px solid var(--fantasy-border);
-            box-shadow: 0 4px 10px rgba(74, 37, 17, 0.5), inset 0 0 20px rgba(212, 175, 55, 0.2);
+        /* Fantasy Marker Styles - Enhanced for SVG icons */
+        body.fantasy-mode .marker-container {
+            filter: drop-shadow(0 5px 8px rgba(74, 37, 17, 0.5));
         }
 
-        body.fantasy-mode .marker-pin:hover {
-            transform: scale(1.4);
-            box-shadow: 0 6px 20px rgba(139, 111, 71, 0.8), inset 0 0 30px rgba(212, 175, 55, 0.4);
-        }
-
-        body.fantasy-mode .marker-icon {
-            transform: translate(-50%, -50%);
-            font-size: 1.5rem;
-            filter: drop-shadow(1px 1px 2px rgba(74, 37, 17, 0.7));
+        body.fantasy-mode .marker-container:hover {
+            transform: scale(1.2);
+            filter: drop-shadow(0 7px 15px rgba(139, 111, 71, 0.7));
         }
 
         /* Fantasy Popup Styling */
@@ -2495,6 +2478,10 @@ ESCAPE: Window 10ft drop`
                 this.dragOffset = { x: 0, y: 0 };
                 this.battleLog = [];
                 this.currentLocation = null;
+                this.portraitImages = {}; // Cache for loaded portrait images
+                this.spawnPoint = null; // Spawn point for this floor
+                this.isDraggingSpawn = false; // Track if dragging spawn point
+                this.spawnPoints = {}; // Store spawn points per location
             }
 
             init(locationKey, location) {
@@ -2507,6 +2494,16 @@ ESCAPE: Window 10ft drop`
                 this.canvas.height = this.rows * this.gridSize;
 
                 document.getElementById('grid-info').textContent = `${this.gridFeet}ft • ${this.cols}×${this.rows}`;
+
+                // Initialize spawn point (load saved or create default at bottom-center)
+                if (!this.spawnPoints[locationKey]) {
+                    this.spawnPoints[locationKey] = {
+                        x: (this.cols / 2) * this.gridSize,
+                        y: (this.rows - 2) * this.gridSize, // 2 squares from bottom
+                        type: 'door'
+                    };
+                }
+                this.spawnPoint = this.spawnPoints[locationKey];
 
                 // Try to load background image
                 this.loadBackground(locationKey, location);
@@ -2702,6 +2699,21 @@ ESCAPE: Window 10ft drop`
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
 
+                // Check if clicking on spawn point
+                if (this.spawnPoint) {
+                    const dx = x - this.spawnPoint.x;
+                    const dy = y - this.spawnPoint.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < this.gridSize * 0.5) {
+                        this.isDraggingSpawn = true;
+                        this.dragOffset = { x: dx, y: dy };
+                        this.selectedToken = null; // Deselect any token
+                        this.draw();
+                        return;
+                    }
+                }
+
                 // Check if clicking on a token
                 for (let i = this.tokens.length - 1; i >= 0; i--) {
                     const token = this.tokens[i];
@@ -2735,7 +2747,24 @@ ESCAPE: Window 10ft drop`
                 const mouseX = e.clientX - rect.left;
                 const mouseY = e.clientY - rect.top;
 
-                // Handle dragging
+                // Handle spawn point dragging
+                if (this.isDraggingSpawn && this.spawnPoint) {
+                    let x = mouseX - this.dragOffset.x;
+                    let y = mouseY - this.dragOffset.y;
+
+                    if (this.snapToGrid) {
+                        // Snap to center of grid squares
+                        x = Math.round(x / this.gridSize) * this.gridSize;
+                        y = Math.round(y / this.gridSize) * this.gridSize;
+                    }
+
+                    this.spawnPoint.x = x;
+                    this.spawnPoint.y = y;
+                    this.draw();
+                    return;
+                }
+
+                // Handle token dragging
                 if (this.selectedToken && this.isDragging) {
                     let x = mouseX - this.dragOffset.x;
                     let y = mouseY - this.dragOffset.y;
@@ -2779,6 +2808,7 @@ ESCAPE: Window 10ft drop`
 
             onMouseUp() {
                 this.isDragging = false;
+                this.isDraggingSpawn = false;
                 this.draw();
             }
 
@@ -2876,9 +2906,16 @@ ESCAPE: Window 10ft drop`
                 PARTY_CHARACTERS.forEach((char, index) => {
                     // Check if already on map
                     if (!this.tokens.find(t => t.id === char.id)) {
-                        // Place party members in a row
-                        const x = ((index % 5) + 1) * this.gridSize + this.gridSize / 2;
-                        const y = (Math.floor(index / 5) + 1) * this.gridSize + this.gridSize / 2;
+                        // Place party members at spawn point in a cluster
+                        const spawnX = this.spawnPoint ? this.spawnPoint.x : (this.cols / 2) * this.gridSize;
+                        const spawnY = this.spawnPoint ? this.spawnPoint.y : (this.rows - 2) * this.gridSize;
+
+                        // Arrange in a small cluster around spawn point
+                        const offsetX = ((index % 3) - 1) * this.gridSize; // -1, 0, 1 grid squares
+                        const offsetY = (Math.floor(index / 3) - 1) * this.gridSize;
+
+                        const x = spawnX + offsetX;
+                        const y = spawnY + offsetY;
 
                         this.tokens.push({
                             id: char.id,
@@ -2891,6 +2928,8 @@ ESCAPE: Window 10ft drop`
                             hp: char.hp,
                             maxHp: char.maxHp,
                             ac: char.ac,
+                            portrait: char.portrait || null, // Use character portrait if available
+                            character: char, // Store full character reference
                             selected: false
                         });
                         loaded++;
@@ -2950,6 +2989,11 @@ ESCAPE: Window 10ft drop`
 
                 // Draw tokens
                 this.tokens.forEach(token => this.drawToken(token));
+
+                // Draw spawn point
+                if (this.spawnPoint) {
+                    this.drawSpawnPoint();
+                }
             }
 
             drawRooms() {
@@ -3024,6 +3068,43 @@ ESCAPE: Window 10ft drop`
                 }
             }
 
+            drawSpawnPoint() {
+                if (!this.spawnPoint) return;
+
+                const g = this.gridSize;
+                const x = this.spawnPoint.x;
+                const y = this.spawnPoint.y;
+                const size = g * 0.9;
+
+                this.ctx.save();
+
+                // Draw spawn marker [_*_]
+                this.ctx.shadowColor = 'rgba(212, 175, 55, 0.8)';
+                this.ctx.shadowBlur = 15;
+
+                // Outer square
+                this.ctx.strokeStyle = '#d4af37';
+                this.ctx.fillStyle = 'rgba(212, 175, 55, 0.2)';
+                this.ctx.lineWidth = 3;
+                this.ctx.strokeRect(x - size/2, y - size/2, size, size);
+                this.ctx.fillRect(x - size/2, y - size/2, size, size);
+
+                // Draw door icon
+                this.ctx.fillStyle = '#d4af37';
+                this.ctx.font = `bold ${g * 0.6}px Arial`;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText('🚪', x, y);
+
+                // Label
+                this.ctx.shadowBlur = 0;
+                this.ctx.fillStyle = '#d4af37';
+                this.ctx.font = 'bold 10px Arial';
+                this.ctx.fillText('SPAWN', x, y + size/2 + 12);
+
+                this.ctx.restore();
+            }
+
             drawGrid() {
                 this.ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)';
                 this.ctx.lineWidth = 1;
@@ -3064,7 +3145,7 @@ ESCAPE: Window 10ft drop`
             drawToken(token) {
                 const isHovered = token === this.hoveredToken;
                 const isSelected = token === this.selectedToken;
-                const radius = this.gridSize * 0.35 * (isHovered ? 1.15 : 1);
+                const size = this.gridSize * 0.8 * (isHovered ? 1.1 : 1);
 
                 // Draw movement range (glowing circle) - only when selected and NOT dragging
                 if (isSelected && !this.isDragging) {
@@ -3093,41 +3174,60 @@ ESCAPE: Window 10ft drop`
                     this.ctx.shadowColor = token.type === 'player' ? '#3b82f6' : '#dc2626';
                     this.ctx.shadowBlur = 20;
                     this.ctx.beginPath();
-                    this.ctx.arc(token.x, token.y, radius, 0, Math.PI * 2);
+                    this.ctx.arc(token.x, token.y, size / 2, 0, Math.PI * 2);
                     this.ctx.strokeStyle = token.type === 'player' ? '#3b82f6' : '#dc2626';
                     this.ctx.lineWidth = 1;
                     this.ctx.stroke();
                     this.ctx.restore();
                 }
 
-                // Draw token
+                // Draw token with portrait or fallback
                 this.ctx.save();
 
                 // Shadow
-                this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-                this.ctx.shadowBlur = isHovered ? 12 : 8;
+                this.ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+                this.ctx.shadowBlur = isHovered ? 15 : 10;
                 this.ctx.shadowOffsetX = 2;
                 this.ctx.shadowOffsetY = 2;
 
-                // Token circle
-                this.ctx.fillStyle = token.type === 'player' ? '#3b82f6' : '#dc2626';
-                this.ctx.beginPath();
-                this.ctx.arc(token.x, token.y, radius, 0, Math.PI * 2);
-                this.ctx.fill();
+                const hasPortrait = token.portrait && this.portraitImages && this.portraitImages[token.portrait];
+
+                if (hasPortrait) {
+                    // Draw portrait image
+                    const img = this.portraitImages[token.portrait];
+                    this.ctx.save();
+                    this.ctx.beginPath();
+                    this.ctx.arc(token.x, token.y, size / 2, 0, Math.PI * 2);
+                    this.ctx.closePath();
+                    this.ctx.clip();
+
+                    // Draw image centered and scaled to fit
+                    this.ctx.drawImage(img, token.x - size / 2, token.y - size / 2, size, size);
+                    this.ctx.restore();
+                } else {
+                    // Fallback: colored circle
+                    this.ctx.fillStyle = token.type === 'player' ? '#3b82f6' : '#dc2626';
+                    this.ctx.beginPath();
+                    this.ctx.arc(token.x, token.y, size / 2, 0, Math.PI * 2);
+                    this.ctx.fill();
+
+                    // Icon fallback
+                    this.ctx.shadowColor = 'transparent';
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.font = `bold ${size * 0.5}px Arial`;
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(token.type === 'player' ? '👤' : '⚔️', token.x, token.y);
+                }
 
                 // Border
-                this.ctx.strokeStyle = isSelected ? '#d4af37' : (isHovered ? '#fff' : 'rgba(255, 255, 255, 0.8)');
+                this.ctx.strokeStyle = isSelected ? '#d4af37' : (isHovered ? '#fff' : 'rgba(255, 255, 255, 0.9)');
                 this.ctx.lineWidth = isSelected ? 4 : (isHovered ? 3 : 2);
+                this.ctx.beginPath();
+                this.ctx.arc(token.x, token.y, size / 2, 0, Math.PI * 2);
                 this.ctx.stroke();
 
                 this.ctx.restore();
-
-                // Icon
-                this.ctx.fillStyle = 'white';
-                this.ctx.font = `bold ${this.gridSize * 0.4 * (isHovered ? 1.1 : 1)}px Arial`;
-                this.ctx.textAlign = 'center';
-                this.ctx.textBaseline = 'middle';
-                this.ctx.fillText(token.type === 'player' ? '●' : '▲', token.x, token.y);
 
                 // Character info tooltip (if character token)
                 if (token.character && isHovered) {
@@ -3337,6 +3437,47 @@ ESCAPE: Window 10ft drop`
                 `).join('');
             }
 
+            // Portrait Image Management
+            loadPortraitImage(url) {
+                return new Promise((resolve, reject) => {
+                    if (this.portraitImages[url]) {
+                        resolve(this.portraitImages[url]);
+                        return;
+                    }
+
+                    const img = new Image();
+                    img.onload = () => {
+                        this.portraitImages[url] = img;
+                        this.draw(); // Redraw to show the portrait
+                        resolve(img);
+                    };
+                    img.onerror = () => reject(new Error('Failed to load portrait'));
+                    img.src = url;
+                });
+            }
+
+            setCharacterPortrait(characterId, imageUrl) {
+                const character = CHARACTERS[characterId];
+                if (character) {
+                    character.portrait = imageUrl;
+                    this.loadPortraitImage(imageUrl).then(() => {
+                        this.addLog(`Updated portrait for ${character.name}`, 'info');
+                    }).catch(err => {
+                        this.addLog(`Failed to load portrait for ${character.name}`, 'error');
+                        console.error(err);
+                    });
+                }
+            }
+
+            uploadPortraitForCharacter(characterId, file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const dataUrl = e.target.result;
+                    this.setCharacterPortrait(characterId, dataUrl);
+                };
+                reader.readAsDataURL(file);
+            }
+
             cleanup() {
                 this.tokens = [];
                 this.selectedToken = null;
@@ -3417,16 +3558,69 @@ ESCAPE: Window 10ft drop`
                 document.getElementById(`layer-${type}`).classList.add('active');
             }
 
+            getFantasyIcon(type, emoji) {
+                const icons = {
+                    continental: `<svg viewBox="0 0 50 50" width="50" height="50">
+                        <defs>
+                            <filter id="shadow-continental"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.5"/></filter>
+                        </defs>
+                        <circle cx="25" cy="25" r="22" fill="rgba(59, 130, 246, 0.3)" stroke="#3b82f6" stroke-width="2" filter="url(#shadow-continental)"/>
+                        <path d="M15,20 L20,15 L25,18 L30,15 L35,20 L30,25 L25,22 L20,25 Z" fill="#3b82f6" stroke="#1e40af" stroke-width="1.5"/>
+                        <rect x="23" y="25" width="4" height="10" fill="#3b82f6" stroke="#1e40af" stroke-width="1"/>
+                        <text x="25" y="32" font-size="18" text-anchor="middle" fill="#fff">${emoji}</text>
+                    </svg>`,
+
+                    hessian: `<svg viewBox="0 0 50 50" width="50" height="50">
+                        <defs>
+                            <filter id="shadow-hessian"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.5"/></filter>
+                        </defs>
+                        <circle cx="25" cy="25" r="22" fill="rgba(245, 158, 11, 0.3)" stroke="#f59e0b" stroke-width="2" filter="url(#shadow-hessian)"/>
+                        <rect x="15" y="15" width="20" height="20" fill="#f59e0b" stroke="#d97706" stroke-width="2"/>
+                        <rect x="12" y="10" width="6" height="8" fill="#f59e0b" stroke="#d97706" stroke-width="1.5"/>
+                        <rect x="32" y="10" width="6" height="8" fill="#f59e0b" stroke="#d97706" stroke-width="1.5"/>
+                        <text x="25" y="30" font-size="16" text-anchor="middle" fill="#fff">${emoji}</text>
+                    </svg>`,
+
+                    quest: `<svg viewBox="0 0 50 50" width="50" height="50">
+                        <defs>
+                            <filter id="shadow-quest"><feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.6"/></filter>
+                            <radialGradient id="questGlow">
+                                <stop offset="0%" style="stop-color:#dc2626;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#991b1b;stop-opacity:1" />
+                            </radialGradient>
+                        </defs>
+                        <circle cx="25" cy="25" r="23" fill="url(#questGlow)" stroke="#b91c1c" stroke-width="2.5" filter="url(#shadow-quest)"/>
+                        <circle cx="25" cy="25" r="18" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+                        <text x="25" y="32" font-size="20" text-anchor="middle" fill="#fff">${emoji}</text>
+                    </svg>`,
+
+                    crossing: `<svg viewBox="0 0 50 50" width="50" height="50">
+                        <defs>
+                            <filter id="shadow-crossing"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.5"/></filter>
+                        </defs>
+                        <circle cx="25" cy="25" r="22" fill="rgba(6, 182, 212, 0.3)" stroke="#06b6d4" stroke-width="2" filter="url(#shadow-crossing)"/>
+                        <path d="M10,25 Q25,15 40,25 Q25,35 10,25" fill="#06b6d4" fill-opacity="0.4" stroke="#0891b2" stroke-width="1.5"/>
+                        <path d="M15,25 Q25,20 35,25" fill="none" stroke="#0891b2" stroke-width="1.5"/>
+                        <text x="25" y="31" font-size="16" text-anchor="middle" fill="#fff">${emoji}</text>
+                    </svg>`
+                };
+
+                return icons[type] || icons.continental;
+            }
+
             createMarker(key) {
                 const loc = CAMPAIGN[key];
-                const html = `<div class="marker-pin ${loc.type}"><div class="marker-icon">${loc.icon}</div></div>`;
+
+                // Get custom fantasy icon SVG
+                const iconSVG = this.getFantasyIcon(loc.type, loc.icon);
+                const html = `<div class="marker-container ${loc.type}">${iconSVG}</div>`;
 
                 const marker = L.marker(loc.coords, {
                     icon: L.divIcon({
                         className: 'custom-marker',
                         html: html,
-                        iconSize: [40, 40],
-                        iconAnchor: [20, 40]
+                        iconSize: [50, 50],
+                        iconAnchor: [25, 50]
                     })
                 }).addTo(this.map);
 
