@@ -682,8 +682,8 @@
             right: 10px;
             width: 350px;
             max-height: 300px;
-            background: rgba(26, 20, 16, 0.95);
-            border: 2px solid var(--secondary);
+            background: rgba(244, 228, 193, 0.95);
+            border: 2px solid #8b6f47;
             border-radius: 8px;
             padding: 1rem;
             z-index: 100;
@@ -697,17 +697,17 @@
             align-items: center;
             margin-bottom: 0.8rem;
             padding-bottom: 0.5rem;
-            border-bottom: 2px solid var(--secondary);
+            border-bottom: 2px solid #8b6f47;
         }
 
         .log-title {
             font-weight: bold;
-            color: var(--secondary);
+            color: #2c1810;
             font-size: 0.9rem;
         }
 
         .log-clear {
-            background: var(--accent);
+            background: #dc2626;
             border: none;
             color: white;
             padding: 0.3rem 0.6rem;
@@ -1551,7 +1551,34 @@
                 <div class="modal-title" id="character-modal-title">Add Character</div>
                 <button class="modal-close" onclick="closeCharacterModal()">✕</button>
             </div>
-            <div style="padding: 1.5rem;">
+
+            <!-- Mode Switcher -->
+            <div style="padding: 1rem 1.5rem 0; border-bottom: 2px solid #8b6f47; margin-bottom: 1rem;">
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                    <button type="button" id="mode-library-btn" onclick="switchCharacterMode('library')" style="flex: 1; padding: 0.8rem; background: #d4af37; color: #2c1810; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">📚 Load from Library</button>
+                    <button type="button" id="mode-create-btn" onclick="switchCharacterMode('create')" style="flex: 1; padding: 0.8rem; background: rgba(139, 111, 71, 0.3); color: #2c1810; border: 2px solid #8b6f47; border-radius: 6px; font-weight: bold; cursor: pointer;">➕ Create New</button>
+                </div>
+            </div>
+
+            <!-- Library Selection View -->
+            <div id="character-library-view" style="padding: 1.5rem; display: none;">
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="font-weight: bold; margin-bottom: 0.8rem; color: #2c1810;">Select from Templates:</div>
+                    <div id="template-list" style="display: grid; gap: 0.5rem; max-height: 200px; overflow-y: auto;"></div>
+                </div>
+
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="font-weight: bold; margin-bottom: 0.8rem; color: #2c1810;">Select from Characters:</div>
+                    <div id="character-library-list" style="display: grid; gap: 0.5rem; max-height: 200px; overflow-y: auto;"></div>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem;">
+                    <button type="button" onclick="closeCharacterModal()" style="flex: 1; padding: 0.8rem; background: #dc2626; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Cancel</button>
+                </div>
+            </div>
+
+            <!-- Create New Form View -->
+            <div id="character-form-view" style="padding: 1.5rem;">
                 <form id="character-form" onsubmit="saveCharacter(event)">
                     <div style="display: grid; grid-template-columns: 200px 1fr; gap: 1.5rem;">
                         <!-- Left: Image -->
@@ -4173,10 +4200,130 @@ ESCAPE: Window 10ft drop`
             document.getElementById('character-form').reset();
             document.getElementById('char-preview').style.display = 'none';
             document.getElementById('char-placeholder').style.display = 'flex';
+
+            // Default to library mode
+            switchCharacterMode('library');
+            populateCharacterLibrary(type);
         }
 
         function closeCharacterModal() {
             document.getElementById('character-modal').style.display = 'none';
+        }
+
+        function switchCharacterMode(mode) {
+            const libraryView = document.getElementById('character-library-view');
+            const formView = document.getElementById('character-form-view');
+            const libraryBtn = document.getElementById('mode-library-btn');
+            const createBtn = document.getElementById('mode-create-btn');
+
+            if (mode === 'library') {
+                libraryView.style.display = 'block';
+                formView.style.display = 'none';
+                libraryBtn.style.background = '#d4af37';
+                libraryBtn.style.border = 'none';
+                createBtn.style.background = 'rgba(139, 111, 71, 0.3)';
+                createBtn.style.border = '2px solid #8b6f47';
+            } else {
+                libraryView.style.display = 'none';
+                formView.style.display = 'block';
+                libraryBtn.style.background = 'rgba(139, 111, 71, 0.3)';
+                libraryBtn.style.border = '2px solid #8b6f47';
+                createBtn.style.background = '#d4af37';
+                createBtn.style.border = 'none';
+            }
+        }
+
+        function populateCharacterLibrary(type) {
+            // Populate templates
+            const templateList = document.getElementById('template-list');
+            const templates = Object.entries(CHARACTER_TEMPLATES).filter(([key, char]) => {
+                if (type === 'player') return char.type === 'player';
+                if (type === 'enemy') return char.type === 'enemy';
+                return true;
+            });
+
+            if (templates.length === 0) {
+                templateList.innerHTML = '<p style="opacity: 0.6; text-align: center; padding: 1rem; color: #2c1810;">No templates available</p>';
+            } else {
+                templateList.innerHTML = templates.map(([key, char]) => `
+                    <button type="button" onclick="loadCharacterFromLibrary('template', '${key}')" style="width: 100%; padding: 0.8rem; background: rgba(139, 111, 71, 0.2); border: 2px solid #8b6f47; border-radius: 6px; text-align: left; cursor: pointer; color: #2c1810; font-weight: bold; transition: all 0.2s;" onmouseover="this.style.background='rgba(212, 175, 55, 0.3)'" onmouseout="this.style.background='rgba(139, 111, 71, 0.2)'">
+                        <div style="font-size: 1.1rem;">${char.name}</div>
+                        <div style="font-size: 0.85rem; opacity: 0.7;">${char.title || char.class || ''} | HP ${char.maxHp} | AC ${char.ac}</div>
+                    </button>
+                `).join('');
+            }
+
+            // Populate existing characters
+            const charList = document.getElementById('character-library-list');
+            const characters = Object.entries(CHARACTERS).filter(([key, char]) => {
+                if (type === 'player') return char.type === 'player';
+                if (type === 'enemy') return char.type === 'enemy';
+                return true;
+            });
+
+            if (characters.length === 0) {
+                charList.innerHTML = '<p style="opacity: 0.6; text-align: center; padding: 1rem; color: #2c1810;">No characters in library</p>';
+            } else {
+                charList.innerHTML = characters.map(([key, char]) => `
+                    <button type="button" onclick="loadCharacterFromLibrary('character', '${key}')" style="width: 100%; padding: 0.8rem; background: rgba(59, 130, 246, 0.2); border: 2px solid #3b82f6; border-radius: 6px; text-align: left; cursor: pointer; color: #2c1810; font-weight: bold; transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 0.3)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.2)'">
+                        <div style="font-size: 1.1rem;">${char.name}</div>
+                        <div style="font-size: 0.85rem; opacity: 0.7;">${char.class || ''} | HP ${char.hp || char.maxHp}/${char.maxHp} | AC ${char.ac}</div>
+                    </button>
+                `).join('');
+            }
+        }
+
+        function loadCharacterFromLibrary(source, id) {
+            let character;
+
+            if (source === 'template') {
+                // Load from CHARACTER_TEMPLATES and add to party
+                const template = CHARACTER_TEMPLATES[id];
+                if (!template) {
+                    alert('Template not found');
+                    return;
+                }
+
+                // Create new character from template with unique ID
+                character = {
+                    ...template,
+                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                    type: currentCharacterType // Use the modal's current type
+                };
+            } else {
+                // Load from CHARACTERS
+                character = CHARACTERS[id];
+                if (!character) {
+                    alert('Character not found');
+                    return;
+                }
+
+                // Create a copy with new ID to avoid conflicts
+                character = {
+                    ...character,
+                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+                };
+            }
+
+            // Add to appropriate list based on currentCharacterType
+            if (currentCharacterType === 'player') {
+                PARTY_CHARACTERS.push(character);
+                localStorage.setItem('party_characters', JSON.stringify(PARTY_CHARACTERS));
+                renderPartyList();
+            } else {
+                // Add to CHARACTERS as enemy
+                character.type = 'enemy';
+                CHARACTERS[character.id] = character;
+                renderCharactersList();
+            }
+
+            // Close modal
+            closeCharacterModal();
+
+            // Show success message
+            if (window.tactical) {
+                tactical.addLog(`Added ${character.name} to ${currentCharacterType === 'player' ? 'party' : 'characters'}`, 'info');
+            }
         }
 
         // Character Detail Modal (for sidebar characters)
