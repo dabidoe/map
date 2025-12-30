@@ -2478,6 +2478,7 @@ ESCAPE: Window 10ft drop`
                 this.dragOffset = { x: 0, y: 0 };
                 this.battleLog = [];
                 this.currentLocation = null;
+                this.portraitImages = {}; // Cache for loaded portrait images
             }
 
             init(locationKey, location) {
@@ -3047,7 +3048,7 @@ ESCAPE: Window 10ft drop`
             drawToken(token) {
                 const isHovered = token === this.hoveredToken;
                 const isSelected = token === this.selectedToken;
-                const radius = this.gridSize * 0.35 * (isHovered ? 1.15 : 1);
+                const size = this.gridSize * 0.8 * (isHovered ? 1.1 : 1);
 
                 // Draw movement range (glowing circle) - only when selected and NOT dragging
                 if (isSelected && !this.isDragging) {
@@ -3076,41 +3077,60 @@ ESCAPE: Window 10ft drop`
                     this.ctx.shadowColor = token.type === 'player' ? '#3b82f6' : '#dc2626';
                     this.ctx.shadowBlur = 20;
                     this.ctx.beginPath();
-                    this.ctx.arc(token.x, token.y, radius, 0, Math.PI * 2);
+                    this.ctx.arc(token.x, token.y, size / 2, 0, Math.PI * 2);
                     this.ctx.strokeStyle = token.type === 'player' ? '#3b82f6' : '#dc2626';
                     this.ctx.lineWidth = 1;
                     this.ctx.stroke();
                     this.ctx.restore();
                 }
 
-                // Draw token
+                // Draw token with portrait or fallback
                 this.ctx.save();
 
                 // Shadow
-                this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-                this.ctx.shadowBlur = isHovered ? 12 : 8;
+                this.ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+                this.ctx.shadowBlur = isHovered ? 15 : 10;
                 this.ctx.shadowOffsetX = 2;
                 this.ctx.shadowOffsetY = 2;
 
-                // Token circle
-                this.ctx.fillStyle = token.type === 'player' ? '#3b82f6' : '#dc2626';
-                this.ctx.beginPath();
-                this.ctx.arc(token.x, token.y, radius, 0, Math.PI * 2);
-                this.ctx.fill();
+                const hasPortrait = token.portrait && this.portraitImages && this.portraitImages[token.portrait];
+
+                if (hasPortrait) {
+                    // Draw portrait image
+                    const img = this.portraitImages[token.portrait];
+                    this.ctx.save();
+                    this.ctx.beginPath();
+                    this.ctx.arc(token.x, token.y, size / 2, 0, Math.PI * 2);
+                    this.ctx.closePath();
+                    this.ctx.clip();
+
+                    // Draw image centered and scaled to fit
+                    this.ctx.drawImage(img, token.x - size / 2, token.y - size / 2, size, size);
+                    this.ctx.restore();
+                } else {
+                    // Fallback: colored circle
+                    this.ctx.fillStyle = token.type === 'player' ? '#3b82f6' : '#dc2626';
+                    this.ctx.beginPath();
+                    this.ctx.arc(token.x, token.y, size / 2, 0, Math.PI * 2);
+                    this.ctx.fill();
+
+                    // Icon fallback
+                    this.ctx.shadowColor = 'transparent';
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.font = `bold ${size * 0.5}px Arial`;
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    this.ctx.fillText(token.type === 'player' ? '👤' : '⚔️', token.x, token.y);
+                }
 
                 // Border
-                this.ctx.strokeStyle = isSelected ? '#d4af37' : (isHovered ? '#fff' : 'rgba(255, 255, 255, 0.8)');
+                this.ctx.strokeStyle = isSelected ? '#d4af37' : (isHovered ? '#fff' : 'rgba(255, 255, 255, 0.9)');
                 this.ctx.lineWidth = isSelected ? 4 : (isHovered ? 3 : 2);
+                this.ctx.beginPath();
+                this.ctx.arc(token.x, token.y, size / 2, 0, Math.PI * 2);
                 this.ctx.stroke();
 
                 this.ctx.restore();
-
-                // Icon
-                this.ctx.fillStyle = 'white';
-                this.ctx.font = `bold ${this.gridSize * 0.4 * (isHovered ? 1.1 : 1)}px Arial`;
-                this.ctx.textAlign = 'center';
-                this.ctx.textBaseline = 'middle';
-                this.ctx.fillText(token.type === 'player' ? '●' : '▲', token.x, token.y);
 
                 // Character info tooltip (if character token)
                 if (token.character && isHovered) {
@@ -3318,6 +3338,47 @@ ESCAPE: Window 10ft drop`
                         <div>${entry.message}</div>
                     </div>
                 `).join('');
+            }
+
+            // Portrait Image Management
+            loadPortraitImage(url) {
+                return new Promise((resolve, reject) => {
+                    if (this.portraitImages[url]) {
+                        resolve(this.portraitImages[url]);
+                        return;
+                    }
+
+                    const img = new Image();
+                    img.onload = () => {
+                        this.portraitImages[url] = img;
+                        this.draw(); // Redraw to show the portrait
+                        resolve(img);
+                    };
+                    img.onerror = () => reject(new Error('Failed to load portrait'));
+                    img.src = url;
+                });
+            }
+
+            setCharacterPortrait(characterId, imageUrl) {
+                const character = CHARACTERS[characterId];
+                if (character) {
+                    character.portrait = imageUrl;
+                    this.loadPortraitImage(imageUrl).then(() => {
+                        this.addLog(`Updated portrait for ${character.name}`, 'info');
+                    }).catch(err => {
+                        this.addLog(`Failed to load portrait for ${character.name}`, 'error');
+                        console.error(err);
+                    });
+                }
+            }
+
+            uploadPortraitForCharacter(characterId, file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const dataUrl = e.target.result;
+                    this.setCharacterPortrait(characterId, dataUrl);
+                };
+                reader.readAsDataURL(file);
             }
 
             cleanup() {
