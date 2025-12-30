@@ -1016,6 +1016,29 @@
             filter: grayscale(0.2);
         }
 
+        /* Hide fantasy layer button - use Fantasy Mode toggle instead */
+        #layer-fantasy {
+            display: none;
+        }
+
+        /* Exclude tactical overlay from fantasy styling */
+        body.fantasy-mode .tactical-overlay {
+            filter: none !important;
+            background: #1a1410 !important;
+        }
+
+        body.fantasy-mode .tactical-overlay * {
+            filter: none !important;
+        }
+
+        /* Keep tactical overlay dark and readable */
+        body.fantasy-mode .tactical-overlay .combat-log,
+        body.fantasy-mode .tactical-overlay textarea,
+        body.fantasy-mode .tactical-overlay input {
+            background: rgba(26, 20, 16, 0.95) !important;
+            color: #f4e8d0 !important;
+        }
+
         /* Decorative Corners */
         .fantasy-corner {
             display: none;
@@ -1377,47 +1400,8 @@
             color: var(--fantasy-ink);
         }
 
-        /* Fantasy Mode Tactical Overlay */
-        body.fantasy-mode .tactical-overlay {
-            background: var(--fantasy-parchment);
-        }
-
-        body.fantasy-mode .tactical-header {
-            background: linear-gradient(135deg, #8b6f47, #6b5537);
-            border-bottom-color: var(--fantasy-border);
-        }
-
-        body.fantasy-mode .tactical-title {
-            color: var(--fantasy-parchment);
-        }
-
-        body.fantasy-mode .tactical-tabs {
-            background: rgba(139, 111, 71, 0.2);
-            border-bottom-color: var(--fantasy-border);
-        }
-
-        body.fantasy-mode .tactical-tab {
-            color: var(--fantasy-ink);
-            border-right-color: rgba(139, 111, 71, 0.3);
-        }
-
-        body.fantasy-mode .tactical-tab:hover {
-            background: rgba(212, 175, 55, 0.2);
-        }
-
-        body.fantasy-mode .tactical-tab.active {
-            background: rgba(212, 175, 55, 0.3);
-            color: var(--fantasy-shadow);
-        }
-
-        body.fantasy-mode .stat-row {
-            background: rgba(139, 111, 71, 0.1);
-            color: var(--fantasy-ink);
-        }
-
-        body.fantasy-mode .stat-value {
-            color: var(--fantasy-shadow);
-        }
+        /* Fantasy Mode Tactical Overlay - Keep Dark Theme */
+        /* Tactical overlay stays in dark mode for readability - fantasy only affects main map */
     </style>
 </head>
 <body>
@@ -4945,13 +4929,9 @@ ESCAPE: Window 10ft drop`
 
             button.textContent = isFantasyMode ? '📍 Realistic Mode' : '🗺️ Fantasy Mode';
 
-            // Switch map layer when toggling fantasy mode
-            if (window.app) {
-                if (isFantasyMode) {
-                    app.setLayer('fantasy');
-                } else {
-                    app.setLayer('satellite');
-                }
+            // Always use satellite for fantasy mode (looks best)
+            if (window.app && isFantasyMode) {
+                app.setLayer('satellite');
             }
 
             // Save preference
@@ -4964,10 +4944,10 @@ ESCAPE: Window 10ft drop`
             if (savedMode) {
                 document.body.classList.add('fantasy-mode');
                 document.querySelector('.fantasy-toggle-text').textContent = '📍 Realistic Mode';
-                // Apply fantasy layer after app initializes
+                // Apply satellite layer for fantasy mode after app initializes
                 setTimeout(() => {
                     if (window.app) {
-                        app.setLayer('fantasy');
+                        app.setLayer('satellite');
                     }
                 }, 100);
             }
