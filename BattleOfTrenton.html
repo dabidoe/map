@@ -1860,11 +1860,10 @@
                     </div>
                     <div style="padding: 15px; max-height: 600px; overflow-y: auto;">
                         <div style="margin-bottom: 15px;">
-                            <button onclick="addAllMapTokensToCombat()" style="width: 100%; padding: 8px; background: #16a34a; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-bottom: 5px;">🗺️ Add All Map Tokens</button>
-                            <button onclick="rollAllCombatInitiative()" style="width: 100%; padding: 8px; background: #dc2626; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">🎲 Roll Initiative</button>
+                            <button onclick="rollAllCombatInitiative()" style="width: 100%; padding: 10px; background: #dc2626; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem;">🎲 Roll Initiative</button>
                         </div>
                         <div id="initiative-list" style="color: #2c1810;">
-                            <p style="opacity: 0.7; text-align: center; padding: 2rem; font-size: 0.9rem;">Add characters to begin combat</p>
+                            <p style="opacity: 0.7; text-align: center; padding: 2rem; font-size: 0.9rem;">Tokens auto-add when placed on map</p>
                         </div>
                     </div>
                 </div>
@@ -3169,16 +3168,38 @@ ESCAPE: Window 10ft drop`
                             hp: char.hp,
                             maxHp: char.maxHp,
                             ac: char.ac,
+                            attacks: char.attacks || [],
+                            abilities: char.abilities || [],
                             portrait: char.portrait || null, // Use character portrait if available
                             character: char, // Store full character reference
                             selected: false
                         });
+
+                        // Auto-add to combat tracker
+                        if (!COMBAT_TRACKER.find(c => c.id === char.id)) {
+                            COMBAT_TRACKER.push({
+                                id: char.id,
+                                name: char.name,
+                                hp: char.hp,
+                                maxHp: char.maxHp,
+                                ac: char.ac,
+                                initiative: null,
+                                initiativeRoll: null,
+                                type: 'player',
+                                attacks: char.attacks || [],
+                                abilities: char.abilities || [],
+                                class: char.class || '',
+                                image: char.portrait || null
+                            });
+                        }
+
                         loaded++;
                     }
                 });
 
                 if (loaded > 0) {
                     this.addLog(`Loaded ${loaded} party member(s) onto the map`, 'info');
+                    renderInitiativeList(); // Update COMBAT tab
                     this.draw();
                 } else {
                     this.addLog('All party members already on map', 'info');
@@ -5324,43 +5345,46 @@ ESCAPE: Window 10ft drop`
                 const borderStyle = isCurrentTurn ? '5px solid #d4af37' : `5px solid ${borderColor}`;
                 const opacity = isCurrentTurn ? '1' : '0.6';
 
-                // Compact row for all
+                // Compact layout - no horizontal scroll
                 let html = `
                     <div style="background: ${bgColor}; border-left: ${borderStyle}; border-radius: 8px; padding: 1rem; margin-bottom: 0.8rem; ${isCurrentTurn ? 'box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);' : ''} opacity: ${opacity};">
-                        <div style="display: grid; grid-template-columns: 60px 80px 1fr 120px 100px auto; gap: 1rem; align-items: center;">
+                        <div style="display: flex; gap: 1rem; align-items: center;">
                             <!-- Initiative # -->
-                            <div style="text-align: center; font-size: 2rem; font-weight: bold; color: #8b6f47;">
+                            <div style="text-align: center; font-size: 2rem; font-weight: bold; color: #8b6f47; min-width: 50px;">
                                 ${index + 1}${isCurrentTurn ? '<div style="font-size: 0.7rem; color: #d4af37;">◄ TURN</div>' : ''}
                             </div>
 
                             <!-- Portrait -->
-                            <div style="width: 60px; height: 60px; background: rgba(139, 111, 71, 0.2); border: 2px solid #8b6f47; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                            <div style="width: 60px; height: 60px; background: rgba(139, 111, 71, 0.2); border: 2px solid #8b6f47; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
                                 ${hasImage ? `<img src="${imgSrc}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="font-size: 2rem; opacity: 0.5;">👤</div>'}
                             </div>
 
-                            <!-- Name & Class -->
-                            <div>
+                            <!-- Name & Stats -->
+                            <div style="flex: 1; min-width: 0;">
                                 <div style="font-size: 1.2rem; font-weight: bold; color: #2c1810;">${combatant.name}</div>
                                 ${combatant.class ? `<div style="opacity: 0.7; font-size: 0.85rem; color: #2c1810;">${combatant.class}</div>` : ''}
                             </div>
 
-                            <!-- HP -->
-                            <div style="text-align: center;">
-                                <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem; color: #2c1810;">HP</div>
-                                <input type="number" value="${combatant.hp}" onchange="updateCombatantHP('${combatant.id}', this.value)" onclick="event.stopPropagation()" style="width: 100%; padding: 0.4rem; background: rgba(244, 228, 193, 0.8); border: 2px solid #16a34a; color: #16a34a; border-radius: 4px; text-align: center; font-size: 1.2rem; font-weight: bold;">
-                                <div style="opacity: 0.6; font-size: 0.8rem; margin-top: 0.2rem; color: #2c1810;">/ ${combatant.maxHp}</div>
-                            </div>
+                            <!-- HP, AC, Initiative in compact row -->
+                            <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+                                <!-- HP -->
+                                <div style="text-align: center; min-width: 80px;">
+                                    <div style="font-size: 0.7rem; opacity: 0.7; color: #2c1810;">HP</div>
+                                    <input type="number" value="${combatant.hp}" onchange="updateCombatantHP('${combatant.id}', this.value)" onclick="event.stopPropagation()" style="width: 60px; padding: 0.3rem; background: rgba(244, 228, 193, 0.8); border: 2px solid #16a34a; color: #16a34a; border-radius: 4px; text-align: center; font-size: 1rem; font-weight: bold;">
+                                    <div style="opacity: 0.6; font-size: 0.7rem; color: #2c1810;">/${combatant.maxHp}</div>
+                                </div>
 
-                            <!-- AC -->
-                            <div style="text-align: center; padding: 0.8rem; background: rgba(139, 111, 71, 0.2); border: 2px solid #8b6f47; border-radius: 6px;">
-                                <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem; color: #2c1810;">AC</div>
-                                <div style="font-size: 1.5rem; font-weight: bold; color: #2c1810;">${combatant.ac}</div>
-                            </div>
+                                <!-- AC -->
+                                <div style="text-align: center; padding: 0.5rem; background: rgba(139, 111, 71, 0.2); border: 2px solid #8b6f47; border-radius: 6px; min-width: 60px;">
+                                    <div style="font-size: 0.7rem; opacity: 0.7; color: #2c1810;">AC</div>
+                                    <div style="font-size: 1.2rem; font-weight: bold; color: #2c1810;">${combatant.ac}</div>
+                                </div>
 
-                            <!-- Initiative Roll -->
-                            <div style="text-align: center; padding: 0.8rem; background: rgba(212, 175, 55, 0.25); border: 2px solid #d4af37; border-radius: 6px;">
-                                <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem; color: #2c1810;">Initiative</div>
-                                <div style="font-size: 1.8rem; font-weight: bold; color: #8b6f47;">${initiativeDisplay}</div>
+                                <!-- Initiative -->
+                                <div style="text-align: center; padding: 0.5rem; background: rgba(212, 175, 55, 0.25); border: 2px solid #d4af37; border-radius: 6px; min-width: 60px;">
+                                    <div style="font-size: 0.7rem; opacity: 0.7; color: #2c1810;">Init</div>
+                                    <div style="font-size: 1.2rem; font-weight: bold; color: #8b6f47;">${initiativeDisplay}</div>
+                                </div>
                             </div>
                         </div>`;
 
@@ -5548,7 +5572,7 @@ ESCAPE: Window 10ft drop`
             if (!menu) {
                 menu = document.createElement('div');
                 menu.id = 'token-action-menu';
-                menu.style.cssText = 'position: fixed; background: rgba(244, 228, 193, 0.98); border: 3px solid #8b6f47; border-radius: 8px; padding: 10px; z-index: 10000; box-shadow: 0 4px 20px rgba(0,0,0,0.5); min-width: 200px;';
+                menu.style.cssText = 'position: fixed; background: rgba(244, 228, 193, 0.98); border: 3px solid #8b6f47; border-radius: 8px; padding: 12px; z-index: 10000; box-shadow: 0 4px 20px rgba(0,0,0,0.5); min-width: 220px;';
                 document.body.appendChild(menu);
             }
 
@@ -5557,9 +5581,9 @@ ESCAPE: Window 10ft drop`
             menu.style.top = y + 'px';
             menu.style.display = 'block';
 
-            // Build menu content
+            // Build menu content - D&D standard actions
             let html = `
-                <div style="font-weight: bold; color: #2c1810; margin-bottom: 10px; font-size: 1.1rem; border-bottom: 2px solid #8b6f47; padding-bottom: 5px;">
+                <div style="font-weight: bold; color: #2c1810; margin-bottom: 8px; font-size: 1.1rem; border-bottom: 2px solid #8b6f47; padding-bottom: 5px;">
                     ${token.name || 'Unknown Token'}
                 </div>
                 <div style="color: #2c1810; font-size: 0.85rem; margin-bottom: 10px;">
@@ -5567,29 +5591,44 @@ ESCAPE: Window 10ft drop`
                 </div>
             `;
 
-            // Add attacks
+            // Standard D&D Actions
+            html += '<div style="margin-bottom: 3px;"><strong style="color: #8b6f47; font-size: 0.9rem;">Actions:</strong></div>';
+
+            // Attack - show submenu if multiple attacks
             if (token.attacks && token.attacks.length > 0) {
-                html += '<div style="margin-bottom: 5px;"><strong style="color: #dc2626;">⚔️ Attacks:</strong></div>';
                 token.attacks.forEach((attack, idx) => {
-                    html += `<button onclick="selectAttackMode('${token.id}', '${attack}')" style="width: 100%; padding: 8px; margin-bottom: 5px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: left;">
-                        ${attack}
+                    html += `<button onclick="selectAttackMode('${token.id}', '${attack.replace(/'/g, "\\'")}'); hideTokenActionMenu();" style="width: 100%; padding: 8px; margin-bottom: 4px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: left; font-size: 0.9rem;">
+                        ⚔️ ${attack}
                     </button>`;
                 });
+            } else {
+                html += `<button onclick="tokenBasicAttack('${token.id}'); hideTokenActionMenu();" style="width: 100%; padding: 8px; margin-bottom: 4px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: left; font-size: 0.9rem;">
+                    ⚔️ Attack
+                </button>`;
             }
 
-            // Add abilities
+            // Abilities/Spells
             if (token.abilities && token.abilities.length > 0) {
-                html += '<div style="margin-top: 10px; margin-bottom: 5px;"><strong style="color: #3b82f6;">✨ Abilities:</strong></div>';
                 token.abilities.forEach((ability, idx) => {
-                    html += `<button onclick="useAbility('${token.id}', '${ability}')" style="width: 100%; padding: 8px; margin-bottom: 5px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: left;">
-                        ${ability}
+                    html += `<button onclick="useAbility('${token.id}', '${ability.replace(/'/g, "\\'")}'); hideTokenActionMenu();" style="width: 100%; padding: 8px; margin-bottom: 4px; background: #7c3aed; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: left; font-size: 0.9rem;">
+                        ✨ ${ability}
                     </button>`;
                 });
             }
 
-            // Add close button
-            html += `<button onclick="hideTokenActionMenu()" style="width: 100%; padding: 8px; margin-top: 10px; background: #6b7280; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                Close
+            // Dodge action
+            html += `<button onclick="tokenDodge('${token.id}'); hideTokenActionMenu();" style="width: 100%; padding: 8px; margin-bottom: 4px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: left; font-size: 0.9rem;">
+                🛡️ Dodge
+            </button>`;
+
+            // Dash action
+            html += `<button onclick="tokenDash('${token.id}'); hideTokenActionMenu();" style="width: 100%; padding: 8px; margin-bottom: 4px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: left; font-size: 0.9rem;">
+                💨 Dash
+            </button>`;
+
+            // Help action
+            html += `<button onclick="tokenHelp('${token.id}'); hideTokenActionMenu();" style="width: 100%; padding: 8px; margin-bottom: 4px; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: left; font-size: 0.9rem;">
+                🤝 Help
             </button>`;
 
             menu.innerHTML = html;
@@ -5739,16 +5778,51 @@ ESCAPE: Window 10ft drop`
         }
 
         function useAbility(tokenId, ability) {
-            hideTokenActionMenu();
-
             const token = window.tactical.tokens.find(t => t.id === tokenId);
             if (!token) return;
 
             if (window.tactical) {
                 tactical.addLog(`${token.name || 'Unknown'} uses: ${ability}`, 'combat');
             }
+        }
 
-            alert(`${token.name || 'Unknown'} uses ${ability}\n\n(Ability effects can be added here)`);
+        function tokenBasicAttack(tokenId) {
+            attackMode = { attackerId: tokenId, attackString: 'Basic Attack (1d6+2)' };
+
+            if (window.tactical) {
+                tactical.addLog(`Click a target to attack`, 'info');
+                window.tactical.canvas.style.cursor = 'crosshair';
+            }
+
+            window.tactical.canvas.addEventListener('click', handleAttackTargetClick);
+        }
+
+        function tokenDodge(tokenId) {
+            const token = window.tactical.tokens.find(t => t.id === tokenId);
+            if (!token) return;
+
+            if (window.tactical) {
+                tactical.addLog(`${token.name || 'Unknown'} takes the Dodge action (disadvantage to attackers until next turn)`, 'combat');
+            }
+        }
+
+        function tokenDash(tokenId) {
+            const token = window.tactical.tokens.find(t => t.id === tokenId);
+            if (!token) return;
+
+            const speed = token.speed || 30;
+            if (window.tactical) {
+                tactical.addLog(`${token.name || 'Unknown'} takes the Dash action (movement doubled to ${speed * 2}ft this turn)`, 'combat');
+            }
+        }
+
+        function tokenHelp(tokenId) {
+            const token = window.tactical.tokens.find(t => t.id === tokenId);
+            if (!token) return;
+
+            if (window.tactical) {
+                tactical.addLog(`${token.name || 'Unknown'} takes the Help action (next ally has advantage)`, 'combat');
+            }
         }
 
         // Combat Log Functions for COMBAT Tab
