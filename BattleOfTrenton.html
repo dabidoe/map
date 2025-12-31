@@ -1961,6 +1961,17 @@
                     <div id="initiative-list">
                         <p style="opacity: 0.7; text-align: center; padding: 3rem; color: #2c1810;">No combatants in initiative. Add characters and roll initiative to begin.</p>
                     </div>
+
+                    <!-- Combat Log -->
+                    <div style="margin-top: 2rem; background: rgba(244, 228, 193, 0.95); border: 2px solid #8b6f47; border-radius: 8px; overflow: hidden;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 2px solid #8b6f47; background: rgba(139, 111, 71, 0.2);">
+                            <div style="font-weight: bold; font-size: 1.1rem; color: #2c1810;">⚔️ Combat Log</div>
+                            <button onclick="clearCombatLog()" style="padding: 0.5rem 1rem; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85rem;">Clear</button>
+                        </div>
+                        <div id="combat-log-entries" style="padding: 1rem; max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 0.9rem;">
+                            <p style="opacity: 0.6; text-align: center; padding: 2rem; color: #2c1810;">Combat log will appear here...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -2793,20 +2804,40 @@ ESCAPE: Window 10ft drop`
                 const enemyIds = encounter.enemies;
                 const enemies = enemyIds.map(id => CHARACTERS[id]).filter(e => e);
 
+                // Add these enemies to the COMBAT_TRACKER for the COMBAT tab
+                enemies.forEach(enemy => {
+                    if (!COMBAT_TRACKER.find(c => c.id === enemy.id)) {
+                        COMBAT_TRACKER.push({
+                            ...enemy,
+                            hp: enemy.hp || enemy.maxHp || 58,
+                            initiative: null,
+                            initiativeRoll: null,
+                            type: 'enemy'
+                        });
+                    }
+                });
+
                 container.innerHTML = `
-                    <div style="background: #dc2626; padding: 1rem; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
-                        <h3 style="margin: 0; color: white;">⚔️ Combat Tracker - ${encounter.name}</h3>
-                        <button onclick="rollAllInitiative()" style="background: var(--secondary); color: var(--primary); border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">Roll All Initiative</button>
+                    <div style="background: #dc2626; padding: 1rem; border-radius: 8px 8px 0 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
+                            <h3 style="margin: 0; color: white;">⚔️ ${encounter.name}</h3>
+                            <button onclick="switchTacticalTab('combat')" style="background: var(--secondary); color: var(--primary); border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">
+                                ⚔️ Go to COMBAT Tab
+                            </button>
+                        </div>
+                        <div style="color: rgba(255,255,255,0.9); font-size: 0.85rem; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
+                            ${enemies.length} enemies added to combat tracker. Switch to the COMBAT tab for full turn-based combat with dice rolling, targeting, and abilities.
+                        </div>
                     </div>
 
                     <div style="background: rgba(0,0,0,0.2); padding: 1.5rem;">
                         ${enemies.map(enemy => {
-                            const hp = enemy.hp || 58;
+                            const hp = enemy.hp || enemy.maxHp || 58;
                             const maxHp = enemy.maxHp || hp;
                             const ac = enemy.ac || 15;
                             return `
-                                <div style="background: rgba(30, 30, 30, 0.6); border: 3px solid var(--secondary); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <div style="background: rgba(30, 30, 30, 0.6); border: 3px solid var(--secondary); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
                                         <div style="display: flex; align-items: center; gap: 1rem;">
                                             <div style="font-size: 2rem;">▲</div>
                                             <strong style="font-size: 1.3rem;">${enemy.name}</strong>
@@ -2814,21 +2845,13 @@ ESCAPE: Window 10ft drop`
                                         <div style="display: flex; gap: 1rem; align-items: center;">
                                             <div style="text-align: center;">
                                                 <div style="font-size: 0.8rem; opacity: 0.7;">HP</div>
-                                                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                                    <input type="number" value="${hp}" max="${maxHp}"
-                                                           style="width: 60px; padding: 0.4rem; background: rgba(0,0,0,0.5); border: 2px solid var(--secondary); color: white; text-align: center; font-size: 1.2rem; font-weight: bold; border-radius: 4px;"
-                                                           onchange="updateHP('${enemy.id}', this.value)">
-                                                    <span style="font-size: 1.2rem; font-weight: bold;">/ ${maxHp}</span>
-                                                </div>
+                                                <div style="font-size: 1.2rem; font-weight: bold;">${hp} / ${maxHp}</div>
                                             </div>
                                             <div style="text-align: center; padding: 0 1rem;">
                                                 <div style="font-size: 0.8rem; opacity: 0.7;">AC</div>
                                                 <div style="font-size: 1.5rem; font-weight: bold;">${ac}</div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <div style="display: flex; gap: 0.5rem;">
-                                        <button onclick="attackRoll('${enemy.id}', '${enemy.name}')" style="flex: 1; background: #dc2626; color: white; border: none; padding: 0.6rem; border-radius: 6px; font-weight: bold; cursor: pointer;">Attack</button>
                                     </div>
                                 </div>
                             `;
@@ -5097,18 +5120,31 @@ ESCAPE: Window 10ft drop`
         let currentTurnIndex = 0;
 
         function addPartyToCombat() {
+            if (PARTY_CHARACTERS.length === 0) {
+                const message = 'No party members found. Add characters in the PARTY tab first.';
+                addCombatLog(message, 'info');
+                alert(message);
+                return;
+            }
+
+            let addedCount = 0;
             PARTY_CHARACTERS.forEach(char => {
                 if (!COMBAT_TRACKER.find(c => c.id === char.id)) {
                     COMBAT_TRACKER.push({
                         ...char,
                         initiative: null,
-                        initiativeRoll: null
+                        initiativeRoll: null,
+                        type: char.type || 'player'  // Ensure type is set
                     });
+                    addedCount++;
                 }
             });
+
             renderInitiativeList();
+            const message = `Added ${addedCount} party member(s) to combat`;
+            addCombatLog(message, 'info');
             if (window.tactical) {
-                tactical.addLog(`Added ${PARTY_CHARACTERS.length} party members to combat`, 'info');
+                tactical.addLog(message, 'info');
             }
         }
 
@@ -5437,6 +5473,39 @@ ESCAPE: Window 10ft drop`
             }
         }
 
+        // Combat Log Functions for COMBAT Tab
+        function addCombatLog(message, type = 'combat') {
+            const logContainer = document.getElementById('combat-log-entries');
+            if (!logContainer) return;
+
+            // Remove placeholder if exists
+            const placeholder = logContainer.querySelector('p');
+            if (placeholder) {
+                placeholder.remove();
+            }
+
+            const entry = document.createElement('div');
+            entry.style.cssText = 'background: rgba(139, 111, 71, 0.15); padding: 0.8rem; border-left: 4px solid #dc2626; margin-bottom: 0.8rem; border-radius: 4px; white-space: pre-wrap; color: #2c1810;';
+
+            if (type === 'info') {
+                entry.style.borderLeftColor = '#3b82f6';
+            } else if (type === 'combat') {
+                entry.style.borderLeftColor = '#dc2626';
+            }
+
+            const timestamp = new Date().toLocaleTimeString();
+            entry.innerHTML = `<div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem;">${timestamp}</div>${message}`;
+
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        function clearCombatLog() {
+            const logContainer = document.getElementById('combat-log-entries');
+            if (!logContainer) return;
+            logContainer.innerHTML = '<p style="opacity: 0.6; text-align: center; padding: 2rem; color: #2c1810;">Combat log cleared...</p>';
+        }
+
         // ENHANCED COMBAT SYSTEM WITH DICE ROLLING AND TARGETING
 
         // Dice roller with animation and result
@@ -5509,55 +5578,57 @@ ESCAPE: Window 10ft drop`
             const damageRoll = rollDice(attack.damage);
 
             // Log to combat log
+            const isCrit = toHitRoll.rolls[0] === 20;
+            const isFumble = toHitRoll.rolls[0] === 1;
+
+            let logType = 'combat';
+            let message = `${attacker.name} attacks`;
+
+            if (target) {
+                message += ` ${target.name} (AC ${target.ac})!\n`;
+            } else {
+                message += `!\n`;
+            }
+
+            message += `🎲 To Hit: ${toHitRoll.rolls[0]}${toHitBonus >= 0 ? '+' : ''}${toHitBonus} = ${toHitTotal}`;
+
+            if (target) {
+                const hit = toHitTotal >= target.ac || isCrit;
+                if (hit && !isFumble) {
+                    message += ` → ${toHitTotal >= target.ac ? '✓ HIT' : '✗ MISS'}`;
+                }
+            }
+
+            if (isCrit) {
+                message += ' ⚡ CRITICAL HIT!';
+                const critDamage = rollDice(attack.damage);
+                const totalCritDamage = damageRoll.total + critDamage.total;
+                message += `\n💥 Damage: ${damageRoll.rolls.join('+')}${damageRoll.bonus > 0 ? '+' + damageRoll.bonus : ''} + ${critDamage.rolls.join('+')}${critDamage.bonus > 0 ? '+' + critDamage.bonus : ''} = ${totalCritDamage} ${attack.damageType}`;
+
+                // Auto-apply damage on crit
+                if (target) {
+                    const newHP = Math.max(0, target.hp - totalCritDamage);
+                    target.hp = newHP;
+                    message += `\n${target.name}: ${target.hp + totalCritDamage} → ${newHP} HP`;
+                    renderInitiativeList();
+                }
+            } else if (isFumble) {
+                message += ' ❌ FUMBLE!';
+            } else {
+                message += `\n💥 Damage: ${damageRoll.rolls.join('+')}${damageRoll.bonus > 0 ? '+' + damageRoll.bonus : ''} = ${damageRoll.total} ${attack.damageType}`;
+
+                // Auto-apply damage if it hit
+                if (target && toHitTotal >= target.ac) {
+                    const newHP = Math.max(0, target.hp - damageRoll.total);
+                    target.hp = newHP;
+                    message += `\n${target.name}: ${target.hp + damageRoll.total} → ${newHP} HP`;
+                    renderInitiativeList();
+                }
+            }
+
+            // Log to both combat tab and tactical map log
+            addCombatLog(message, logType);
             if (window.tactical) {
-                const isCrit = toHitRoll.rolls[0] === 20;
-                const isFumble = toHitRoll.rolls[0] === 1;
-
-                let logType = 'combat';
-                let message = `${attacker.name} attacks`;
-
-                if (target) {
-                    message += ` ${target.name} (AC ${target.ac})!\n`;
-                } else {
-                    message += `!\n`;
-                }
-
-                message += `🎲 To Hit: ${toHitRoll.rolls[0]}${toHitBonus >= 0 ? '+' : ''}${toHitBonus} = ${toHitTotal}`;
-
-                if (target) {
-                    const hit = toHitTotal >= target.ac || isCrit;
-                    if (hit && !isFumble) {
-                        message += ` → ${toHitTotal >= target.ac ? '✓ HIT' : '✗ MISS'}`;
-                    }
-                }
-
-                if (isCrit) {
-                    message += ' ⚡ CRITICAL HIT!';
-                    const critDamage = rollDice(attack.damage);
-                    const totalCritDamage = damageRoll.total + critDamage.total;
-                    message += `\n💥 Damage: ${damageRoll.rolls.join('+')}${damageRoll.bonus > 0 ? '+' + damageRoll.bonus : ''} + ${critDamage.rolls.join('+')}${critDamage.bonus > 0 ? '+' + critDamage.bonus : ''} = ${totalCritDamage} ${attack.damageType}`;
-
-                    // Auto-apply damage on crit
-                    if (target) {
-                        const newHP = Math.max(0, target.hp - totalCritDamage);
-                        target.hp = newHP;
-                        message += `\n${target.name}: ${target.hp + totalCritDamage} → ${newHP} HP`;
-                        renderInitiativeList();
-                    }
-                } else if (isFumble) {
-                    message += ' ❌ FUMBLE!';
-                } else {
-                    message += `\n💥 Damage: ${damageRoll.rolls.join('+')}${damageRoll.bonus > 0 ? '+' + damageRoll.bonus : ''} = ${damageRoll.total} ${attack.damageType}`;
-
-                    // Auto-apply damage if it hit
-                    if (target && toHitTotal >= target.ac) {
-                        const newHP = Math.max(0, target.hp - damageRoll.total);
-                        target.hp = newHP;
-                        message += `\n${target.name}: ${target.hp + damageRoll.total} → ${newHP} HP`;
-                        renderInitiativeList();
-                    }
-                }
-
                 tactical.addLog(message, logType);
             }
         }
@@ -5651,14 +5722,17 @@ ESCAPE: Window 10ft drop`
 
             // Check if it's user's turn
             if (COMBAT_TRACKER[currentTurnIndex]?.id !== userId) {
+                addCombatLog(`Not ${user.name}'s turn!`, 'info');
                 if (window.tactical) {
                     tactical.addLog(`Not ${user.name}'s turn!`, 'info');
                 }
                 return;
             }
 
+            const message = `${user.name} uses ${abilityName}!`;
+            addCombatLog(message, 'combat');
             if (window.tactical) {
-                tactical.addLog(`${user.name} uses ${abilityName}!`, 'combat');
+                tactical.addLog(message, 'combat');
             }
         }
 
