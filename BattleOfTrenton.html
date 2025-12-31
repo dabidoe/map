@@ -1853,14 +1853,14 @@
                 <canvas id="tactical-canvas"></canvas>
 
                 <!-- Floating Combat Tracker -->
-                <div id="floating-combat-tracker" style="position: absolute; top: 80px; right: 20px; width: 400px; background: rgba(244, 228, 193, 0.98); border: 3px solid #8b6f47; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 100; display: none;">
+                <div id="floating-combat-tracker" style="position: fixed; top: 100px; right: 20px; width: 420px; background: rgba(244, 228, 193, 0.98); border: 3px solid #8b6f47; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 9999; display: none;">
                     <div style="background: #8b6f47; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 5px 5px 0 0; cursor: move;" id="combat-tracker-header">
                         <div style="font-weight: bold; color: white; font-size: 1.1rem;">⚔️ Combat Tracker</div>
                         <button onclick="toggleCombatTracker()" style="background: #dc2626; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;">×</button>
                     </div>
                     <div style="padding: 15px; max-height: 600px; overflow-y: auto;">
                         <div style="margin-bottom: 15px;">
-                            <button onclick="addPartyToCombat()" style="width: 100%; padding: 8px; background: #3b82f6; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-bottom: 5px;">+ Party Members</button>
+                            <button onclick="addAllMapTokensToCombat()" style="width: 100%; padding: 8px; background: #16a34a; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-bottom: 5px;">🗺️ Add All Map Tokens</button>
                             <button onclick="rollAllCombatInitiative()" style="width: 100%; padding: 8px; background: #dc2626; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">🎲 Roll Initiative</button>
                         </div>
                         <div id="initiative-list" style="color: #2c1810;">
@@ -2902,6 +2902,7 @@ ESCAPE: Window 10ft drop`
                 this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
                 this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
                 this.canvas.addEventListener('mouseup', () => this.onMouseUp());
+                this.canvas.addEventListener('contextmenu', (e) => this.onRightClick(e));
                 this.canvas.addEventListener('mouseleave', () => this.onMouseUp());
             }
 
@@ -3021,6 +3022,27 @@ ESCAPE: Window 10ft drop`
                 this.isDragging = false;
                 this.isDraggingSpawn = false;
                 this.draw();
+            }
+
+            onRightClick(e) {
+                e.preventDefault();
+                const rect = this.canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                // Check if clicking on a token
+                for (let i = this.tokens.length - 1; i >= 0; i--) {
+                    const token = this.tokens[i];
+                    const dx = x - token.x;
+                    const dy = y - token.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < this.gridSize * 0.4) {
+                        // Show action menu for this token
+                        showTokenActionMenu(token, e.clientX, e.clientY);
+                        return;
+                    }
+                }
             }
 
             toggleGrid() {
@@ -5482,6 +5504,251 @@ ESCAPE: Window 10ft drop`
         function showCombatTracker() {
             const tracker = document.getElementById('floating-combat-tracker');
             tracker.style.display = 'block';
+        }
+
+        function addAllMapTokensToCombat() {
+            if (!window.tactical || !window.tactical.tokens) {
+                alert('No tokens on map. Place characters on the map first!');
+                return;
+            }
+
+            let addedCount = 0;
+            window.tactical.tokens.forEach(token => {
+                if (!COMBAT_TRACKER.find(c => c.id === token.id)) {
+                    COMBAT_TRACKER.push({
+                        id: token.id,
+                        name: token.name || 'Unknown',
+                        hp: token.hp || token.maxHp || 20,
+                        maxHp: token.maxHp || 20,
+                        ac: token.ac || 10,
+                        initiative: null,
+                        initiativeRoll: null,
+                        type: token.type || 'player',
+                        attacks: token.attacks || [],
+                        abilities: token.abilities || []
+                    });
+                    addedCount++;
+                }
+            });
+
+            renderInitiativeList();
+            const message = `Added ${addedCount} token(s) from map to combat`;
+            if (window.tactical) {
+                tactical.addLog(message, 'info');
+            }
+            alert(message);
+        }
+
+        // Token Action Menu System
+        let attackMode = null; // {attackerId, attackString}
+
+        function showTokenActionMenu(token, x, y) {
+            // Get or create the menu
+            let menu = document.getElementById('token-action-menu');
+            if (!menu) {
+                menu = document.createElement('div');
+                menu.id = 'token-action-menu';
+                menu.style.cssText = 'position: fixed; background: rgba(244, 228, 193, 0.98); border: 3px solid #8b6f47; border-radius: 8px; padding: 10px; z-index: 10000; box-shadow: 0 4px 20px rgba(0,0,0,0.5); min-width: 200px;';
+                document.body.appendChild(menu);
+            }
+
+            // Position the menu
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
+            menu.style.display = 'block';
+
+            // Build menu content
+            let html = `
+                <div style="font-weight: bold; color: #2c1810; margin-bottom: 10px; font-size: 1.1rem; border-bottom: 2px solid #8b6f47; padding-bottom: 5px;">
+                    ${token.name || 'Unknown Token'}
+                </div>
+                <div style="color: #2c1810; font-size: 0.85rem; margin-bottom: 10px;">
+                    HP: ${token.hp || token.maxHp || 20}/${token.maxHp || 20} | AC: ${token.ac || 10}
+                </div>
+            `;
+
+            // Add attacks
+            if (token.attacks && token.attacks.length > 0) {
+                html += '<div style="margin-bottom: 5px;"><strong style="color: #dc2626;">⚔️ Attacks:</strong></div>';
+                token.attacks.forEach((attack, idx) => {
+                    html += `<button onclick="selectAttackMode('${token.id}', '${attack}')" style="width: 100%; padding: 8px; margin-bottom: 5px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: left;">
+                        ${attack}
+                    </button>`;
+                });
+            }
+
+            // Add abilities
+            if (token.abilities && token.abilities.length > 0) {
+                html += '<div style="margin-top: 10px; margin-bottom: 5px;"><strong style="color: #3b82f6;">✨ Abilities:</strong></div>';
+                token.abilities.forEach((ability, idx) => {
+                    html += `<button onclick="useAbility('${token.id}', '${ability}')" style="width: 100%; padding: 8px; margin-bottom: 5px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: left;">
+                        ${ability}
+                    </button>`;
+                });
+            }
+
+            // Add close button
+            html += `<button onclick="hideTokenActionMenu()" style="width: 100%; padding: 8px; margin-top: 10px; background: #6b7280; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                Close
+            </button>`;
+
+            menu.innerHTML = html;
+
+            // Close menu when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', function closeMenu(e) {
+                    if (!menu.contains(e.target)) {
+                        hideTokenActionMenu();
+                        document.removeEventListener('click', closeMenu);
+                    }
+                }, { once: true });
+            }, 100);
+        }
+
+        function hideTokenActionMenu() {
+            const menu = document.getElementById('token-action-menu');
+            if (menu) {
+                menu.style.display = 'none';
+            }
+            attackMode = null;
+            if (window.tactical) {
+                window.tactical.canvas.style.cursor = 'crosshair';
+            }
+        }
+
+        function selectAttackMode(attackerId, attackString) {
+            attackMode = { attackerId, attackString };
+            hideTokenActionMenu();
+
+            if (window.tactical) {
+                tactical.addLog(`Click a target to attack with: ${attackString}`, 'info');
+                window.tactical.canvas.style.cursor = 'crosshair';
+            }
+
+            // Add one-time click listener to canvas for target selection
+            window.tactical.canvas.addEventListener('click', handleAttackTargetClick);
+        }
+
+        function handleAttackTargetClick(e) {
+            if (!attackMode) return;
+
+            const rect = window.tactical.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Find clicked token
+            for (let i = window.tactical.tokens.length - 1; i >= 0; i--) {
+                const token = window.tactical.tokens[i];
+                const dx = x - token.x;
+                const dy = y - token.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < window.tactical.gridSize * 0.4) {
+                    // Found target - execute attack
+                    executeAttackOnTarget(attackMode.attackerId, attackMode.attackString, token.id);
+                    attackMode = null;
+                    window.tactical.canvas.removeEventListener('click', handleAttackTargetClick);
+                    window.tactical.canvas.style.cursor = 'crosshair';
+                    return;
+                }
+            }
+
+            // Clicked empty space - cancel attack
+            if (window.tactical) {
+                tactical.addLog('Attack cancelled', 'info');
+            }
+            attackMode = null;
+            window.tactical.canvas.removeEventListener('click', handleAttackTargetClick);
+        }
+
+        function executeAttackOnTarget(attackerId, attackString, targetId) {
+            // Find attacker and target in combat tracker
+            const attacker = COMBAT_TRACKER.find(c => c.id === attackerId) ||
+                             window.tactical.tokens.find(t => t.id === attackerId);
+            const target = COMBAT_TRACKER.find(c => c.id === targetId) ||
+                           window.tactical.tokens.find(t => t.id === targetId);
+
+            if (!attacker || !target) {
+                alert('Could not find attacker or target!');
+                return;
+            }
+
+            // Roll attack (1d20)
+            const attackRoll = Math.floor(Math.random() * 20) + 1;
+            const attackBonus = 5; // Default +5, could be parsed from attackString
+            const totalAttack = attackRoll + attackBonus;
+
+            let resultMessage = `${attacker.name || 'Attacker'} attacks ${target.name || 'Target'} with ${attackString}\n`;
+            resultMessage += `Attack roll: ${attackRoll} + ${attackBonus} = ${totalAttack} vs AC ${target.ac || 10}\n`;
+
+            if (attackRoll === 20) {
+                resultMessage += '🎯 CRITICAL HIT!\n';
+                // Roll damage twice for crit
+                const damage1 = rollDiceFromString(attackString);
+                const damage2 = rollDiceFromString(attackString);
+                const totalDamage = damage1 + damage2;
+                resultMessage += `Damage: ${damage1} + ${damage2} = ${totalDamage} damage!`;
+
+                // Apply damage
+                if (target.hp !== undefined) {
+                    target.hp = Math.max(0, target.hp - totalDamage);
+                    resultMessage += `\n${target.name} HP: ${target.hp}/${target.maxHp || 20}`;
+                }
+            } else if (attackRoll === 1) {
+                resultMessage += '💀 CRITICAL MISS!';
+            } else if (totalAttack >= (target.ac || 10)) {
+                resultMessage += '✅ HIT!\n';
+                const damage = rollDiceFromString(attackString);
+                resultMessage += `Damage: ${damage}`;
+
+                // Apply damage
+                if (target.hp !== undefined) {
+                    target.hp = Math.max(0, target.hp - damage);
+                    resultMessage += `\n${target.name} HP: ${target.hp}/${target.maxHp || 20}`;
+                }
+            } else {
+                resultMessage += '❌ MISS!';
+            }
+
+            if (window.tactical) {
+                tactical.addLog(resultMessage, 'combat');
+            }
+
+            // Update initiative list if target is in combat tracker
+            renderInitiativeList();
+
+            // Show combat tracker if not visible
+            showCombatTracker();
+        }
+
+        function rollDiceFromString(attackString) {
+            // Parse damage from attack string like "Longsword (1d8+3)" or just "1d8+2"
+            const match = attackString.match(/(\d+)d(\d+)([+-]\d+)?/);
+            if (!match) return 5; // Default damage if can't parse
+
+            const numDice = parseInt(match[1]);
+            const diceSize = parseInt(match[2]);
+            const modifier = match[3] ? parseInt(match[3]) : 0;
+
+            let total = modifier;
+            for (let i = 0; i < numDice; i++) {
+                total += Math.floor(Math.random() * diceSize) + 1;
+            }
+
+            return total;
+        }
+
+        function useAbility(tokenId, ability) {
+            hideTokenActionMenu();
+
+            const token = window.tactical.tokens.find(t => t.id === tokenId);
+            if (!token) return;
+
+            if (window.tactical) {
+                tactical.addLog(`${token.name || 'Unknown'} uses: ${ability}`, 'combat');
+            }
+
+            alert(`${token.name || 'Unknown'} uses ${ability}\n\n(Ability effects can be added here)`);
         }
 
         // Combat Log Functions for COMBAT Tab
