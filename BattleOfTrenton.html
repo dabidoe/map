@@ -825,6 +825,20 @@
             }
         }
 
+        /* Dice Roll Animation */
+        @keyframes dice-roll {
+            0% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(90deg) scale(1.2); }
+            50% { transform: rotate(180deg) scale(1); }
+            75% { transform: rotate(270deg) scale(1.2); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+
+        .dice-rolling {
+            display: inline-block;
+            animation: dice-roll 0.5s ease-in-out;
+        }
+
         .marker-container svg {
             display: block;
         }
@@ -1701,6 +1715,11 @@
                                 <textarea id="char-attacks" rows="3" placeholder="Longsword +5 to hit, 1d8+3 slashing&#10;Shortbow +4 to hit, 1d6+2 piercing" style="width: 100%; padding: 0.6rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px; font-family: monospace;"></textarea>
                             </div>
 
+                            <div>
+                                <label style="display: block; margin-bottom: 0.3rem; opacity: 0.8; font-size: 0.9rem;">Abilities/Spells (one per line, optional)</label>
+                                <textarea id="char-abilities" rows="2" placeholder="Second Wind (heal 1d10+5)&#10;Action Surge&#10;Fireball (8d6 fire, DC 15 DEX save)" style="width: 100%; padding: 0.6rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px; font-family: monospace;"></textarea>
+                            </div>
+
                             <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
                                 <button type="submit" style="flex: 1; padding: 0.8rem; background: #16a34a; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Save Character</button>
                                 <button type="button" onclick="closeCharacterModal()" style="flex: 1; padding: 0.8rem; background: #dc2626; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Cancel</button>
@@ -1780,6 +1799,24 @@
                 </div>
             </div>
             <div id="char-detail-content"></div>
+        </div>
+    </div>
+
+    <!-- Attack Targeting Modal -->
+    <div class="modal-overlay" id="attack-target-modal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px; background: rgba(244, 228, 193, 0.98); border: 3px solid #8b6f47;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #8b6f47;">
+                <h2 style="margin: 0; color: #2c1810; font-size: 1.5rem;">🎯 Select Target</h2>
+                <button onclick="closeTargetModal()" style="background: #dc2626; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: bold;">Cancel</button>
+            </div>
+
+            <div style="margin-bottom: 1rem; padding: 1rem; background: rgba(139, 111, 71, 0.2); border-left: 4px solid #dc2626; border-radius: 6px;">
+                <div style="color: #2c1810; font-weight: bold; font-family: monospace;" id="attack-display">Attack</div>
+            </div>
+
+            <div id="target-list" style="display: grid; gap: 0.8rem; max-height: 400px; overflow-y: auto;">
+                <!-- Targets rendered here -->
+            </div>
         </div>
     </div>
 
@@ -4589,6 +4626,7 @@ ESCAPE: Window 10ft drop`
             document.getElementById('char-cha-save').value = char.chaSave || '+0';
             document.getElementById('char-skills').value = char.skills ? JSON.stringify(char.skills, null, 2) : '';
             document.getElementById('char-attacks').value = (char.attacks || []).join('\n');
+            document.getElementById('char-abilities').value = (char.abilities || []).join('\n');
             document.getElementById('char-image-url').value = char.image || '';
 
             // Show image preview if available
@@ -4639,6 +4677,7 @@ ESCAPE: Window 10ft drop`
                 char.chaSave = document.getElementById('char-cha-save').value || '+0';
                 char.skills = skills;
                 char.attacks = document.getElementById('char-attacks').value.split('\n').filter(a => a.trim());
+                char.abilities = document.getElementById('char-abilities').value.split('\n').filter(a => a.trim());
                 char.image = document.getElementById('char-image-url').value || null;
 
                 // Update in storage (check if party character or CHARACTERS)
@@ -4727,6 +4766,7 @@ ESCAPE: Window 10ft drop`
                 chaSave: document.getElementById('char-cha-save').value || '+0',
                 skills: skills,
                 attacks: document.getElementById('char-attacks').value.split('\n').filter(a => a.trim()),
+                abilities: document.getElementById('char-abilities').value.split('\n').filter(a => a.trim()),
                 image: document.getElementById('char-image-url').value || null,
                 type: currentCharacterType
             };
@@ -5227,46 +5267,84 @@ ESCAPE: Window 10ft drop`
                 const isCurrentTurn = index === currentTurnIndex;
                 const bgColor = isCurrentTurn ? 'rgba(212, 175, 55, 0.25)' : 'rgba(139, 111, 71, 0.15)';
                 const borderStyle = isCurrentTurn ? '5px solid #d4af37' : `5px solid ${borderColor}`;
-                const bgHover = isCurrentTurn ? 'rgba(212, 175, 55, 0.4)' : 'rgba(139, 111, 71, 0.25)';
+                const opacity = isCurrentTurn ? '1' : '0.6';
 
-                return `
-                    <div onclick="openCombatantActions('${combatant.id}')" style="background: ${bgColor}; border-left: ${borderStyle}; border-radius: 8px; padding: 1rem; margin-bottom: 0.8rem; display: grid; grid-template-columns: 60px 80px 1fr 120px 100px auto; gap: 1rem; align-items: center; cursor: pointer; transition: background 0.2s; ${isCurrentTurn ? 'box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);' : ''}" onmouseover="this.style.background='${bgHover}'" onmouseout="this.style.background='${bgColor}'"${isCurrentTurn ? ' data-current-turn="true"' : ''}>
-                        <!-- Initiative # -->
-                        <div style="text-align: center; font-size: 2rem; font-weight: bold; color: #8b6f47;">
-                            ${index + 1}
-                        </div>
+                // Compact row for all
+                let html = `
+                    <div style="background: ${bgColor}; border-left: ${borderStyle}; border-radius: 8px; padding: 1rem; margin-bottom: 0.8rem; ${isCurrentTurn ? 'box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);' : ''} opacity: ${opacity};">
+                        <div style="display: grid; grid-template-columns: 60px 80px 1fr 120px 100px auto; gap: 1rem; align-items: center;">
+                            <!-- Initiative # -->
+                            <div style="text-align: center; font-size: 2rem; font-weight: bold; color: #8b6f47;">
+                                ${index + 1}${isCurrentTurn ? '<div style="font-size: 0.7rem; color: #d4af37;">◄ TURN</div>' : ''}
+                            </div>
 
-                        <!-- Portrait -->
-                        <div style="width: 60px; height: 60px; background: rgba(139, 111, 71, 0.2); border: 2px solid #8b6f47; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                            ${hasImage ? `<img src="${imgSrc}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="font-size: 2rem; opacity: 0.5;">👤</div>'}
-                        </div>
+                            <!-- Portrait -->
+                            <div style="width: 60px; height: 60px; background: rgba(139, 111, 71, 0.2); border: 2px solid #8b6f47; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                ${hasImage ? `<img src="${imgSrc}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="font-size: 2rem; opacity: 0.5;">👤</div>'}
+                            </div>
 
-                        <!-- Name & Class -->
-                        <div>
-                            <div style="font-size: 1.2rem; font-weight: bold; color: #2c1810;">${combatant.name}</div>
-                            ${combatant.class ? `<div style="opacity: 0.7; font-size: 0.85rem; color: #2c1810;">${combatant.class}</div>` : ''}
-                        </div>
+                            <!-- Name & Class -->
+                            <div>
+                                <div style="font-size: 1.2rem; font-weight: bold; color: #2c1810;">${combatant.name}</div>
+                                ${combatant.class ? `<div style="opacity: 0.7; font-size: 0.85rem; color: #2c1810;">${combatant.class}</div>` : ''}
+                            </div>
 
-                        <!-- HP -->
-                        <div style="text-align: center;">
-                            <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem; color: #2c1810;">HP</div>
-                            <input type="number" value="${combatant.hp}" onchange="updateCombatantHP('${combatant.id}', this.value)" onclick="event.stopPropagation()" style="width: 100%; padding: 0.4rem; background: rgba(244, 228, 193, 0.8); border: 2px solid #16a34a; color: #16a34a; border-radius: 4px; text-align: center; font-size: 1.2rem; font-weight: bold;">
-                            <div style="opacity: 0.6; font-size: 0.8rem; margin-top: 0.2rem; color: #2c1810;">/ ${combatant.maxHp}</div>
-                        </div>
+                            <!-- HP -->
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem; color: #2c1810;">HP</div>
+                                <input type="number" value="${combatant.hp}" onchange="updateCombatantHP('${combatant.id}', this.value)" onclick="event.stopPropagation()" style="width: 100%; padding: 0.4rem; background: rgba(244, 228, 193, 0.8); border: 2px solid #16a34a; color: #16a34a; border-radius: 4px; text-align: center; font-size: 1.2rem; font-weight: bold;">
+                                <div style="opacity: 0.6; font-size: 0.8rem; margin-top: 0.2rem; color: #2c1810;">/ ${combatant.maxHp}</div>
+                            </div>
 
-                        <!-- AC -->
-                        <div style="text-align: center; padding: 0.8rem; background: rgba(139, 111, 71, 0.2); border: 2px solid #8b6f47; border-radius: 6px;">
-                            <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem; color: #2c1810;">AC</div>
-                            <div style="font-size: 1.5rem; font-weight: bold; color: #2c1810;">${combatant.ac}</div>
-                        </div>
+                            <!-- AC -->
+                            <div style="text-align: center; padding: 0.8rem; background: rgba(139, 111, 71, 0.2); border: 2px solid #8b6f47; border-radius: 6px;">
+                                <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem; color: #2c1810;">AC</div>
+                                <div style="font-size: 1.5rem; font-weight: bold; color: #2c1810;">${combatant.ac}</div>
+                            </div>
 
-                        <!-- Initiative Roll -->
-                        <div style="text-align: center; padding: 0.8rem; background: rgba(212, 175, 55, 0.25); border: 2px solid #d4af37; border-radius: 6px;">
-                            <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem; color: #2c1810;">Initiative</div>
-                            <div style="font-size: 1.8rem; font-weight: bold; color: #8b6f47;">${initiativeDisplay}</div>
-                        </div>
-                    </div>
-                `;
+                            <!-- Initiative Roll -->
+                            <div style="text-align: center; padding: 0.8rem; background: rgba(212, 175, 55, 0.25); border: 2px solid #d4af37; border-radius: 6px;">
+                                <div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem; color: #2c1810;">Initiative</div>
+                                <div style="font-size: 1.8rem; font-weight: bold; color: #8b6f47;">${initiativeDisplay}</div>
+                            </div>
+                        </div>`;
+
+                // Expanded actions for active character
+                if (isCurrentTurn) {
+                    // Attacks section
+                    if (combatant.attacks && combatant.attacks.length > 0) {
+                        html += `
+                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 2px solid #d4af37;">
+                                <div style="font-weight: bold; margin-bottom: 0.5rem; color: #2c1810;">⚔️ ATTACKS:</div>
+                                <div style="display: grid; gap: 0.5rem;">
+                                    ${combatant.attacks.map(attack => `
+                                        <button onclick="event.stopPropagation(); openTargetModal('${combatant.id}', '${attack.replace(/'/g, "\\'")}');" style="width: 100%; padding: 0.6rem; background: #dc2626; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-align: left; font-family: monospace; font-size: 0.85rem; transition: all 0.2s;" onmouseover="this.style.background='#b91c1c'" onmouseout="this.style.background='#dc2626'">
+                                            🎯 ${attack}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>`;
+                    }
+
+                    // Abilities section (show top 3)
+                    if (combatant.abilities && combatant.abilities.length > 0) {
+                        const topAbilities = combatant.abilities.slice(0, 3);
+                        html += `
+                            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 2px solid #d4af37;">
+                                <div style="font-weight: bold; margin-bottom: 0.5rem; color: #2c1810;">✨ ABILITIES:</div>
+                                <div style="display: grid; gap: 0.5rem;">
+                                    ${topAbilities.map(ability => `
+                                        <button onclick="event.stopPropagation(); useCombatAbility('${combatant.id}', '${ability.replace(/'/g, "\\'")}');" style="width: 100%; padding: 0.6rem; background: #7c3aed; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-align: left; font-family: monospace; font-size: 0.85rem; transition: all 0.2s;" onmouseover="this.style.background='#6d28d9'" onmouseout="this.style.background='#7c3aed'">
+                                            ✨ ${ability}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            </div>`;
+                    }
+                }
+
+                html += `</div>`;
+                return html;
             }).join('');
         }
 
@@ -5356,6 +5434,231 @@ ESCAPE: Window 10ft drop`
                 if (window.tactical) {
                     tactical.addLog('Combat tracker cleared', 'info');
                 }
+            }
+        }
+
+        // ENHANCED COMBAT SYSTEM WITH DICE ROLLING AND TARGETING
+
+        // Dice roller with animation and result
+        function rollDice(notation) {
+            // Parse notation like "2d6+3" or "1d20" or "1d8+5"
+            const match = notation.match(/(\d+)?d(\d+)([+-]\d+)?/i);
+            if (!match) {
+                // Try parsing as flat bonus like "+5"
+                const flatMatch = notation.match(/([+-]?\d+)/);
+                if (flatMatch) {
+                    return { total: parseInt(flatMatch[1]), rolls: [], bonus: parseInt(flatMatch[1]) };
+                }
+                return { total: 0, rolls: [], bonus: 0 };
+            }
+
+            const numDice = parseInt(match[1]) || 1;
+            const dieSize = parseInt(match[2]);
+            const bonus = match[3] ? parseInt(match[3]) : 0;
+
+            const rolls = [];
+            let total = bonus;
+
+            for (let i = 0; i < numDice; i++) {
+                const roll = Math.floor(Math.random() * dieSize) + 1;
+                rolls.push(roll);
+                total += roll;
+            }
+
+            return { total, rolls, bonus, notation };
+        }
+
+        // Parse attack string like "Longsword +5 to hit, 1d8+3 slashing"
+        function parseAttack(attackString) {
+            const toHitMatch = attackString.match(/([+-]\d+)\s*to hit/i);
+            const damageMatch = attackString.match(/(\d+d\d+[+-]?\d*)\s*(\w+)?/i);
+
+            return {
+                toHit: toHitMatch ? toHitMatch[1] : '+0',
+                damage: damageMatch ? damageMatch[1] : '1d6',
+                damageType: damageMatch && damageMatch[2] ? damageMatch[2] : 'damage',
+                original: attackString
+            };
+        }
+
+        // Roll attack with to-hit and damage, with optional target
+        function rollCombatAttack(attackerId, attackString, targetId = null) {
+            const attacker = COMBAT_TRACKER.find(c => c.id === attackerId);
+            if (!attacker) return;
+
+            // Check if it's attacker's turn
+            if (COMBAT_TRACKER[currentTurnIndex]?.id !== attackerId) {
+                if (window.tactical) {
+                    tactical.addLog(`Not ${attacker.name}'s turn!`, 'info');
+                }
+                return;
+            }
+
+            const attack = parseAttack(attackString);
+            const target = targetId ? COMBAT_TRACKER.find(c => c.id === targetId) : null;
+
+            // Roll to-hit
+            const toHitRoll = rollDice('1d20');
+            const toHitBonus = parseInt(attack.toHit) || 0;
+            const toHitTotal = toHitRoll.total + toHitBonus;
+
+            // Show dice animation
+            showDiceAnimation();
+
+            // Roll damage (always roll, DM decides if it hits)
+            const damageRoll = rollDice(attack.damage);
+
+            // Log to combat log
+            if (window.tactical) {
+                const isCrit = toHitRoll.rolls[0] === 20;
+                const isFumble = toHitRoll.rolls[0] === 1;
+
+                let logType = 'combat';
+                let message = `${attacker.name} attacks`;
+
+                if (target) {
+                    message += ` ${target.name} (AC ${target.ac})!\n`;
+                } else {
+                    message += `!\n`;
+                }
+
+                message += `🎲 To Hit: ${toHitRoll.rolls[0]}${toHitBonus >= 0 ? '+' : ''}${toHitBonus} = ${toHitTotal}`;
+
+                if (target) {
+                    const hit = toHitTotal >= target.ac || isCrit;
+                    if (hit && !isFumble) {
+                        message += ` → ${toHitTotal >= target.ac ? '✓ HIT' : '✗ MISS'}`;
+                    }
+                }
+
+                if (isCrit) {
+                    message += ' ⚡ CRITICAL HIT!';
+                    const critDamage = rollDice(attack.damage);
+                    const totalCritDamage = damageRoll.total + critDamage.total;
+                    message += `\n💥 Damage: ${damageRoll.rolls.join('+')}${damageRoll.bonus > 0 ? '+' + damageRoll.bonus : ''} + ${critDamage.rolls.join('+')}${critDamage.bonus > 0 ? '+' + critDamage.bonus : ''} = ${totalCritDamage} ${attack.damageType}`;
+
+                    // Auto-apply damage on crit
+                    if (target) {
+                        const newHP = Math.max(0, target.hp - totalCritDamage);
+                        target.hp = newHP;
+                        message += `\n${target.name}: ${target.hp + totalCritDamage} → ${newHP} HP`;
+                        renderInitiativeList();
+                    }
+                } else if (isFumble) {
+                    message += ' ❌ FUMBLE!';
+                } else {
+                    message += `\n💥 Damage: ${damageRoll.rolls.join('+')}${damageRoll.bonus > 0 ? '+' + damageRoll.bonus : ''} = ${damageRoll.total} ${attack.damageType}`;
+
+                    // Auto-apply damage if it hit
+                    if (target && toHitTotal >= target.ac) {
+                        const newHP = Math.max(0, target.hp - damageRoll.total);
+                        target.hp = newHP;
+                        message += `\n${target.name}: ${target.hp + damageRoll.total} → ${newHP} HP`;
+                        renderInitiativeList();
+                    }
+                }
+
+                tactical.addLog(message, logType);
+            }
+        }
+
+        // Show dice animation overlay
+        function showDiceAnimation() {
+            // Create temporary dice element
+            const diceEl = document.createElement('div');
+            diceEl.textContent = '🎲';
+            diceEl.style.cssText = 'position: fixed; top: 50%; left: 50%; font-size: 4rem; z-index: 10000; transform: translate(-50%, -50%); pointer-events: none;';
+            diceEl.className = 'dice-rolling';
+            document.body.appendChild(diceEl);
+
+            // Remove after animation
+            setTimeout(() => {
+                document.body.removeChild(diceEl);
+            }, 500);
+        }
+
+        // Targeting system
+        let currentAttackerId = null;
+        let currentAttackString = null;
+
+        function openTargetModal(attackerId, attackString) {
+            currentAttackerId = attackerId;
+            currentAttackString = attackString;
+
+            // Show attack being used
+            document.getElementById('attack-display').textContent = attackString;
+
+            // Populate target list with all combatants except attacker
+            const targetList = document.getElementById('target-list');
+            const targets = COMBAT_TRACKER.filter(c => c.id !== attackerId);
+
+            if (targets.length === 0) {
+                targetList.innerHTML = '<p style="text-align: center; padding: 2rem; color: #2c1810; opacity: 0.7;">No targets available</p>';
+            } else {
+                targetList.innerHTML = targets.map(target => {
+                    const borderColor = target.type === 'enemy' ? '#dc2626' : '#3b82f6';
+                    const imgSrc = target.image || '';
+                    const hasImage = imgSrc && imgSrc.trim();
+
+                    return `
+                        <button onclick="executeAttackOnTarget('${currentAttackerId}', '${currentAttackString.replace(/'/g, "\\'")}', '${target.id}')" style="width: 100%; padding: 1rem; background: rgba(139, 111, 71, 0.15); border: 3px solid ${borderColor}; border-radius: 8px; cursor: pointer; transition: all 0.2s; display: grid; grid-template-columns: 60px 1fr auto auto; gap: 1rem; align-items: center; text-align: left;" onmouseover="this.style.background='rgba(139, 111, 71, 0.25)'" onmouseout="this.style.background='rgba(139, 111, 71, 0.15)'">
+                            <!-- Portrait -->
+                            <div style="width: 60px; height: 60px; background: rgba(139, 111, 71, 0.2); border: 2px solid #8b6f47; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                ${hasImage ? `<img src="${imgSrc}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="font-size: 2rem; opacity: 0.5;">👤</div>'}
+                            </div>
+
+                            <!-- Name -->
+                            <div>
+                                <div style="font-size: 1.2rem; font-weight: bold; color: #2c1810;">${target.name}</div>
+                                ${target.class ? `<div style="opacity: 0.7; font-size: 0.85rem; color: #2c1810;">${target.class}</div>` : ''}
+                            </div>
+
+                            <!-- HP -->
+                            <div style="text-align: center; padding: 0.6rem 1rem; background: rgba(139, 111, 71, 0.2); border: 2px solid #16a34a; border-radius: 6px;">
+                                <div style="font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.2rem; color: #2c1810;">HP</div>
+                                <div style="font-size: 1.2rem; font-weight: bold; color: #16a34a;">${target.hp}/${target.maxHp}</div>
+                            </div>
+
+                            <!-- AC -->
+                            <div style="text-align: center; padding: 0.6rem 1rem; background: rgba(139, 111, 71, 0.2); border: 2px solid #8b6f47; border-radius: 6px;">
+                                <div style="font-size: 0.7rem; opacity: 0.7; margin-bottom: 0.2rem; color: #2c1810;">AC</div>
+                                <div style="font-size: 1.4rem; font-weight: bold; color: #2c1810;">${target.ac}</div>
+                            </div>
+                        </button>
+                    `;
+                }).join('');
+            }
+
+            // Show modal
+            document.getElementById('attack-target-modal').style.display = 'flex';
+        }
+
+        function closeTargetModal() {
+            document.getElementById('attack-target-modal').style.display = 'none';
+            currentAttackerId = null;
+            currentAttackString = null;
+        }
+
+        function executeAttackOnTarget(attackerId, attackString, targetId) {
+            closeTargetModal();
+            rollCombatAttack(attackerId, attackString, targetId);
+        }
+
+        // Use ability/spell
+        function useCombatAbility(userId, abilityName) {
+            const user = COMBAT_TRACKER.find(c => c.id === userId);
+            if (!user) return;
+
+            // Check if it's user's turn
+            if (COMBAT_TRACKER[currentTurnIndex]?.id !== userId) {
+                if (window.tactical) {
+                    tactical.addLog(`Not ${user.name}'s turn!`, 'info');
+                }
+                return;
+            }
+
+            if (window.tactical) {
+                tactical.addLog(`${user.name} uses ${abilityName}!`, 'combat');
             }
         }
 
