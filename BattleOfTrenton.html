@@ -2902,6 +2902,7 @@ ESCAPE: Window 10ft drop`
                 this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
                 this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
                 this.canvas.addEventListener('mouseup', () => this.onMouseUp());
+                this.canvas.addEventListener('contextmenu', (e) => this.onRightClick(e));
                 this.canvas.addEventListener('mouseleave', () => this.onMouseUp());
             }
 
