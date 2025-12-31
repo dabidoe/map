@@ -2817,47 +2817,16 @@ ESCAPE: Window 10ft drop`
                     }
                 });
 
-                container.innerHTML = `
-                    <div style="background: #dc2626; padding: 1rem; border-radius: 8px 8px 0 0;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem;">
-                            <h3 style="margin: 0; color: white;">⚔️ ${encounter.name}</h3>
-                            <button onclick="switchTacticalTab('combat')" style="background: var(--secondary); color: var(--primary); border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">
-                                ⚔️ Go to COMBAT Tab
-                            </button>
-                        </div>
-                        <div style="color: rgba(255,255,255,0.9); font-size: 0.85rem; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 4px;">
-                            ${enemies.length} enemies added to combat tracker. Switch to the COMBAT tab for full turn-based combat with dice rolling, targeting, and abilities.
-                        </div>
-                    </div>
+                // Hide this container and switch to COMBAT tab automatically
+                container.style.display = 'none';
+                switchTacticalTab('combat');
+                renderInitiativeList();
 
-                    <div style="background: rgba(0,0,0,0.2); padding: 1.5rem;">
-                        ${enemies.map(enemy => {
-                            const hp = enemy.hp || enemy.maxHp || 58;
-                            const maxHp = enemy.maxHp || hp;
-                            const ac = enemy.ac || 15;
-                            return `
-                                <div style="background: rgba(30, 30, 30, 0.6); border: 3px solid var(--secondary); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                                        <div style="display: flex; align-items: center; gap: 1rem;">
-                                            <div style="font-size: 2rem;">▲</div>
-                                            <strong style="font-size: 1.3rem;">${enemy.name}</strong>
-                                        </div>
-                                        <div style="display: flex; gap: 1rem; align-items: center;">
-                                            <div style="text-align: center;">
-                                                <div style="font-size: 0.8rem; opacity: 0.7;">HP</div>
-                                                <div style="font-size: 1.2rem; font-weight: bold;">${hp} / ${maxHp}</div>
-                                            </div>
-                                            <div style="text-align: center; padding: 0 1rem;">
-                                                <div style="font-size: 0.8rem; opacity: 0.7;">AC</div>
-                                                <div style="font-size: 1.5rem; font-weight: bold;">${ac}</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                `;
+                // Show notification
+                addCombatLog(`${enemies.length} enemies from "${encounter.name}" added to combat`, 'info');
+                if (window.tactical) {
+                    tactical.addLog(`${enemies.length} enemies added - switched to COMBAT tab`, 'info');
+                }
             }
 
             loadBackground(key, location) {
