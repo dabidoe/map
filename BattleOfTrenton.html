@@ -680,8 +680,10 @@
             position: absolute;
             bottom: 10px;
             right: 10px;
-            width: 350px;
-            max-height: 300px;
+            width: 400px;
+            min-width: 300px;
+            height: 350px;
+            min-height: 200px;
             background: rgba(244, 228, 193, 0.95);
             border: 2px solid #8b6f47;
             border-radius: 8px;
@@ -689,6 +691,8 @@
             z-index: 100;
             display: flex;
             flex-direction: column;
+            resize: both;
+            overflow: hidden;
         }
 
         .log-header {
@@ -720,7 +724,7 @@
         .log-entries {
             flex: 1;
             overflow-y: auto;
-            max-height: 220px;
+            overflow-x: hidden;
         }
 
         .log-entry {
@@ -1852,19 +1856,23 @@
             <div class="tactical-content active" id="tactical-tab-maps">
                 <canvas id="tactical-canvas"></canvas>
 
-                <!-- Floating Combat Tracker -->
-                <div id="floating-combat-tracker" style="position: fixed; top: 100px; right: 20px; width: 420px; background: rgba(244, 228, 193, 0.98); border: 3px solid #8b6f47; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 9999; display: none;">
+                <!-- Floating Combat Tracker - Resizable -->
+                <div id="floating-combat-tracker" style="position: fixed; top: 100px; right: 20px; width: 500px; min-width: 350px; background: rgba(244, 228, 193, 0.98); border: 3px solid #8b6f47; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 9999; display: none; resize: both; overflow: hidden;">
                     <div style="background: #8b6f47; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 5px 5px 0 0; cursor: move;" id="combat-tracker-header">
                         <div style="font-weight: bold; color: white; font-size: 1.1rem;">⚔️ Combat Tracker</div>
                         <button onclick="toggleCombatTracker()" style="background: #dc2626; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;">×</button>
                     </div>
-                    <div style="padding: 15px; max-height: 600px; overflow-y: auto;">
+                    <div style="padding: 15px; height: calc(100% - 50px); overflow-y: auto; overflow-x: hidden;">
                         <div style="margin-bottom: 15px;">
                             <button onclick="rollAllCombatInitiative()" style="width: 100%; padding: 10px; background: #dc2626; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem;">🎲 Roll Initiative</button>
                         </div>
                         <div id="initiative-list" style="color: #2c1810;">
                             <p style="opacity: 0.7; text-align: center; padding: 2rem; font-size: 0.9rem;">Tokens auto-add when placed on map</p>
                         </div>
+                    </div>
+                    <!-- Resize handle indicator -->
+                    <div style="position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; cursor: se-resize; opacity: 0.5;">
+                        <div style="position: absolute; bottom: 4px; right: 4px; width: 12px; height: 12px; border-right: 3px solid #8b6f47; border-bottom: 3px solid #8b6f47;"></div>
                     </div>
                 </div>
 
@@ -3170,28 +3178,10 @@ ESCAPE: Window 10ft drop`
                             ac: char.ac,
                             attacks: char.attacks || [],
                             abilities: char.abilities || [],
-                            portrait: char.portrait || null, // Use character portrait if available
-                            character: char, // Store full character reference
+                            portrait: char.portrait || null,
+                            character: char,
                             selected: false
                         });
-
-                        // Auto-add to combat tracker
-                        if (!COMBAT_TRACKER.find(c => c.id === char.id)) {
-                            COMBAT_TRACKER.push({
-                                id: char.id,
-                                name: char.name,
-                                hp: char.hp,
-                                maxHp: char.maxHp,
-                                ac: char.ac,
-                                initiative: null,
-                                initiativeRoll: null,
-                                type: 'player',
-                                attacks: char.attacks || [],
-                                abilities: char.abilities || [],
-                                class: char.class || '',
-                                image: char.portrait || null
-                            });
-                        }
 
                         loaded++;
                     }
@@ -3199,7 +3189,7 @@ ESCAPE: Window 10ft drop`
 
                 if (loaded > 0) {
                     this.addLog(`Loaded ${loaded} party member(s) onto the map`, 'info');
-                    renderInitiativeList(); // Update COMBAT tab
+                    syncCombatTrackerWithMap(); // Sync with map tokens only
                     this.draw();
                 } else {
                     this.addLog('All party members already on map', 'info');
@@ -4253,6 +4243,11 @@ ESCAPE: Window 10ft drop`
             // Load party list when switching to PARTY tab
             if (tabName === 'party') {
                 renderPartyList();
+            }
+
+            // Sync combat tracker with map tokens when switching to COMBAT tab
+            if (tabName === 'combat') {
+                syncCombatTrackerWithMap();
             }
         }
 
@@ -5563,6 +5558,38 @@ ESCAPE: Window 10ft drop`
             alert(message);
         }
 
+        // Sync combat tracker with ONLY tokens on current map
+        function syncCombatTrackerWithMap() {
+            if (!window.tactical || !window.tactical.tokens) {
+                COMBAT_TRACKER = [];
+                renderInitiativeList();
+                return;
+            }
+
+            // Clear combat tracker
+            COMBAT_TRACKER = [];
+
+            // Add ONLY tokens that are on the current map
+            window.tactical.tokens.forEach(token => {
+                COMBAT_TRACKER.push({
+                    id: token.id,
+                    name: token.name || 'Unknown',
+                    hp: token.hp || token.maxHp || 20,
+                    maxHp: token.maxHp || 20,
+                    ac: token.ac || 10,
+                    initiative: null,
+                    initiativeRoll: null,
+                    type: token.type || 'player',
+                    attacks: token.attacks || [],
+                    abilities: token.abilities || [],
+                    class: token.class || '',
+                    image: token.portrait || null
+                });
+            });
+
+            renderInitiativeList();
+        }
+
         // Token Action Menu System
         let attackMode = null; // {attackerId, attackString}
 
@@ -5609,27 +5636,13 @@ ESCAPE: Window 10ft drop`
 
             // Abilities/Spells
             if (token.abilities && token.abilities.length > 0) {
+                html += '<div style="margin-top: 8px; margin-bottom: 3px;"><strong style="color: #8b6f47; font-size: 0.9rem;">Abilities & Spells:</strong></div>';
                 token.abilities.forEach((ability, idx) => {
-                    html += `<button onclick="useAbility('${token.id}', '${ability.replace(/'/g, "\\'")}'); hideTokenActionMenu();" style="width: 100%; padding: 8px; margin-bottom: 4px; background: #7c3aed; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: left; font-size: 0.9rem;">
+                    html += `<button onclick="useAbility('${token.id}', '${ability.replace(/'/g, "\\'")}');" style="width: 100%; padding: 8px; margin-bottom: 4px; background: #7c3aed; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: left; font-size: 0.9rem;">
                         ✨ ${ability}
                     </button>`;
                 });
             }
-
-            // Dodge action
-            html += `<button onclick="tokenDodge('${token.id}'); hideTokenActionMenu();" style="width: 100%; padding: 8px; margin-bottom: 4px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: left; font-size: 0.9rem;">
-                🛡️ Dodge
-            </button>`;
-
-            // Dash action
-            html += `<button onclick="tokenDash('${token.id}'); hideTokenActionMenu();" style="width: 100%; padding: 8px; margin-bottom: 4px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: left; font-size: 0.9rem;">
-                💨 Dash
-            </button>`;
-
-            // Help action
-            html += `<button onclick="tokenHelp('${token.id}'); hideTokenActionMenu();" style="width: 100%; padding: 8px; margin-bottom: 4px; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; text-align: left; font-size: 0.9rem;">
-                🤝 Help
-            </button>`;
 
             menu.innerHTML = html;
 
