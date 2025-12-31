@@ -1853,14 +1853,14 @@
                 <canvas id="tactical-canvas"></canvas>
 
                 <!-- Floating Combat Tracker -->
-                <div id="floating-combat-tracker" style="position: absolute; top: 80px; right: 20px; width: 400px; background: rgba(244, 228, 193, 0.98); border: 3px solid #8b6f47; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 100; display: none;">
+                <div id="floating-combat-tracker" style="position: fixed; top: 100px; right: 20px; width: 420px; background: rgba(244, 228, 193, 0.98); border: 3px solid #8b6f47; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 9999; display: none;">
                     <div style="background: #8b6f47; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 5px 5px 0 0; cursor: move;" id="combat-tracker-header">
                         <div style="font-weight: bold; color: white; font-size: 1.1rem;">⚔️ Combat Tracker</div>
                         <button onclick="toggleCombatTracker()" style="background: #dc2626; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;">×</button>
                     </div>
                     <div style="padding: 15px; max-height: 600px; overflow-y: auto;">
                         <div style="margin-bottom: 15px;">
-                            <button onclick="addPartyToCombat()" style="width: 100%; padding: 8px; background: #3b82f6; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-bottom: 5px;">+ Party Members</button>
+                            <button onclick="addAllMapTokensToCombat()" style="width: 100%; padding: 8px; background: #16a34a; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-bottom: 5px;">🗺️ Add All Map Tokens</button>
                             <button onclick="rollAllCombatInitiative()" style="width: 100%; padding: 8px; background: #dc2626; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">🎲 Roll Initiative</button>
                         </div>
                         <div id="initiative-list" style="color: #2c1810;">
@@ -5482,6 +5482,39 @@ ESCAPE: Window 10ft drop`
         function showCombatTracker() {
             const tracker = document.getElementById('floating-combat-tracker');
             tracker.style.display = 'block';
+        }
+
+        function addAllMapTokensToCombat() {
+            if (!window.tactical || !window.tactical.tokens) {
+                alert('No tokens on map. Place characters on the map first!');
+                return;
+            }
+
+            let addedCount = 0;
+            window.tactical.tokens.forEach(token => {
+                if (!COMBAT_TRACKER.find(c => c.id === token.id)) {
+                    COMBAT_TRACKER.push({
+                        id: token.id,
+                        name: token.name || 'Unknown',
+                        hp: token.hp || token.maxHp || 20,
+                        maxHp: token.maxHp || 20,
+                        ac: token.ac || 10,
+                        initiative: null,
+                        initiativeRoll: null,
+                        type: token.type || 'player',
+                        attacks: token.attacks || [],
+                        abilities: token.abilities || []
+                    });
+                    addedCount++;
+                }
+            });
+
+            renderInitiativeList();
+            const message = `Added ${addedCount} token(s) from map to combat`;
+            if (window.tactical) {
+                tactical.addLog(message, 'info');
+            }
+            alert(message);
         }
 
         // Combat Log Functions for COMBAT Tab
