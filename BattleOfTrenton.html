@@ -1851,6 +1851,24 @@
             <!-- MAPS Tab -->
             <div class="tactical-content active" id="tactical-tab-maps">
                 <canvas id="tactical-canvas"></canvas>
+
+                <!-- Floating Combat Tracker -->
+                <div id="floating-combat-tracker" style="position: absolute; top: 80px; right: 20px; width: 400px; background: rgba(244, 228, 193, 0.98); border: 3px solid #8b6f47; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 100; display: none;">
+                    <div style="background: #8b6f47; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 5px 5px 0 0; cursor: move;" id="combat-tracker-header">
+                        <div style="font-weight: bold; color: white; font-size: 1.1rem;">⚔️ Combat Tracker</div>
+                        <button onclick="toggleCombatTracker()" style="background: #dc2626; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;">×</button>
+                    </div>
+                    <div style="padding: 15px; max-height: 600px; overflow-y: auto;">
+                        <div style="margin-bottom: 15px;">
+                            <button onclick="addPartyToCombat()" style="width: 100%; padding: 8px; background: #3b82f6; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-bottom: 5px;">+ Party Members</button>
+                            <button onclick="rollAllCombatInitiative()" style="width: 100%; padding: 8px; background: #dc2626; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">🎲 Roll Initiative</button>
+                        </div>
+                        <div id="initiative-list" style="color: #2c1810;">
+                            <p style="opacity: 0.7; text-align: center; padding: 2rem; font-size: 0.9rem;">Add characters to begin combat</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="tactical-controls">
                     <div class="control-title">Grid Controls</div>
                     <button class="control-btn active" id="grid-toggle-btn" onclick="tactical.toggleGrid()">Hide Grid</button>
@@ -1867,6 +1885,7 @@
                     </div>
                 </div>
                 <div class="token-controls">
+                    <button class="token-btn" onclick="toggleCombatTracker()" style="background: #dc2626; font-weight: bold;">⚔️ Combat Tracker</button>
                     <button class="token-btn" onclick="tactical.loadAllPartyMembers()">👥 Load Party</button>
                     <button class="token-btn" onclick="tactical.openCharacterLibrary('player')">Add Player</button>
                     <button class="token-btn" onclick="tactical.openCharacterLibrary('enemy')">Add Enemy</button>
@@ -1922,14 +1941,14 @@
             </div>
 
             <!-- COMBAT Tab -->
-            <div class="tactical-content" id="tactical-tab-combat" style="min-height: 600px;">
-                <div class="tab-panel" id="combat-content">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #8b6f47;">
-                        <div class="section-header" style="margin: 0;">⚔️ Initiative Tracker</div>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <button onclick="rollAllCombatInitiative()" style="padding: 0.8rem 1.5rem; background: #dc2626; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">🎲 Roll All Initiative</button>
-                            <button onclick="clearCombatTracker()" style="padding: 0.8rem 1.5rem; background: rgba(139, 111, 71, 0.3); color: #2c1810; border: 2px solid #8b6f47; border-radius: 6px; cursor: pointer; font-weight: bold;">Clear Combat</button>
-                        </div>
+            <div class="tactical-content" id="tactical-tab-combat">
+                <div style="padding: 20px; background: #f4e4c1; min-height: 800px; overflow-y: auto;">
+
+                    <h2 style="color: #2c1810; margin-bottom: 20px;">⚔️ Initiative Tracker</h2>
+
+                    <div style="margin-bottom: 20px;">
+                        <button onclick="rollAllCombatInitiative()" style="padding: 10px 20px; background: #dc2626; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-right: 10px;">🎲 Roll All Initiative</button>
+                        <button onclick="clearCombatTracker()" style="padding: 10px 20px; background: #8b6f47; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Clear Combat</button>
                     </div>
 
                     <!-- Add Combatants -->
@@ -2818,15 +2837,14 @@ ESCAPE: Window 10ft drop`
                     }
                 });
 
-                // Hide this container and switch to COMBAT tab automatically
+                // Hide this container and show floating combat tracker
                 container.style.display = 'none';
-                switchTacticalTab('combat');
+                showCombatTracker();
                 renderInitiativeList();
 
                 // Show notification
-                addCombatLog(`${enemies.length} enemies from "${encounter.name}" added to combat`, 'info');
                 if (window.tactical) {
-                    tactical.addLog(`${enemies.length} enemies added - switched to COMBAT tab`, 'info');
+                    tactical.addLog(`${enemies.length} enemies from "${encounter.name}" added to combat tracker`, 'info');
                 }
             }
 
@@ -5450,6 +5468,20 @@ ESCAPE: Window 10ft drop`
                     tactical.addLog('Combat tracker cleared', 'info');
                 }
             }
+        }
+
+        function toggleCombatTracker() {
+            const tracker = document.getElementById('floating-combat-tracker');
+            if (tracker.style.display === 'none') {
+                tracker.style.display = 'block';
+            } else {
+                tracker.style.display = 'none';
+            }
+        }
+
+        function showCombatTracker() {
+            const tracker = document.getElementById('floating-combat-tracker');
+            tracker.style.display = 'block';
         }
 
         // Combat Log Functions for COMBAT Tab
