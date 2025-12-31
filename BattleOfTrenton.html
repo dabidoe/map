@@ -4543,8 +4543,19 @@ ESCAPE: Window 10ft drop`
         function editCharacterFromDetail() {
             if (!currentDetailCharId) return;
 
-            const char = CHARACTERS[currentDetailCharId];
-            if (!char) return;
+            // Check both CHARACTERS object and PARTY_CHARACTERS array
+            let char = CHARACTERS[currentDetailCharId];
+            let isPartyCharacter = false;
+
+            if (!char) {
+                char = PARTY_CHARACTERS.find(c => c.id === currentDetailCharId);
+                isPartyCharacter = true;
+            }
+
+            if (!char) {
+                alert('Character not found');
+                return;
+            }
 
             // Close detail modal
             closeCharacterDetail();
@@ -4552,6 +4563,9 @@ ESCAPE: Window 10ft drop`
             // Open character creation modal with pre-filled data
             currentCharacterType = char.type || 'player';
             document.getElementById('character-modal').style.display = 'flex';
+
+            // IMPORTANT: Switch to CREATE mode, not library mode
+            switchCharacterMode('create');
 
             // Pre-fill form
             document.getElementById('char-name').value = char.name || '';
@@ -4627,13 +4641,24 @@ ESCAPE: Window 10ft drop`
                 char.attacks = document.getElementById('char-attacks').value.split('\n').filter(a => a.trim());
                 char.image = document.getElementById('char-image-url').value || null;
 
-                // Update in storage
-                CHARACTERS[currentDetailCharId] = char;
+                // Update in storage (check if party character or CHARACTERS)
+                if (isPartyCharacter) {
+                    // Update in PARTY_CHARACTERS array
+                    const index = PARTY_CHARACTERS.findIndex(c => c.id === currentDetailCharId);
+                    if (index !== -1) {
+                        PARTY_CHARACTERS[index] = char;
+                    }
+                    localStorage.setItem('party_characters', JSON.stringify(PARTY_CHARACTERS));
+                    renderPartyList();
+                } else {
+                    // Update in CHARACTERS object
+                    CHARACTERS[currentDetailCharId] = char;
+                    renderEnemiesList();
+                    renderNPCsList();
+                }
 
                 // Refresh displays
                 if (app.renderCharacters) app.renderCharacters();
-                renderEnemiesList();
-                renderNPCsList();
 
                 closeCharacterModal();
 
