@@ -2801,6 +2801,29 @@ ESCAPE: Window 10ft drop`
             }
 
             loadBackground(key, location) {
+                // First, try to load from localStorage (user uploads)
+                const savedBackground = localStorage.getItem(`tactical_bg_${key}`);
+                if (savedBackground) {
+                    const img = new Image();
+                    img.onload = () => {
+                        this.backgroundImage = img;
+                        this.draw();
+                        this.addLog('Background image loaded from storage', 'info');
+                    };
+                    img.onerror = () => {
+                        // If saved image fails, clear it and try file paths
+                        localStorage.removeItem(`tactical_bg_${key}`);
+                        this.tryLoadFromFiles(key, location);
+                    };
+                    img.src = savedBackground;
+                    return;
+                }
+
+                // If no saved background, try loading from file paths
+                this.tryLoadFromFiles(key, location);
+            }
+
+            tryLoadFromFiles(key, location) {
                 const possiblePaths = [
                     `campaign-images/${key}/background.jpg`,
                     `campaign-images/${key}/background.png`,
@@ -2977,6 +3000,8 @@ ESCAPE: Window 10ft drop`
                 const img = new Image();
                 img.onload = () => {
                     this.backgroundImage = img;
+                    // Save URL to localStorage for this location
+                    localStorage.setItem(`tactical_bg_${this.currentLocation}`, url);
                     this.draw();
                     this.addLog('Background image loaded from URL', 'info');
                 };
@@ -2993,8 +3018,10 @@ ESCAPE: Window 10ft drop`
                         const img = new Image();
                         img.onload = () => {
                             this.backgroundImage = img;
+                            // Save data URL to localStorage for this location
+                            localStorage.setItem(`tactical_bg_${this.currentLocation}`, e.target.result);
                             this.draw();
-                            this.addLog('Background image uploaded', 'info');
+                            this.addLog('Background image uploaded and saved', 'info');
                         };
                         img.src = e.target.result;
                     };
@@ -3004,6 +3031,10 @@ ESCAPE: Window 10ft drop`
 
             clearBackground() {
                 this.backgroundImage = null;
+                // Clear saved background from localStorage
+                if (this.currentLocation) {
+                    localStorage.removeItem(`tactical_bg_${this.currentLocation}`);
+                }
                 this.draw();
                 this.addLog('Background image cleared', 'info');
                 document.getElementById('bg-image-url').value = '';
