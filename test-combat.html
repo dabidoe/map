@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Combat Tab Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1410;
+            color: #f4e4c1;
+            padding: 20px;
+        }
+        #combat-log-entries {
+            background: rgba(244, 228, 193, 0.95);
+            border: 2px solid #8b6f47;
+            padding: 1rem;
+            margin-top: 20px;
+            min-height: 200px;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Combat Tab Test</h1>
+
+    <button onclick="testCombatLog()">Test Combat Log</button>
+    <button onclick="testAddParty()">Test Add Party</button>
+
+    <div style="margin-top: 2rem;">
+        <h2>Combat Log:</h2>
+        <div id="combat-log-entries">
+            <p style="opacity: 0.6; text-align: center; padding: 2rem; color: #2c1810;">Combat log will appear here...</p>
+        </div>
+    </div>
+
+    <div style="margin-top: 2rem;">
+        <h2>Initiative List:</h2>
+        <div id="initiative-list">
+            <p>No combatants</p>
+        </div>
+    </div>
+
+    <script>
+        let PARTY_CHARACTERS = [];
+        let COMBAT_TRACKER = [];
+
+        function addCombatLog(message, type = 'combat') {
+            const logContainer = document.getElementById('combat-log-entries');
+            if (!logContainer) {
+                alert('ERROR: combat-log-entries not found!');
+                return;
+            }
+
+            const placeholder = logContainer.querySelector('p');
+            if (placeholder) {
+                placeholder.remove();
+            }
+
+            const entry = document.createElement('div');
+            entry.style.cssText = 'background: rgba(139, 111, 71, 0.15); padding: 0.8rem; border-left: 4px solid #dc2626; margin-bottom: 0.8rem; border-radius: 4px; white-space: pre-wrap; color: #2c1810;';
+
+            const timestamp = new Date().toLocaleTimeString();
+            entry.innerHTML = `<div style="font-size: 0.75rem; opacity: 0.7; margin-bottom: 0.3rem;">${timestamp}</div>${message}`;
+
+            logContainer.appendChild(entry);
+        }
+
+        function testCombatLog() {
+            addCombatLog('Test message - combat log is working!', 'combat');
+            addCombatLog('Another test message', 'info');
+        }
+
+        function testAddParty() {
+            if (PARTY_CHARACTERS.length === 0) {
+                alert('No party members found (this is expected for test)');
+            } else {
+                alert(`Found ${PARTY_CHARACTERS.length} party members`);
+            }
+        }
+
+        console.log('Test page loaded successfully');
+    </script>
+</body>
+</html>

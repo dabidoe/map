@@ -4190,6 +4190,8 @@ ESCAPE: Window 10ft drop`
         }
 
         function switchTacticalTab(tabName) {
+            console.log('[DEBUG] Switching to tab:', tabName);
+
             // Update tab buttons
             document.querySelectorAll('.tactical-tab').forEach(tab => tab.classList.remove('active'));
 
@@ -4202,7 +4204,14 @@ ESCAPE: Window 10ft drop`
 
             // Update tab content
             document.querySelectorAll('.tactical-content').forEach(content => content.classList.remove('active'));
-            document.getElementById(`tactical-tab-${tabName}`).classList.add('active');
+            const targetTab = document.getElementById(`tactical-tab-${tabName}`);
+            console.log('[DEBUG] Target tab element:', targetTab);
+            if (targetTab) {
+                targetTab.classList.add('active');
+                console.log('[DEBUG] Tab activated successfully');
+            } else {
+                console.error('[ERROR] Tab element not found:', `tactical-tab-${tabName}`);
+            }
 
             // Load character lists when switching to CHARACTERS tab
             if (tabName === 'encounters') {
@@ -5475,8 +5484,12 @@ ESCAPE: Window 10ft drop`
 
         // Combat Log Functions for COMBAT Tab
         function addCombatLog(message, type = 'combat') {
+            console.log('[DEBUG] Adding to combat log:', message);
             const logContainer = document.getElementById('combat-log-entries');
-            if (!logContainer) return;
+            if (!logContainer) {
+                console.error('[ERROR] Combat log container not found!');
+                return;
+            }
 
             // Remove placeholder if exists
             const placeholder = logContainer.querySelector('p');
