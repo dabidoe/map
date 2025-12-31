@@ -1922,14 +1922,14 @@
             </div>
 
             <!-- COMBAT Tab -->
-            <div class="tactical-content" id="tactical-tab-combat" style="min-height: 600px;">
-                <div class="tab-panel" id="combat-content">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #8b6f47;">
-                        <div class="section-header" style="margin: 0;">⚔️ Initiative Tracker</div>
-                        <div style="display: flex; gap: 0.5rem;">
-                            <button onclick="rollAllCombatInitiative()" style="padding: 0.8rem 1.5rem; background: #dc2626; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">🎲 Roll All Initiative</button>
-                            <button onclick="clearCombatTracker()" style="padding: 0.8rem 1.5rem; background: rgba(139, 111, 71, 0.3); color: #2c1810; border: 2px solid #8b6f47; border-radius: 6px; cursor: pointer; font-weight: bold;">Clear Combat</button>
-                        </div>
+            <div class="tactical-content" id="tactical-tab-combat">
+                <div style="padding: 20px; background: #f4e4c1; min-height: 800px; overflow-y: auto;">
+
+                    <h2 style="color: #2c1810; margin-bottom: 20px;">⚔️ Initiative Tracker</h2>
+
+                    <div style="margin-bottom: 20px;">
+                        <button onclick="rollAllCombatInitiative()" style="padding: 10px 20px; background: #dc2626; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-right: 10px;">🎲 Roll All Initiative</button>
+                        <button onclick="clearCombatTracker()" style="padding: 10px 20px; background: #8b6f47; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Clear Combat</button>
                     </div>
 
                     <!-- Add Combatants -->
