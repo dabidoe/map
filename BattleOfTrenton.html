@@ -2748,6 +2748,11 @@ ESCAPE: Window 10ft drop`
 
                 // Load combat tracker
                 this.renderCombatTracker(locationKey);
+
+                // Auto-load party members at spawn point
+                setTimeout(() => {
+                    this.loadAllPartyMembers();
+                }, 200);
             }
 
             renderEncounter(locationKey) {
@@ -5328,46 +5333,35 @@ ESCAPE: Window 10ft drop`
                 const borderStyle = isCurrentTurn ? '5px solid #d4af37' : `5px solid ${borderColor}`;
                 const opacity = isCurrentTurn ? '1' : '0.6';
 
-                // Compact layout - no horizontal scroll
+                // Simple vertical layout - no overlap
                 let html = `
-                    <div style="background: ${bgColor}; border-left: ${borderStyle}; border-radius: 8px; padding: 1rem; margin-bottom: 0.8rem; ${isCurrentTurn ? 'box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);' : ''} opacity: ${opacity};">
-                        <div style="display: flex; gap: 1rem; align-items: center;">
-                            <!-- Initiative # -->
-                            <div style="text-align: center; font-size: 2rem; font-weight: bold; color: #8b6f47; min-width: 50px;">
-                                ${index + 1}${isCurrentTurn ? '<div style="font-size: 0.7rem; color: #d4af37;">◄ TURN</div>' : ''}
+                    <div style="background: ${bgColor}; border-left: ${borderStyle}; border-radius: 6px; padding: 0.75rem; margin-bottom: 0.6rem;">
+                        <!-- Name row -->
+                        <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem;">
+                            <div style="font-size: 1.5rem; font-weight: bold; color: #8b6f47; min-width: 35px; text-align: center;">
+                                ${index + 1}
                             </div>
-
-                            <!-- Portrait -->
-                            <div style="width: 60px; height: 60px; background: rgba(139, 111, 71, 0.2); border: 2px solid #8b6f47; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
-                                ${hasImage ? `<img src="${imgSrc}" style="width: 100%; height: 100%; object-fit: cover;">` : '<div style="font-size: 2rem; opacity: 0.5;">👤</div>'}
+                            <div style="width: 50px; height: 50px; background: rgba(139, 111, 71, 0.2); border: 2px solid #8b6f47; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                ${hasImage ? `<img src="${imgSrc}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;">` : '<div style="font-size: 1.5rem;">👤</div>'}
                             </div>
-
-                            <!-- Name & Stats -->
-                            <div style="flex: 1; min-width: 0;">
-                                <div style="font-size: 1.2rem; font-weight: bold; color: #2c1810;">${combatant.name}</div>
-                                ${combatant.class ? `<div style="opacity: 0.7; font-size: 0.85rem; color: #2c1810;">${combatant.class}</div>` : ''}
+                            <div style="flex: 1;">
+                                <div style="font-size: 1.1rem; font-weight: bold; color: #2c1810;">${combatant.name}</div>
+                                ${isCurrentTurn ? '<div style="font-size: 0.75rem; color: #d4af37; font-weight: bold;">◄ CURRENT TURN</div>' : ''}
                             </div>
-
-                            <!-- HP, AC, Initiative in compact row -->
-                            <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
-                                <!-- HP -->
-                                <div style="text-align: center; min-width: 80px;">
-                                    <div style="font-size: 0.7rem; opacity: 0.7; color: #2c1810;">HP</div>
-                                    <input type="number" value="${combatant.hp}" onchange="updateCombatantHP('${combatant.id}', this.value)" onclick="event.stopPropagation()" style="width: 60px; padding: 0.3rem; background: rgba(244, 228, 193, 0.8); border: 2px solid #16a34a; color: #16a34a; border-radius: 4px; text-align: center; font-size: 1rem; font-weight: bold;">
-                                    <div style="opacity: 0.6; font-size: 0.7rem; color: #2c1810;">/${combatant.maxHp}</div>
-                                </div>
-
-                                <!-- AC -->
-                                <div style="text-align: center; padding: 0.5rem; background: rgba(139, 111, 71, 0.2); border: 2px solid #8b6f47; border-radius: 6px; min-width: 60px;">
-                                    <div style="font-size: 0.7rem; opacity: 0.7; color: #2c1810;">AC</div>
-                                    <div style="font-size: 1.2rem; font-weight: bold; color: #2c1810;">${combatant.ac}</div>
-                                </div>
-
-                                <!-- Initiative -->
-                                <div style="text-align: center; padding: 0.5rem; background: rgba(212, 175, 55, 0.25); border: 2px solid #d4af37; border-radius: 6px; min-width: 60px;">
-                                    <div style="font-size: 0.7rem; opacity: 0.7; color: #2c1810;">Init</div>
-                                    <div style="font-size: 1.2rem; font-weight: bold; color: #8b6f47;">${initiativeDisplay}</div>
-                                </div>
+                        </div>
+                        <!-- Stats row -->
+                        <div style="display: flex; gap: 0.5rem; margin-left: 85px;">
+                            <div style="flex: 1; text-align: center; padding: 0.4rem; background: rgba(22, 163, 74, 0.1); border: 2px solid #16a34a; border-radius: 4px;">
+                                <div style="font-size: 0.65rem; opacity: 0.7; color: #2c1810; margin-bottom: 2px;">HP</div>
+                                <div style="font-size: 1rem; font-weight: bold; color: #16a34a;">${combatant.hp}/${combatant.maxHp}</div>
+                            </div>
+                            <div style="flex: 1; text-align: center; padding: 0.4rem; background: rgba(139, 111, 71, 0.15); border: 2px solid #8b6f47; border-radius: 4px;">
+                                <div style="font-size: 0.65rem; opacity: 0.7; color: #2c1810; margin-bottom: 2px;">AC</div>
+                                <div style="font-size: 1rem; font-weight: bold; color: #2c1810;">${combatant.ac}</div>
+                            </div>
+                            <div style="flex: 1; text-align: center; padding: 0.4rem; background: rgba(212, 175, 55, 0.2); border: 2px solid #d4af37; border-radius: 4px;">
+                                <div style="font-size: 0.65rem; opacity: 0.7; color: #2c1810; margin-bottom: 2px;">INIT</div>
+                                <div style="font-size: 1rem; font-weight: bold; color: #8b6f47;">${initiativeDisplay}</div>
                             </div>
                         </div>`;
 
@@ -5752,6 +5746,16 @@ ESCAPE: Window 10ft drop`
 
             if (window.tactical) {
                 tactical.addLog(resultMessage, 'combat');
+            }
+
+            // Sync HP between combat tracker and map tokens
+            const trackerEntry = COMBAT_TRACKER.find(c => c.id === targetId);
+            const mapToken = window.tactical?.tokens.find(t => t.id === targetId);
+            if (trackerEntry && mapToken && trackerEntry.hp !== mapToken.hp) {
+                // Sync HP to both
+                const newHP = Math.min(trackerEntry.hp, mapToken.hp);
+                trackerEntry.hp = newHP;
+                mapToken.hp = newHP;
             }
 
             // Update initiative list if target is in combat tracker
