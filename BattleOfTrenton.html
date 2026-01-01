@@ -1856,23 +1856,23 @@
             <div class="tactical-content active" id="tactical-tab-maps">
                 <canvas id="tactical-canvas"></canvas>
 
-                <!-- Floating Combat Tracker - Resizable -->
-                <div id="floating-combat-tracker" style="position: fixed; top: 100px; right: 20px; width: 500px; min-width: 350px; height: 600px; min-height: 300px; background: rgba(244, 228, 193, 0.98); border: 3px solid #8b6f47; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 9999; display: block; resize: both; overflow: hidden;">
-                    <div style="background: #8b6f47; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 5px 5px 0 0; cursor: move;" id="combat-tracker-header">
-                        <div style="font-weight: bold; color: white; font-size: 1.1rem;">⚔️ Combat Tracker</div>
-                        <button onclick="toggleCombatTracker()" style="background: #dc2626; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;">×</button>
+                <!-- Floating Combat Tracker - Resizable and Draggable -->
+                <div id="floating-combat-tracker" style="position: fixed; bottom: 20px; right: 20px; width: 380px; min-width: 280px; max-width: 600px; height: 450px; min-height: 250px; max-height: 80vh; background: rgba(244, 228, 193, 0.98); border: 3px solid #8b6f47; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 9999; display: block; resize: both; overflow: hidden;">
+                    <div style="background: #8b6f47; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-radius: 5px 5px 0 0; cursor: move;" id="combat-tracker-header">
+                        <div style="font-weight: bold; color: white; font-size: 1rem;">⚔️ Combat Tracker</div>
+                        <button onclick="toggleCombatTracker()" style="background: #dc2626; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1rem;">×</button>
                     </div>
-                    <div style="padding: 15px; height: calc(100% - 50px); overflow-y: auto; overflow-x: hidden;">
-                        <div style="margin-bottom: 15px;">
-                            <button onclick="rollAllCombatInitiative()" style="width: 100%; padding: 10px; background: #dc2626; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 1rem;">🎲 Roll Initiative</button>
+                    <div style="padding: 12px; height: calc(100% - 45px); overflow-y: auto; overflow-x: hidden;">
+                        <div style="margin-bottom: 12px;">
+                            <button onclick="rollAllCombatInitiative()" style="width: 100%; padding: 8px; background: #dc2626; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">🎲 Roll Initiative</button>
                         </div>
-                        <div id="initiative-list" style="color: #2c1810;">
-                            <p style="opacity: 0.7; text-align: center; padding: 2rem; font-size: 0.9rem;">Tokens auto-add when placed on map</p>
+                        <div id="floating-initiative-list" style="color: #2c1810;">
+                            <p style="opacity: 0.7; text-align: center; padding: 1.5rem 0.5rem; font-size: 0.85rem;">Tokens auto-add when placed on map</p>
                         </div>
                     </div>
                     <!-- Resize handle indicator -->
-                    <div style="position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; cursor: se-resize; opacity: 0.5;">
-                        <div style="position: absolute; bottom: 4px; right: 4px; width: 12px; height: 12px; border-right: 3px solid #8b6f47; border-bottom: 3px solid #8b6f47;"></div>
+                    <div style="position: absolute; bottom: 0; right: 0; width: 16px; height: 16px; cursor: se-resize; opacity: 0.5; pointer-events: none;">
+                        <div style="position: absolute; bottom: 3px; right: 3px; width: 10px; height: 10px; border-right: 2px solid #8b6f47; border-bottom: 2px solid #8b6f47;"></div>
                     </div>
                 </div>
 
@@ -5073,11 +5073,16 @@ ESCAPE: Window 10ft drop`
             const container = document.getElementById('enemies-cards');
             if (!container) return;
 
-            // Show ALL enemies - let DM choose what to use
-            const enemies = Object.values(CHARACTERS).filter(c => c.type === 'enemy');
+            // Show ONLY enemies currently on the map
+            let enemies = [];
+            if (window.tactical && window.tactical.tokens) {
+                // Get character IDs from tokens on the map
+                const tokenIds = window.tactical.tokens.map(t => t.id);
+                enemies = Object.values(CHARACTERS).filter(c => c.type === 'enemy' && tokenIds.includes(c.id));
+            }
 
             if (enemies.length === 0) {
-                container.innerHTML = '<p style="opacity: 0.7; text-align: center; padding: 2rem;">No enemies yet. Add enemies above.</p>';
+                container.innerHTML = '<p style="opacity: 0.7; text-align: center; padding: 2rem;">No enemies on current map. Place tokens to see them here.</p>';
                 return;
             }
 
@@ -5089,11 +5094,16 @@ ESCAPE: Window 10ft drop`
             const container = document.getElementById('npcs-cards');
             if (!container) return;
 
-            // Show ALL NPCs - let DM choose what to use
-            const npcs = Object.values(CHARACTERS).filter(c => c.type !== 'enemy');
+            // Show ONLY NPCs currently on the map
+            let npcs = [];
+            if (window.tactical && window.tactical.tokens) {
+                // Get character IDs from tokens on the map
+                const tokenIds = window.tactical.tokens.map(t => t.id);
+                npcs = Object.values(CHARACTERS).filter(c => c.type !== 'enemy' && tokenIds.includes(c.id));
+            }
 
             if (npcs.length === 0) {
-                container.innerHTML = '<p style="opacity: 0.7; text-align: center; padding: 2rem;">No NPCs yet. Add NPCs above.</p>';
+                container.innerHTML = '<p style="opacity: 0.7; text-align: center; padding: 2rem;">No NPCs on current map. Place tokens to see them here.</p>';
                 return;
             }
 
@@ -5364,14 +5374,19 @@ ESCAPE: Window 10ft drop`
         }
 
         function renderInitiativeList() {
-            const container = document.getElementById('initiative-list');
+            // Update both the COMBAT tab list and the floating tracker list
+            const combatTabContainer = document.getElementById('initiative-list');
+            const floatingContainer = document.getElementById('floating-initiative-list');
+
+            const emptyMessage = '<p style="opacity: 0.7; text-align: center; padding: 1.5rem 0.5rem; color: #2c1810; font-size: 0.9rem;">No combatants in initiative. Roll initiative to begin.</p>';
 
             if (COMBAT_TRACKER.length === 0) {
-                container.innerHTML = '<p style="opacity: 0.7; text-align: center; padding: 3rem; color: #2c1810;">No combatants in initiative. Add characters and roll initiative to begin.</p>';
+                if (combatTabContainer) combatTabContainer.innerHTML = emptyMessage;
+                if (floatingContainer) floatingContainer.innerHTML = emptyMessage;
                 return;
             }
 
-            container.innerHTML = COMBAT_TRACKER.map((combatant, index) => {
+            const html = COMBAT_TRACKER.map((combatant, index) => {
                 const imgSrc = combatant.image || '';
                 const hasImage = imgSrc && imgSrc.trim();
                 const borderColor = combatant.type === 'enemy' ? '#dc2626' : '#3b82f6';
@@ -5461,6 +5476,10 @@ ESCAPE: Window 10ft drop`
                 html += `</div>`;
                 return html;
             }).join('');
+
+            // Update both containers with the same HTML
+            if (combatTabContainer) combatTabContainer.innerHTML = html;
+            if (floatingContainer) floatingContainer.innerHTML = html;
         }
 
         function updateCombatantHP(id, newHP) {
