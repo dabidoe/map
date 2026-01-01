@@ -1839,70 +1839,93 @@
             <div style="display: flex;">
                 <div class="tactical-tab active" onclick="switchTacticalTab('maps')">🗺️ MAPS</div>
                 <div class="tactical-tab" onclick="switchTacticalTab('party')">👥 PARTY</div>
-                <div class="tactical-tab" onclick="switchTacticalTab('encounters')">🎭 CHARACTERS</div>
-                <div class="tactical-tab" onclick="switchTacticalTab('combat')">⚔️ COMBAT</div>
                 <div class="tactical-tab" onclick="switchTacticalTab('notes')">📝 NOTES</div>
                 <div class="tactical-tab" onclick="switchTacticalTab('info')">ℹ️ INFO</div>
-            </div>
-            <div class="floor-tabs" id="floor-tabs">
-                <div class="floor-tab active" onclick="switchFloor(this, 'old-barracks-floor1')">🏛️ Ground Floor</div>
-                <div class="floor-tab" onclick="switchFloor(this, 'old-barracks-floor2')">⛓️ Cell Block</div>
-                <div class="floor-tab" onclick="switchFloor(this, 'old-barracks-floor3')">👑 Officers</div>
             </div>
         </div>
 
         <div class="tactical-body">
-            <!-- MAPS Tab -->
+            <!-- MAPS Tab - New Clean Layout -->
             <div class="tactical-content active" id="tactical-tab-maps">
-                <canvas id="tactical-canvas"></canvas>
+                <!-- Top Controls Bar -->
+                <div style="display: flex; gap: 0.5rem; padding: 0.75rem; background: rgba(139, 111, 71, 0.15); border-bottom: 2px solid #8b6f47; align-items: center; flex-wrap: wrap;">
+                    <button id="dm-mode-toggle" onclick="toggleDMMode()" style="padding: 0.5rem 1rem; background: #dc2626; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">
+                        🎭 DM Mode: ON
+                    </button>
+                    <select id="floor-selector" onchange="switchToFloor(this.value)" style="padding: 0.5rem; background: rgba(244, 228, 193, 0.9); border: 2px solid #8b6f47; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">
+                        <option value="old-barracks-floor1">🏛️ Ground Floor</option>
+                        <option value="old-barracks-floor2">⛓️ Cell Block</option>
+                        <option value="old-barracks-floor3">👑 Officers</option>
+                    </select>
+                    <button id="grid-toggle-btn" onclick="tactical.toggleGrid()" style="padding: 0.5rem 1rem; background: rgba(244, 228, 193, 0.9); border: 2px solid #8b6f47; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">
+                        ⊞ Grid: ON
+                    </button>
+                    <button id="snap-toggle-btn" onclick="tactical.toggleSnap()" style="padding: 0.5rem 1rem; background: rgba(244, 228, 193, 0.9); border: 2px solid #8b6f47; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">
+                        🧲 Snap: ON
+                    </button>
+                    <button onclick="tactical.uploadBackground()" style="padding: 0.5rem 1rem; background: rgba(244, 228, 193, 0.9); border: 2px solid #8b6f47; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">
+                        🎨 Background
+                    </button>
+                    <span id="grid-info" style="margin-left: auto; opacity: 0.7; font-size: 0.85rem; color: #2c1810;">Grid: 5ft • 30×20</span>
+                </div>
 
-                <!-- Floating Combat Tracker - Resizable and Draggable -->
-                <div id="floating-combat-tracker" style="position: fixed; bottom: 20px; right: 20px; width: 380px; min-width: 280px; max-width: 600px; height: 450px; min-height: 250px; max-height: 80vh; background: rgba(244, 228, 193, 0.98); border: 3px solid #8b6f47; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 9999; display: block; resize: both; overflow: hidden;">
-                    <div style="background: #8b6f47; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-radius: 5px 5px 0 0; cursor: move;" id="combat-tracker-header">
-                        <div style="font-weight: bold; color: white; font-size: 1rem;">⚔️ Combat Tracker</div>
-                        <button onclick="toggleCombatTracker()" style="background: #dc2626; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1rem;">×</button>
-                    </div>
-                    <div style="padding: 12px; height: calc(100% - 45px); overflow-y: auto; overflow-x: hidden;">
-                        <div style="margin-bottom: 12px;">
-                            <button onclick="rollAllCombatInitiative()" style="width: 100%; padding: 8px; background: #dc2626; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">🎲 Roll Initiative</button>
+                <!-- Main Game Area -->
+                <div style="display: flex; height: calc(100% - 200px); position: relative;">
+                    <!-- Initiative Sidebar (left) -->
+                    <div id="initiative-sidebar" style="width: 280px; background: rgba(244, 228, 193, 0.95); border-right: 3px solid #8b6f47; overflow-y: auto; display: flex; flex-direction: column;">
+                        <div style="padding: 0.75rem; background: #8b6f47; color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
+                            <span>⚔️ Initiative</span>
+                            <button onclick="toggleInitiativeSidebar()" style="background: transparent; border: none; color: white; cursor: pointer; font-size: 1.2rem; padding: 0; line-height: 1;">‹</button>
                         </div>
-                        <div id="floating-initiative-list" style="color: #2c1810;">
-                            <p style="opacity: 0.7; text-align: center; padding: 1.5rem 0.5rem; font-size: 0.85rem;">Tokens auto-add when placed on map</p>
+                        <div style="padding: 0.75rem;">
+                            <button onclick="rollAllCombatInitiative()" style="width: 100%; padding: 0.6rem; background: #dc2626; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.9rem; margin-bottom: 0.75rem;">
+                                🎲 Roll Initiative
+                            </button>
+                            <button onclick="clearCombatTracker()" style="width: 100%; padding: 0.5rem; background: #8b6f47; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85rem; margin-bottom: 0.75rem;">
+                                Clear Combat
+                            </button>
+                            <!-- Turn indicator -->
+                            <div id="turn-indicator" style="display: none; padding: 0.75rem; background: rgba(212, 175, 55, 0.3); border: 2px solid #d4af37; border-radius: 6px; margin-bottom: 0.75rem; text-align: center;">
+                                <div style="font-size: 0.75rem; opacity: 0.8; margin-bottom: 0.25rem;">CURRENT TURN</div>
+                                <div id="current-turn-display" style="font-size: 1.1rem; font-weight: bold; color: #2c1810;">—</div>
+                            </div>
+                        </div>
+                        <div id="initiative-list" style="flex: 1; overflow-y: auto; padding: 0 0.75rem 0.75rem 0.75rem; color: #2c1810;">
+                            <p style="opacity: 0.7; text-align: center; padding: 2rem 0.5rem; font-size: 0.85rem;">Tokens auto-add when placed on map</p>
                         </div>
                     </div>
-                    <!-- Resize handle indicator -->
-                    <div style="position: absolute; bottom: 0; right: 0; width: 16px; height: 16px; cursor: se-resize; opacity: 0.5; pointer-events: none;">
-                        <div style="position: absolute; bottom: 3px; right: 3px; width: 10px; height: 10px; border-right: 2px solid #8b6f47; border-bottom: 2px solid #8b6f47;"></div>
+
+                    <!-- Map Canvas -->
+                    <div style="flex: 1; position: relative; background: #1a1a1a;">
+                        <canvas id="tactical-canvas" style="display: block; width: 100%; height: 100%;"></canvas>
+
+                        <!-- Quick Token Controls (overlay bottom-right) -->
+                        <div style="position: absolute; bottom: 10px; right: 10px; display: flex; flex-direction: column; gap: 0.5rem;">
+                            <button onclick="tactical.loadAllPartyMembers()" style="padding: 0.6rem; background: rgba(59, 130, 246, 0.9); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                                👥 Load Party
+                            </button>
+                            <button onclick="tactical.openCharacterLibrary('enemy')" style="padding: 0.6rem; background: rgba(220, 38, 38, 0.9); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                                👹 Add Enemy
+                            </button>
+                            <button onclick="tactical.clearTokens()" style="padding: 0.6rem; background: rgba(139, 111, 71, 0.9); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.85rem; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                                🗑️ Clear
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="tactical-controls">
-                    <div class="control-title">Grid Controls</div>
-                    <button class="control-btn active" id="grid-toggle-btn" onclick="tactical.toggleGrid()">Hide Grid</button>
-                    <button class="control-btn" id="snap-toggle-btn" onclick="tactical.toggleSnap()">Snap: ON</button>
-                    <div style="margin-top: 0.5rem; font-size: 0.75rem; opacity: 0.7;">Grid: <span id="grid-info">5ft • 30×20</span></div>
-
-                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(251, 191, 36, 0.3);">
-                        <div class="control-title">Background Image</div>
-                        <input type="text" id="bg-image-url" placeholder="Image URL" style="width: 100%; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid var(--secondary); color: white; border-radius: 4px; margin-bottom: 0.5rem; font-size: 0.8rem;">
-                        <button class="control-btn" onclick="document.getElementById('bg-image-file').click()">📁 Upload</button>
-                        <input type="file" id="bg-image-file" accept="image/*" style="display: none;" onchange="tactical.uploadBackgroundImage(this)">
-                        <button class="control-btn" onclick="tactical.setBackgroundFromURL()">Set URL</button>
-                        <button class="control-btn" onclick="tactical.clearBackground()">Clear BG</button>
+                <!-- Game Log Terminal (bottom, full width) -->
+                <div id="game-log" style="height: 180px; background: rgba(20, 20, 20, 0.95); border-top: 3px solid #8b6f47; overflow-y: auto; display: flex; flex-direction: column;">
+                    <div style="padding: 0.5rem 0.75rem; background: #8b6f47; color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #2c1810;">
+                        <span style="font-family: 'Courier New', monospace;">📜 GAME LOG</span>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button onclick="toggleGameLogSize()" style="background: transparent; border: none; color: white; cursor: pointer; font-weight: bold; padding: 0 0.5rem;">↕</button>
+                            <button onclick="clearGameLog()" style="background: #dc2626; border: none; color: white; cursor: pointer; font-weight: bold; padding: 0.25rem 0.75rem; border-radius: 3px; font-size: 0.85rem;">Clear</button>
+                        </div>
                     </div>
-                </div>
-                <div class="token-controls">
-                    <button class="token-btn" onclick="toggleCombatTracker()" style="background: #dc2626; font-weight: bold;">⚔️ Combat Tracker</button>
-                    <button class="token-btn" onclick="tactical.loadAllPartyMembers()">👥 Load Party</button>
-                    <button class="token-btn" onclick="tactical.openCharacterLibrary('player')">Add Player</button>
-                    <button class="token-btn" onclick="tactical.openCharacterLibrary('enemy')">Add Enemy</button>
-                </div>
-                <div class="battle-log" id="battle-log">
-                    <div class="log-header">
-                        <div class="log-title">⚔️ Combat Log</div>
-                        <button class="log-clear" onclick="tactical.clearLog()">Clear</button>
+                    <div id="game-log-entries" style="flex: 1; overflow-y: auto; padding: 0.75rem; font-family: 'Courier New', monospace; font-size: 0.85rem; color: #d4af37; line-height: 1.6;">
+                        <div style="opacity: 0.6; font-style: italic;">> Game log initialized. Roll for initiative!</div>
                     </div>
-                    <div class="log-entries" id="log-entries"></div>
                 </div>
             </div>
 
@@ -1916,76 +1939,6 @@
                     </div>
                     <div id="party-list">
                         <p style="opacity: 0.7; text-align: center; padding: 2rem;">No party members yet. Add players above.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- CHARACTERS Tab -->
-            <div class="tactical-content" id="tactical-tab-encounters">
-                <div class="tab-panel" id="encounters-content" style="max-width: 1200px;">
-                    <!-- Character Type Subtabs -->
-                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--secondary); padding-bottom: 0.5rem;">
-                        <button id="enemies-subtab" class="subtab-btn active" onclick="switchCharacterSubtab('enemies')" style="flex: 1; padding: 0.8rem; background: #dc2626; color: white; border: none; border-radius: 6px 6px 0 0; font-weight: bold; cursor: pointer;">👹 Enemies</button>
-                        <button id="npcs-subtab" class="subtab-btn" onclick="switchCharacterSubtab('npcs')" style="flex: 1; padding: 0.8rem; background: rgba(251, 191, 36, 0.2); color: var(--secondary); border: none; border-radius: 6px 6px 0 0; font-weight: bold; cursor: pointer;">🤝 NPCs / Allies</button>
-                    </div>
-
-                    <!-- Enemies Content -->
-                    <div id="enemies-list" class="character-subtab-content">
-                        <div style="margin-bottom: 1rem;">
-                            <button onclick="showAddCharacterModal('enemy')" style="padding: 0.8rem 1.5rem; background: #dc2626; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">+ Add Enemy</button>
-                        </div>
-                        <div id="enemies-cards"></div>
-                    </div>
-
-                    <!-- NPCs Content -->
-                    <div id="npcs-list" class="character-subtab-content" style="display: none;">
-                        <div style="margin-bottom: 1rem;">
-                            <button onclick="showAddCharacterModal('npc')" style="padding: 0.8rem 1.5rem; background: var(--secondary); color: var(--primary); border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">+ Add NPC</button>
-                        </div>
-                        <div id="npcs-cards"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- COMBAT Tab -->
-            <div class="tactical-content" id="tactical-tab-combat">
-                <div style="padding: 20px; background: #f4e4c1; min-height: 800px; overflow-y: auto;">
-
-                    <h2 style="color: #2c1810; margin-bottom: 20px;">⚔️ Initiative Tracker</h2>
-
-                    <div style="margin-bottom: 20px;">
-                        <button onclick="rollAllCombatInitiative()" style="padding: 10px 20px; background: #dc2626; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-right: 10px;">🎲 Roll All Initiative</button>
-                        <button onclick="clearCombatTracker()" style="padding: 10px 20px; background: #8b6f47; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Clear Combat</button>
-                    </div>
-
-                    <!-- Turn Tracker -->
-                    <div id="turn-tracker" style="display: none; margin-bottom: 1.5rem; padding: 1rem; background: rgba(212, 175, 55, 0.2); border: 3px solid #d4af37; border-radius: 8px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="font-size: 0.9rem; color: #2c1810; opacity: 0.8; margin-bottom: 0.3rem;">Current Turn:</div>
-                                <div id="current-turn-name" style="font-size: 1.5rem; font-weight: bold; color: #8b6f47;">—</div>
-                            </div>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <button onclick="previousTurn()" style="padding: 0.8rem 1.2rem; background: rgba(139, 111, 71, 0.3); color: #2c1810; border: 2px solid #8b6f47; border-radius: 6px; font-weight: bold; cursor: pointer;">← Prev</button>
-                                <button onclick="nextTurn()" style="padding: 0.8rem 1.2rem; background: #d4af37; color: #2c1810; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Next →</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Initiative Order List -->
-                    <div id="initiative-list">
-                        <p style="opacity: 0.7; text-align: center; padding: 3rem; color: #2c1810;">No combatants in initiative. Add characters and roll initiative to begin.</p>
-                    </div>
-
-                    <!-- Combat Log -->
-                    <div style="margin-top: 2rem; background: rgba(244, 228, 193, 0.95); border: 2px solid #8b6f47; border-radius: 8px; overflow: hidden;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 2px solid #8b6f47; background: rgba(139, 111, 71, 0.2);">
-                            <div style="font-weight: bold; font-size: 1.1rem; color: #2c1810;">⚔️ Combat Log</div>
-                            <button onclick="clearCombatLog()" style="padding: 0.5rem 1rem; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 0.85rem;">Clear</button>
-                        </div>
-                        <div id="combat-log-entries" style="padding: 1rem; max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 0.9rem;">
-                            <p style="opacity: 0.6; text-align: center; padding: 2rem; color: #2c1810;">Combat log will appear here...</p>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -3692,6 +3645,11 @@ ESCAPE: Window 10ft drop`
                 this.battleLog.unshift({ time, message, type });
                 if (this.battleLog.length > 50) this.battleLog.pop();
                 this.renderLog();
+
+                // Also log to the new game log
+                if (typeof addGameLog === 'function') {
+                    addGameLog(message, type);
+                }
             }
 
             clearLog() {
@@ -5332,15 +5290,15 @@ ESCAPE: Window 10ft drop`
         }
 
         function updateTurnDisplay() {
-            const turnTracker = document.getElementById('turn-tracker');
-            const currentTurnName = document.getElementById('current-turn-name');
+            const turnIndicator = document.getElementById('turn-indicator');
+            const currentTurnDisplay = document.getElementById('current-turn-display');
 
             if (COMBAT_TRACKER.length > 0 && COMBAT_TRACKER[currentTurnIndex]) {
-                turnTracker.style.display = 'block';
-                currentTurnName.textContent = COMBAT_TRACKER[currentTurnIndex].name;
+                turnIndicator.style.display = 'block';
+                currentTurnDisplay.textContent = COMBAT_TRACKER[currentTurnIndex].name;
             } else {
-                turnTracker.style.display = 'none';
-                currentTurnName.textContent = '—';
+                turnIndicator.style.display = 'none';
+                currentTurnDisplay.textContent = '—';
             }
         }
 
@@ -5374,15 +5332,14 @@ ESCAPE: Window 10ft drop`
         }
 
         function renderInitiativeList() {
-            // Update both the COMBAT tab list and the floating tracker list
-            const combatTabContainer = document.getElementById('initiative-list');
-            const floatingContainer = document.getElementById('floating-initiative-list');
+            // Update the initiative sidebar
+            const initiativeList = document.getElementById('initiative-list');
+            if (!initiativeList) return;
 
-            const emptyMessage = '<p style="opacity: 0.7; text-align: center; padding: 1.5rem 0.5rem; color: #2c1810; font-size: 0.9rem;">No combatants in initiative. Roll initiative to begin.</p>';
+            const emptyMessage = '<p style="opacity: 0.7; text-align: center; padding: 2rem 0.5rem; font-size: 0.85rem;">Tokens auto-add when placed on map</p>';
 
             if (COMBAT_TRACKER.length === 0) {
-                if (combatTabContainer) combatTabContainer.innerHTML = emptyMessage;
-                if (floatingContainer) floatingContainer.innerHTML = emptyMessage;
+                initiativeList.innerHTML = emptyMessage;
                 return;
             }
 
@@ -5477,9 +5434,8 @@ ESCAPE: Window 10ft drop`
                 return html;
             }).join('');
 
-            // Update both containers with the same HTML
-            if (combatTabContainer) combatTabContainer.innerHTML = html;
-            if (floatingContainer) floatingContainer.innerHTML = html;
+            // Update the initiative sidebar
+            initiativeList.innerHTML = html;
         }
 
         function updateCombatantHP(id, newHP) {
@@ -5571,18 +5527,104 @@ ESCAPE: Window 10ft drop`
             }
         }
 
-        function toggleCombatTracker() {
-            const tracker = document.getElementById('floating-combat-tracker');
-            if (tracker.style.display === 'none') {
-                tracker.style.display = 'block';
+        // DM Mode Toggle
+        let isDMMode = true;
+        function toggleDMMode() {
+            isDMMode = !isDMMode;
+            const btn = document.getElementById('dm-mode-toggle');
+            if (isDMMode) {
+                btn.textContent = '🎭 DM Mode: ON';
+                btn.style.background = '#dc2626';
+                // Show everything
+                // TODO: Implement fog of war reveal
             } else {
-                tracker.style.display = 'none';
+                btn.textContent = '👁️ Player Mode';
+                btn.style.background = '#3b82f6';
+                // Hide DM-only elements
+                // TODO: Implement fog of war hide
+            }
+            if (window.tactical) {
+                window.tactical.draw();
             }
         }
 
+        // Floor Switching
+        function switchToFloor(floorKey) {
+            if (!window.tactical) return;
+
+            const floorNames = {
+                'old-barracks-floor1': 'Old Barracks - Ground Floor',
+                'old-barracks-floor2': 'Old Barracks - Cell Block',
+                'old-barracks-floor3': 'Old Barracks - Officers\' Quarters'
+            };
+
+            document.getElementById('tactical-location-name').textContent = `⚔️ ${floorNames[floorKey]}`;
+            tactical.cleanup();
+            tactical.init(floorKey, { name: floorNames[floorKey] });
+        }
+
+        // Initiative Sidebar Toggle
+        function toggleInitiativeSidebar() {
+            const sidebar = document.getElementById('initiative-sidebar');
+            const btn = event.target;
+            if (sidebar.style.width === '0px' || sidebar.style.width === '') {
+                sidebar.style.width = '280px';
+                btn.textContent = '‹';
+            } else {
+                sidebar.style.width = '0px';
+                sidebar.style.minWidth = '0';
+                sidebar.style.padding = '0';
+                sidebar.style.border = 'none';
+                btn.textContent = '›';
+            }
+        }
+
+        // Game Log Functions
+        function clearGameLog() {
+            const log = document.getElementById('game-log-entries');
+            log.innerHTML = '<div style="opacity: 0.6; font-style: italic;">> Game log cleared.</div>';
+        }
+
+        function addGameLog(message, type = 'info') {
+            const log = document.getElementById('game-log-entries');
+            const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+
+            const colors = {
+                'combat': '#dc2626',
+                'skill': '#3b82f6',
+                'damage': '#f59e0b',
+                'heal': '#10b981',
+                'info': '#d4af37',
+                'system': '#8b6f47'
+            };
+
+            const color = colors[type] || colors.info;
+
+            const entry = document.createElement('div');
+            entry.style.marginBottom = '0.5rem';
+            entry.innerHTML = `<span style="opacity: 0.6;">[${timestamp}]</span> <span style="color: ${color};">${message}</span>`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function toggleGameLogSize() {
+            const gameLog = document.getElementById('game-log');
+            const currentHeight = gameLog.style.height;
+            if (currentHeight === '180px' || !currentHeight) {
+                gameLog.style.height = '350px';
+            } else {
+                gameLog.style.height = '180px';
+            }
+        }
+
+        // Legacy functions (keeping for compatibility)
+        function toggleCombatTracker() {
+            toggleInitiativeSidebar();
+        }
+
         function showCombatTracker() {
-            const tracker = document.getElementById('floating-combat-tracker');
-            tracker.style.display = 'block';
+            const sidebar = document.getElementById('initiative-sidebar');
+            sidebar.style.width = '280px';
         }
 
         function addAllMapTokensToCombat() {
