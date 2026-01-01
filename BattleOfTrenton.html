@@ -1845,9 +1845,9 @@
                 <div class="tactical-tab" onclick="switchTacticalTab('info')">ℹ️ INFO</div>
             </div>
             <div class="floor-tabs" id="floor-tabs">
-                <div class="floor-tab active" onclick="switchFloor('old-barracks-floor1')">🏛️ Ground Floor</div>
-                <div class="floor-tab" onclick="switchFloor('old-barracks-floor2')">⛓️ Cell Block</div>
-                <div class="floor-tab" onclick="switchFloor('old-barracks-floor3')">👑 Officers</div>
+                <div class="floor-tab active" onclick="switchFloor(this, 'old-barracks-floor1')">🏛️ Ground Floor</div>
+                <div class="floor-tab" onclick="switchFloor(this, 'old-barracks-floor2')">⛓️ Cell Block</div>
+                <div class="floor-tab" onclick="switchFloor(this, 'old-barracks-floor3')">👑 Officers</div>
             </div>
         </div>
 
@@ -2009,6 +2009,36 @@
     </div>
 
     <script>
+        // LocalStorage helper functions with error handling
+        function safeLocalStorageSet(key, value) {
+            try {
+                localStorage.setItem(key, value);
+                return true;
+            } catch (e) {
+                console.error('Failed to save to localStorage:', e);
+                return false;
+            }
+        }
+
+        function safeLocalStorageGet(key, defaultValue = null) {
+            try {
+                return localStorage.getItem(key) || defaultValue;
+            } catch (e) {
+                console.error('Failed to read from localStorage:', e);
+                return defaultValue;
+            }
+        }
+
+        function safeLocalStorageRemove(key) {
+            try {
+                localStorage.removeItem(key);
+                return true;
+            } catch (e) {
+                console.error('Failed to remove from localStorage:', e);
+                return false;
+            }
+        }
+
         // CAMPAIGN DATA - Embedded for simplicity
         const CAMPAIGN = {
             "washington-camp": {
@@ -2845,7 +2875,7 @@ ESCAPE: Window 10ft drop`
 
             loadBackground(key, location) {
                 // First, try to load from localStorage (user uploads)
-                const savedBackground = localStorage.getItem(`tactical_bg_${key}`);
+                const savedBackground = safeLocalStorageGet(`tactical_bg_${key}`);
                 if (savedBackground) {
                     const img = new Image();
                     img.onload = () => {
@@ -2855,7 +2885,7 @@ ESCAPE: Window 10ft drop`
                     };
                     img.onerror = () => {
                         // If saved image fails, clear it and try file paths
-                        localStorage.removeItem(`tactical_bg_${key}`);
+                        safeLocalStorageRemove(`tactical_bg_${key}`);
                         this.tryLoadFromFiles(key, location);
                     };
                     img.src = savedBackground;
@@ -2894,11 +2924,20 @@ ESCAPE: Window 10ft drop`
             }
 
             setupEventListeners() {
-                this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
-                this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
-                this.canvas.addEventListener('mouseup', () => this.onMouseUp());
-                this.canvas.addEventListener('contextmenu', (e) => this.onRightClick(e));
-                this.canvas.addEventListener('mouseleave', () => this.onMouseUp());
+                // Store bound handlers so they can be removed later
+                this.boundHandlers = {
+                    mousedown: (e) => this.onMouseDown(e),
+                    mousemove: (e) => this.onMouseMove(e),
+                    mouseup: () => this.onMouseUp(),
+                    contextmenu: (e) => this.onRightClick(e),
+                    mouseleave: () => this.onMouseUp()
+                };
+
+                this.canvas.addEventListener('mousedown', this.boundHandlers.mousedown);
+                this.canvas.addEventListener('mousemove', this.boundHandlers.mousemove);
+                this.canvas.addEventListener('mouseup', this.boundHandlers.mouseup);
+                this.canvas.addEventListener('contextmenu', this.boundHandlers.contextmenu);
+                this.canvas.addEventListener('mouseleave', this.boundHandlers.mouseleave);
             }
 
             onMouseDown(e) {
@@ -3066,7 +3105,7 @@ ESCAPE: Window 10ft drop`
                 img.onload = () => {
                     this.backgroundImage = img;
                     // Save URL to localStorage for this location
-                    localStorage.setItem(`tactical_bg_${this.currentLocation}`, url);
+                    safeLocalStorageSet(`tactical_bg_${this.currentLocation}`, url);
                     this.draw();
                     this.addLog('Background image loaded from URL', 'info');
                 };
@@ -3084,7 +3123,7 @@ ESCAPE: Window 10ft drop`
                         img.onload = () => {
                             this.backgroundImage = img;
                             // Save data URL to localStorage for this location
-                            localStorage.setItem(`tactical_bg_${this.currentLocation}`, e.target.result);
+                            safeLocalStorageSet(`tactical_bg_${this.currentLocation}`, e.target.result);
                             this.draw();
                             this.addLog('Background image uploaded and saved', 'info');
                         };
@@ -3098,7 +3137,7 @@ ESCAPE: Window 10ft drop`
                 this.backgroundImage = null;
                 // Clear saved background from localStorage
                 if (this.currentLocation) {
-                    localStorage.removeItem(`tactical_bg_${this.currentLocation}`);
+                    safeLocalStorageRemove(`tactical_bg_${this.currentLocation}`);
                 }
                 this.draw();
                 this.addLog('Background image cleared', 'info');
@@ -3719,6 +3758,20 @@ ESCAPE: Window 10ft drop`
             }
 
             cleanup() {
+                // Remove event listeners to prevent memory leaks
+                if (this.boundHandlers) {
+                    this.canvas.removeEventListener('mousedown', this.boundHandlers.mousedown);
+                    this.canvas.removeEventListener('mousemove', this.boundHandlers.mousemove);
+                    this.canvas.removeEventListener('mouseup', this.boundHandlers.mouseup);
+                    this.canvas.removeEventListener('contextmenu', this.boundHandlers.contextmenu);
+                    this.canvas.removeEventListener('mouseleave', this.boundHandlers.mouseleave);
+                    this.boundHandlers = null;
+                }
+
+                // Clear cached portrait images to prevent memory leak
+                this.portraitImages = {};
+
+                // Clear other state
                 this.tokens = [];
                 this.selectedToken = null;
                 this.backgroundImage = null;
@@ -4123,11 +4176,11 @@ ESCAPE: Window 10ft drop`
             }
 
             save() {
-                localStorage.setItem('trenton_campaign', JSON.stringify(this.state));
+                safeLocalStorageSet('trenton_campaign', JSON.stringify(this.state));
             }
 
             load() {
-                const saved = localStorage.getItem('trenton_campaign');
+                const saved = safeLocalStorageGet('trenton_campaign');
                 if (saved) {
                     try { this.state = JSON.parse(saved); } catch (e) {}
                 }
@@ -4145,7 +4198,7 @@ ESCAPE: Window 10ft drop`
 
             reset() {
                 if (confirm('Reset campaign? All progress will be lost.')) {
-                    localStorage.removeItem('trenton_campaign');
+                    safeLocalStorageRemove('trenton_campaign');
                     location.reload();
                 }
             }
@@ -4281,7 +4334,7 @@ ESCAPE: Window 10ft drop`
             }
         }
 
-        function switchFloor(floorKey) {
+        function switchFloor(element, floorKey) {
             if (!window.tactical) return;
 
             const floorNames = {
@@ -4292,7 +4345,7 @@ ESCAPE: Window 10ft drop`
 
             // Update active floor tab
             document.querySelectorAll('.floor-tab').forEach(tab => tab.classList.remove('active'));
-            event.target.classList.add('active');
+            element.classList.add('active');
 
             // Update location and reinit
             document.getElementById('tactical-location-name').textContent = `⚔️ ${floorNames[floorKey]}`;
@@ -4307,7 +4360,7 @@ ESCAPE: Window 10ft drop`
         }
 
         // CHARACTER MANAGEMENT
-        let PARTY_CHARACTERS = JSON.parse(localStorage.getItem('party_characters') || '[]');
+        let PARTY_CHARACTERS = JSON.parse(safeLocalStorageGet('party_characters', '[]'));
 
         let currentCharacterType = 'player'; // Track what type of character we're adding
 
@@ -4425,7 +4478,7 @@ ESCAPE: Window 10ft drop`
             // Add to appropriate list based on currentCharacterType
             if (currentCharacterType === 'player') {
                 PARTY_CHARACTERS.push(character);
-                localStorage.setItem('party_characters', JSON.stringify(PARTY_CHARACTERS));
+                safeLocalStorageSet('party_characters', JSON.stringify(PARTY_CHARACTERS));
                 renderPartyList();
             } else {
                 // Add to CHARACTERS as enemy
@@ -4703,18 +4756,18 @@ ESCAPE: Window 10ft drop`
                 // Update existing character
                 char.name = document.getElementById('char-name').value;
                 char.class = document.getElementById('char-class').value;
-                char.hp = parseInt(document.getElementById('char-hp').value);
-                char.maxHp = parseInt(document.getElementById('char-hp').value);
-                char.ac = parseInt(document.getElementById('char-ac').value);
-                char.speed = parseInt(document.getElementById('char-speed').value);
+                char.hp = parseInt(document.getElementById('char-hp').value, 10);
+                char.maxHp = parseInt(document.getElementById('char-hp').value, 10);
+                char.ac = parseInt(document.getElementById('char-ac').value, 10);
+                char.speed = parseInt(document.getElementById('char-speed').value, 10);
                 char.initiative = document.getElementById('char-initiative').value;
-                char.proficiency = parseInt(document.getElementById('char-proficiency').value) || 2;
-                char.str = parseInt(document.getElementById('char-str').value) || 10;
-                char.dex = parseInt(document.getElementById('char-dex').value) || 10;
-                char.con = parseInt(document.getElementById('char-con').value) || 10;
-                char.int = parseInt(document.getElementById('char-int').value) || 10;
-                char.wis = parseInt(document.getElementById('char-wis').value) || 10;
-                char.cha = parseInt(document.getElementById('char-cha').value) || 10;
+                char.proficiency = parseInt(document.getElementById('char-proficiency').value, 10) || 2;
+                char.str = parseInt(document.getElementById('char-str').value, 10) || 10;
+                char.dex = parseInt(document.getElementById('char-dex').value, 10) || 10;
+                char.con = parseInt(document.getElementById('char-con').value, 10) || 10;
+                char.int = parseInt(document.getElementById('char-int').value, 10) || 10;
+                char.wis = parseInt(document.getElementById('char-wis').value, 10) || 10;
+                char.cha = parseInt(document.getElementById('char-cha').value, 10) || 10;
                 char.strSave = document.getElementById('char-str-save').value || '+0';
                 char.dexSave = document.getElementById('char-dex-save').value || '+0';
                 char.conSave = document.getElementById('char-con-save').value || '+0';
@@ -4733,7 +4786,7 @@ ESCAPE: Window 10ft drop`
                     if (index !== -1) {
                         PARTY_CHARACTERS[index] = char;
                     }
-                    localStorage.setItem('party_characters', JSON.stringify(PARTY_CHARACTERS));
+                    safeLocalStorageSet('party_characters', JSON.stringify(PARTY_CHARACTERS));
                     renderPartyList();
                 } else {
                     // Update in CHARACTERS object
@@ -4792,18 +4845,18 @@ ESCAPE: Window 10ft drop`
                 id: 'char_' + Date.now(),
                 name: document.getElementById('char-name').value,
                 class: document.getElementById('char-class').value,
-                hp: parseInt(document.getElementById('char-hp').value),
-                maxHp: parseInt(document.getElementById('char-hp').value),
-                ac: parseInt(document.getElementById('char-ac').value),
-                speed: parseInt(document.getElementById('char-speed').value),
+                hp: parseInt(document.getElementById('char-hp').value, 10),
+                maxHp: parseInt(document.getElementById('char-hp').value, 10),
+                ac: parseInt(document.getElementById('char-ac').value, 10),
+                speed: parseInt(document.getElementById('char-speed').value, 10),
                 initiative: document.getElementById('char-initiative').value,
-                proficiency: parseInt(document.getElementById('char-proficiency').value) || 2,
-                str: parseInt(document.getElementById('char-str').value) || 10,
-                dex: parseInt(document.getElementById('char-dex').value) || 10,
-                con: parseInt(document.getElementById('char-con').value) || 10,
-                int: parseInt(document.getElementById('char-int').value) || 10,
-                wis: parseInt(document.getElementById('char-wis').value) || 10,
-                cha: parseInt(document.getElementById('char-cha').value) || 10,
+                proficiency: parseInt(document.getElementById('char-proficiency').value, 10) || 2,
+                str: parseInt(document.getElementById('char-str').value, 10) || 10,
+                dex: parseInt(document.getElementById('char-dex').value, 10) || 10,
+                con: parseInt(document.getElementById('char-con').value, 10) || 10,
+                int: parseInt(document.getElementById('char-int').value, 10) || 10,
+                wis: parseInt(document.getElementById('char-wis').value, 10) || 10,
+                cha: parseInt(document.getElementById('char-cha').value, 10) || 10,
                 strSave: document.getElementById('char-str-save').value || '+0',
                 dexSave: document.getElementById('char-dex-save').value || '+0',
                 conSave: document.getElementById('char-con-save').value || '+0',
@@ -4820,7 +4873,7 @@ ESCAPE: Window 10ft drop`
             // Save to appropriate location based on type
             if (currentCharacterType === 'player') {
                 PARTY_CHARACTERS.push(character);
-                localStorage.setItem('party_characters', JSON.stringify(PARTY_CHARACTERS));
+                safeLocalStorageSet('party_characters', JSON.stringify(PARTY_CHARACTERS));
                 renderPartyList();
 
                 // Add to tactical map if currently in tactical view
@@ -4943,7 +4996,7 @@ ESCAPE: Window 10ft drop`
         function deleteCharacter(id) {
             if (confirm('Remove this character from the party?')) {
                 PARTY_CHARACTERS = PARTY_CHARACTERS.filter(c => c.id !== id);
-                localStorage.setItem('party_characters', JSON.stringify(PARTY_CHARACTERS));
+                safeLocalStorageSet('party_characters', JSON.stringify(PARTY_CHARACTERS));
                 renderPartyList();
             }
         }
@@ -4955,7 +5008,7 @@ ESCAPE: Window 10ft drop`
                     const char = JSON.parse(json);
                     char.id = 'char_' + Date.now();
                     PARTY_CHARACTERS.push(char);
-                    localStorage.setItem('party_characters', JSON.stringify(PARTY_CHARACTERS));
+                    safeLocalStorageSet('party_characters', JSON.stringify(PARTY_CHARACTERS));
                     renderPartyList();
                 } catch (e) {
                     alert('Invalid JSON: ' + e.message);
@@ -4982,7 +5035,7 @@ ESCAPE: Window 10ft drop`
                         type: 'player'
                     };
                     PARTY_CHARACTERS.push(char);
-                    localStorage.setItem('party_characters', JSON.stringify(PARTY_CHARACTERS));
+                    safeLocalStorageSet('party_characters', JSON.stringify(PARTY_CHARACTERS));
                     renderPartyList();
                 } catch (e) {
                     alert('Failed to parse D&D Beyond JSON: ' + e.message);
@@ -5250,7 +5303,7 @@ ESCAPE: Window 10ft drop`
             updateTurnDisplay();
             renderInitiativeList();
 
-            if (window.tactical) {
+            if (window.tactical && COMBAT_TRACKER[currentTurnIndex]) {
                 tactical.addLog(`Turn: ${COMBAT_TRACKER[currentTurnIndex].name}`, 'combat');
             }
         }
@@ -5263,7 +5316,7 @@ ESCAPE: Window 10ft drop`
             updateTurnDisplay();
             renderInitiativeList();
 
-            if (window.tactical) {
+            if (window.tactical && COMBAT_TRACKER[currentTurnIndex]) {
                 tactical.addLog(`Turn: ${COMBAT_TRACKER[currentTurnIndex].name}`, 'combat');
             }
         }
@@ -5272,7 +5325,7 @@ ESCAPE: Window 10ft drop`
             const turnTracker = document.getElementById('turn-tracker');
             const currentTurnName = document.getElementById('current-turn-name');
 
-            if (COMBAT_TRACKER.length > 0) {
+            if (COMBAT_TRACKER.length > 0 && COMBAT_TRACKER[currentTurnIndex]) {
                 turnTracker.style.display = 'block';
                 currentTurnName.textContent = COMBAT_TRACKER[currentTurnIndex].name;
             } else {
@@ -5289,7 +5342,7 @@ ESCAPE: Window 10ft drop`
 
             COMBAT_TRACKER.forEach(combatant => {
                 const roll = Math.floor(Math.random() * 20) + 1;
-                const initMod = parseInt(combatant.initiative) || 0;
+                const initMod = parseInt(combatant.initiative, 10) || 0;
                 combatant.initiativeRoll = roll + initMod;
 
                 if (window.tactical) {
@@ -5305,7 +5358,7 @@ ESCAPE: Window 10ft drop`
             updateTurnDisplay();
             renderInitiativeList();
 
-            if (window.tactical) {
+            if (window.tactical && COMBAT_TRACKER[0]) {
                 tactical.addLog(`Combat started! Turn: ${COMBAT_TRACKER[0].name}`, 'combat');
             }
         }
@@ -5413,7 +5466,7 @@ ESCAPE: Window 10ft drop`
         function updateCombatantHP(id, newHP) {
             const combatant = COMBAT_TRACKER.find(c => c.id === id);
             if (combatant) {
-                combatant.hp = parseInt(newHP);
+                combatant.hp = parseInt(newHP, 10);
                 if (window.tactical) {
                     tactical.addLog(`${combatant.name}: HP changed to ${newHP}/${combatant.maxHp}`, 'info');
                 }
@@ -5550,12 +5603,14 @@ ESCAPE: Window 10ft drop`
         function syncCombatTrackerWithMap() {
             if (!window.tactical || !window.tactical.tokens) {
                 COMBAT_TRACKER = [];
+                currentTurnIndex = 0;
                 renderInitiativeList();
                 return;
             }
 
             // Clear combat tracker
             COMBAT_TRACKER = [];
+            currentTurnIndex = 0;
 
             // Add ONLY tokens that are on the current map
             window.tactical.tokens.forEach(token => {
@@ -5579,7 +5634,6 @@ ESCAPE: Window 10ft drop`
         }
 
         // Token Action Menu System
-        let attackMode = null; // {attackerId, attackString}
 
         function showTokenActionMenu(token, x, y) {
             // Get or create the menu
@@ -5641,7 +5695,7 @@ ESCAPE: Window 10ft drop`
                         hideTokenActionMenu();
                         document.removeEventListener('click', closeMenu);
                     }
-                }, { once: true });
+                });
             }, 100);
         }
 
@@ -5650,125 +5704,22 @@ ESCAPE: Window 10ft drop`
             if (menu) {
                 menu.style.display = 'none';
             }
-            attackMode = null;
             if (window.tactical) {
                 window.tactical.canvas.style.cursor = 'crosshair';
             }
         }
 
-        function selectAttackMode(attackerId, attackString) {
-            attackMode = { attackerId, attackString };
-            hideTokenActionMenu();
-
-            if (window.tactical) {
-                tactical.addLog(`Click a target to attack with: ${attackString}`, 'info');
-                window.tactical.canvas.style.cursor = 'crosshair';
-            }
-
-            // Add one-time click listener to canvas for target selection
-            window.tactical.canvas.addEventListener('click', handleAttackTargetClick);
-        }
-
-        function handleAttackTargetClick(e) {
-            if (!attackMode) return;
-
-            const rect = window.tactical.canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            // Find clicked token
-            for (let i = window.tactical.tokens.length - 1; i >= 0; i--) {
-                const token = window.tactical.tokens[i];
-                const dx = x - token.x;
-                const dy = y - token.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-
-                if (dist < window.tactical.gridSize * 0.4) {
-                    // Found target - execute attack
-                    executeAttackOnTarget(attackMode.attackerId, attackMode.attackString, token.id);
-                    attackMode = null;
-                    window.tactical.canvas.removeEventListener('click', handleAttackTargetClick);
-                    window.tactical.canvas.style.cursor = 'crosshair';
-                    return;
-                }
-            }
-
-            // Clicked empty space - cancel attack
-            if (window.tactical) {
-                tactical.addLog('Attack cancelled', 'info');
-            }
-            attackMode = null;
-            window.tactical.canvas.removeEventListener('click', handleAttackTargetClick);
-        }
-
-        function executeAttackOnTarget(attackerId, attackString, targetId) {
-            // Find attacker and target in combat tracker
-            const attacker = COMBAT_TRACKER.find(c => c.id === attackerId) ||
-                             window.tactical.tokens.find(t => t.id === attackerId);
-            const target = COMBAT_TRACKER.find(c => c.id === targetId) ||
-                           window.tactical.tokens.find(t => t.id === targetId);
-
-            if (!attacker || !target) {
-                alert('Could not find attacker or target!');
-                return;
-            }
-
-            // Roll attack (1d20)
-            const attackRoll = Math.floor(Math.random() * 20) + 1;
-            const attackBonus = 5; // Default +5, could be parsed from attackString
-            const totalAttack = attackRoll + attackBonus;
-
-            let resultMessage = `${attacker.name || 'Attacker'} attacks ${target.name || 'Target'} with ${attackString}\n`;
-            resultMessage += `Attack roll: ${attackRoll} + ${attackBonus} = ${totalAttack} vs AC ${target.ac || 10}\n`;
-
-            if (attackRoll === 20) {
-                resultMessage += '🎯 CRITICAL HIT!\n';
-                // Roll damage twice for crit
-                const damage1 = rollDiceFromString(attackString);
-                const damage2 = rollDiceFromString(attackString);
-                const totalDamage = damage1 + damage2;
-                resultMessage += `Damage: ${damage1} + ${damage2} = ${totalDamage} damage!`;
-
-                // Apply damage
-                if (target.hp !== undefined) {
-                    target.hp = Math.max(0, target.hp - totalDamage);
-                    resultMessage += `\n${target.name} HP: ${target.hp}/${target.maxHp || 20}`;
-                }
-            } else if (attackRoll === 1) {
-                resultMessage += '💀 CRITICAL MISS!';
-            } else if (totalAttack >= (target.ac || 10)) {
-                resultMessage += '✅ HIT!\n';
-                const damage = rollDiceFromString(attackString);
-                resultMessage += `Damage: ${damage}`;
-
-                // Apply damage
-                if (target.hp !== undefined) {
-                    target.hp = Math.max(0, target.hp - damage);
-                    resultMessage += `\n${target.name} HP: ${target.hp}/${target.maxHp || 20}`;
-                }
-            } else {
-                resultMessage += '❌ MISS!';
-            }
-
-            if (window.tactical) {
-                tactical.addLog(resultMessage, 'combat');
-            }
-
-            // Update initiative list if target is in combat tracker
-            renderInitiativeList();
-
-            // Show combat tracker if not visible
-            showCombatTracker();
-        }
+        // Note: selectAttackMode and executeAttackOnTarget are defined later in the file (lines 6012+ and 6070+)
+        // This comment preserves line spacing while removing duplicate/unused canvas-based attack code
 
         function rollDiceFromString(attackString) {
             // Parse damage from attack string like "Longsword (1d8+3)" or just "1d8+2"
             const match = attackString.match(/(\d+)d(\d+)([+-]\d+)?/);
             if (!match) return 5; // Default damage if can't parse
 
-            const numDice = parseInt(match[1]);
-            const diceSize = parseInt(match[2]);
-            const modifier = match[3] ? parseInt(match[3]) : 0;
+            const numDice = parseInt(match[1], 10);
+            const diceSize = parseInt(match[2], 10);
+            const modifier = match[3] ? parseInt(match[3], 10) : 0;
 
             let total = modifier;
             for (let i = 0; i < numDice; i++) {
@@ -5788,14 +5739,8 @@ ESCAPE: Window 10ft drop`
         }
 
         function tokenBasicAttack(tokenId) {
-            attackMode = { attackerId: tokenId, attackString: 'Basic Attack (1d6+2)' };
-
-            if (window.tactical) {
-                tactical.addLog(`Click a target to attack`, 'info');
-                window.tactical.canvas.style.cursor = 'crosshair';
-            }
-
-            window.tactical.canvas.addEventListener('click', handleAttackTargetClick);
+            // Use the modal-based attack system for consistency
+            selectAttackMode(tokenId, 'Basic Attack (1d6+2)');
         }
 
         function tokenDodge(tokenId) {
@@ -5873,14 +5818,14 @@ ESCAPE: Window 10ft drop`
                 // Try parsing as flat bonus like "+5"
                 const flatMatch = notation.match(/([+-]?\d+)/);
                 if (flatMatch) {
-                    return { total: parseInt(flatMatch[1]), rolls: [], bonus: parseInt(flatMatch[1]) };
+                    return { total: parseInt(flatMatch[1], 10), rolls: [], bonus: parseInt(flatMatch[1], 10) };
                 }
                 return { total: 0, rolls: [], bonus: 0 };
             }
 
-            const numDice = parseInt(match[1]) || 1;
-            const dieSize = parseInt(match[2]);
-            const bonus = match[3] ? parseInt(match[3]) : 0;
+            const numDice = parseInt(match[1], 10) || 1;
+            const dieSize = parseInt(match[2], 10);
+            const bonus = match[3] ? parseInt(match[3], 10) : 0;
 
             const rolls = [];
             let total = bonus;
@@ -5925,7 +5870,7 @@ ESCAPE: Window 10ft drop`
 
             // Roll to-hit
             const toHitRoll = rollDice('1d20');
-            const toHitBonus = parseInt(attack.toHit) || 0;
+            const toHitBonus = parseInt(attack.toHit, 10) || 0;
             const toHitTotal = toHitRoll.total + toHitBonus;
 
             // Show dice animation
@@ -6179,12 +6124,12 @@ ESCAPE: Window 10ft drop`
             }
 
             // Save preference
-            localStorage.setItem('fantasyMode', isFantasyMode);
+            safeLocalStorageSet('fantasyMode', isFantasyMode);
         }
 
         // Load preference on page load
         document.addEventListener('DOMContentLoaded', () => {
-            const savedMode = localStorage.getItem('fantasyMode') === 'true';
+            const savedMode = safeLocalStorageGet('fantasyMode') === 'true';
             if (savedMode) {
                 document.body.classList.add('fantasy-mode');
                 document.querySelector('.fantasy-toggle-text').textContent = '📍 Realistic Mode';
