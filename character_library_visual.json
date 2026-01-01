@@ -1,0 +1,641 @@
+{
+  "metadata": {
+    "campaign": "The Nine Lives of Liberty - Episode 1",
+    "location": "Battle of Trenton, December 25-26, 1776",
+    "purpose": "Character stat blocks with visual descriptions for image generation"
+  },
+  
+  "washingtonTent": {
+    "georgeWashington": {
+      "name": "General George Washington",
+      "title": "Commander-in-Chief, Continental Army",
+      "description": "Tall imposing figure (6'2\"), late 40s, powdered white hair tied back, steely blue-gray eyes, weathered face with determined expression, prominent nose and strong jawline. Wears dark blue Continental Army coat with buff facings and gold epaulettes, white waistcoat, buff breeches, black riding boots. Black tricorn hat with gold trim. Commands respect through presence alone.",
+      
+      "race": "Human (Colonial American)",
+      "class": "Fighter 15 / Paladin 5",
+      "level": 20,
+      "alignment": "Lawful Good",
+      
+      "stats": {
+        "STR": 16, "DEX": 14, "CON": 18, "INT": 16, "WIS": 20, "CHA": 20
+      },
+      
+      "combat": {
+        "AC": 20,
+        "HP": 245,
+        "speed": 30,
+        "initiative": "+2"
+      },
+      
+      "attacks": [
+        {
+          "name": "Cavalry Saber +2",
+          "bonus": "+13",
+          "damage": "1d8+5 slashing",
+          "properties": ["Finesse", "Versatile (1d10)"]
+        },
+        {
+          "name": "Flintlock Pistol +1",
+          "bonus": "+8",
+          "damage": "1d10+1 piercing",
+          "range": "30/90"
+        }
+      ],
+      
+      "abilities": [
+        "Action Surge (2/rest)",
+        "Second Wind (1d10+15)",
+        "Indomitable (3/rest)",
+        "Inspiring Leader (temp HP = 25)",
+        "Divine Sense (5/day)",
+        "Lay on Hands (25 HP pool)",
+        "Aura of Protection (+5 to saves within 10ft)"
+      ],
+      
+      "equipment": [
+        "Cavalry saber +2 (ornate, family heirloom)",
+        "Flintlock pistol +1",
+        "Half-plate armor under coat",
+        "Commander's cloak (resistance to cold)",
+        "Spyglass",
+        "Maps of Trenton",
+        "Personal war journal"
+      ]
+    },
+    
+    "nathanaelGreene": {
+      "name": "Major General Nathanael Greene",
+      "title": "Northern Column Commander",
+      "description": "Solid build, early 40s, dark brown hair, sharp intelligent gray eyes, slight limp from old injury. Clean-shaven with serious expression. Wears dark blue Continental officer's coat with buff trim, practical rather than ornate. Always carries maps and tactical notes. Projects quiet competence.",
+      
+      "race": "Human (Colonial American)",
+      "class": "Fighter 12 / Wizard 3",
+      "level": 15,
+      
+      "stats": {
+        "STR": 14, "DEX": 16, "CON": 16, "INT": 18, "WIS": 16, "CHA": 14
+      },
+      
+      "combat": {
+        "AC": 18,
+        "HP": 165,
+        "speed": 30,
+        "initiative": "+3"
+      },
+      
+      "attacks": [
+        {
+          "name": "Longsword +1",
+          "bonus": "+10",
+          "damage": "1d8+3 slashing"
+        }
+      ],
+      
+      "equipment": [
+        "Longsword +1",
+        "Musket",
+        "Breastplate",
+        "Tactical maps",
+        "Spellbook",
+        "Writing kit"
+      ]
+    },
+    
+    "johnSullivan": {
+      "name": "Major General John Sullivan",
+      "title": "Western Column Commander",
+      "description": "Broad-shouldered Irish-American, mid-40s, thick reddish-brown hair, fierce green eyes, strong jaw with slight stubble. Stocky and powerful build. Wears Continental blue coat, often unbuttoned, shirt sleeves rolled up for action. Carries himself like a brawler who became an officer. Intense, ready-for-anything expression.",
+      
+      "race": "Human (Immigrant - Irish)",
+      "class": "Fighter 11 / Barbarian 3",
+      "level": 14,
+      
+      "stats": {
+        "STR": 18, "DEX": 14, "CON": 18, "INT": 12, "WIS": 14, "CHA": 16
+      },
+      
+      "combat": {
+        "AC": 17,
+        "HP": 180,
+        "speed": 40,
+        "initiative": "+2"
+      },
+      
+      "attacks": [
+        {
+          "name": "Greatsword",
+          "bonus": "+11",
+          "damage": "2d6+4 slashing"
+        }
+      ],
+      
+      "equipment": [
+        "Greatsword",
+        "Chain mail",
+        "Battle horn"
+      ]
+    }
+  },
+  
+  "oldBarracks": {
+    "namedHessians": {
+      "guardGus": {
+        "name": "Unteroffizier Gustav 'Gus' Hoffmann",
+        "title": "Veteran Cellar Guard",
+        "description": "Heavyset German man in late 40s, gray-streaked brown hair, tired bloodshot eyes with dark circles underneath, scruffy beard. Wears blue Hessian uniform coat with corporal stripes, slightly wrinkled and stained. Brass-fronted grenadier mitre cap sits askew on head. Weary, world-worn expression. Has rolled up sleeves, holds lantern in one hand, saber at hip. Looks like he'd rather be sleeping.",
+        
+        "race": "Human (German)",
+        "class": "Fighter 5",
+        "level": 5,
+        
+        "stats": {
+          "STR": 15, "DEX": 12, "CON": 14, "INT": 10, "WIS": 11, "CHA": 9
+        },
+        
+        "combat": {
+          "AC": 17,
+          "HP": 58,
+          "maxHP": 58,
+          "speed": 30,
+          "initiative": "+1"
+        },
+        
+        "attacks": [
+          {
+            "name": "Saber Attack",
+            "bonus": "+5",
+            "damage": "1d8+3 slashing"
+          },
+          {
+            "name": "Musket Shot",
+            "bonus": "+5",
+            "damage": "1d10+3 piercing",
+            "range": "80/240"
+          }
+        ],
+        
+        "personality": "Tired, professional, 20 years of service. Poor gambler. Has soft spot for his daughter back home.",
+        "quote": "\"Ach, mein Gott, not anuzzer rat! I tell ze Kapitän, ve need cats down here!\"",
+        "tactics": "Will fight to defend post but can be bribed (10+ gold). Falls asleep if too quiet.",
+        
+        "location": "Basement/Cellar - near Cell #4",
+        "status": "On duty but exhausted",
+        
+        "equipment": [
+          "Prussian military saber",
+          "Musket with bayonet",
+          "Blue Hessian coat (brass buttons)",
+          "Grenadier mitre cap",
+          "Lantern",
+          "Keys to cells (on belt)",
+          "Letter from daughter (in pocket)"
+        ]
+      },
+      
+      "klaus": {
+        "name": "Klaus - The Card Shark",
+        "title": "Hessian Guard",
+        "description": "Lean, wiry German man in mid-30s, slicked-back blonde hair, sharp cunning blue eyes, thin mustache, smug grin showing missing tooth. Blue Hessian infantry coat unbuttoned at top, neckerchief loose, sleeves rolled up. Has deck of marked cards in hand, several empty tankards nearby. Cocky, relaxed posture leaning back in chair. Flushed face from drinking and winning.",
+        
+        "race": "Human (German)",
+        "class": "Fighter 1",
+        "level": 1,
+        
+        "stats": {
+          "STR": 13, "DEX": 13, "CON": 12, "INT": 10, "WIS": 10, "CHA": 11
+        },
+        
+        "combat": {
+          "AC": 16,
+          "HP": 11,
+          "maxHP": 11,
+          "speed": 30,
+          "initiative": "+1"
+        },
+        
+        "condition": "DRUNK",
+        "drunkPenalties": [
+          "Disadvantage on Perception",
+          "-2 AC (currently 14)",
+          "Disadvantage on initiative"
+        ],
+        
+        "attacks": [
+          {
+            "name": "Saber Attack",
+            "bonus": "+3",
+            "damage": "1d6+1 slashing"
+          }
+        ],
+        
+        "personality": "Cheater at cards, currently winning and drunk. Cocky and overconfident.",
+        "quote": "\"Ha! I vin again! You boys owe me anuzzer round!\"",
+        "tactics": "Will fight but flee if seriously injured. Cheats even in combat if possible.",
+        
+        "location": "Ground Floor - Main Hall, playing cards by fireplace",
+        "status": "Drunk, winning at cards",
+        
+        "equipment": [
+          "Saber",
+          "Marked deck of cards (worth 5gp)",
+          "Blue Hessian coat",
+          "2d6 silver coins (winnings)",
+          "Hip flask (empty)"
+        ]
+      },
+      
+      "fritz": {
+        "name": "Fritz - The Complainer",
+        "title": "Hessian Guard",
+        "description": "Stocky German man in late 20s, messy brown hair sticking up, perpetual scowl, droopy brown eyes, unshaven stubble. Blue Hessian coat with food stains, shirt untucked. Slumped posture, constantly gesturing in complaint. Cards scattered in front of him (losing hand), nearly empty tankard. Expression of perpetual dissatisfaction.",
+        
+        "race": "Human (German)",
+        "class": "Fighter 1",
+        "level": 1,
+        
+        "stats": {
+          "STR": 13, "DEX": 12, "CON": 12, "INT": 9, "WIS": 10, "CHA": 8
+        },
+        
+        "combat": {
+          "AC": 16,
+          "HP": 11,
+          "maxHP": 11,
+          "speed": 30,
+          "initiative": "+1"
+        },
+        
+        "condition": "DRUNK",
+        "drunkPenalties": [
+          "Disadvantage on Perception",
+          "-2 AC (currently 14)",
+          "Disadvantage on initiative"
+        ],
+        
+        "attacks": [
+          {
+            "name": "Saber Attack",
+            "bonus": "+3",
+            "damage": "1d6+1 slashing"
+          }
+        ],
+        
+        "personality": "Complains about everything. Cold, food, America, the war. Currently losing at cards.",
+        "quote": "\"Zis country is too cold! Ze food is terrible! Vy did I leave Deutschland?\"",
+        "tactics": "Will fight but morale is low. First to surrender or flee.",
+        
+        "location": "Ground Floor - Main Hall, playing cards",
+        "status": "Drunk, losing at cards, complaining",
+        
+        "equipment": [
+          "Saber",
+          "Blue Hessian coat (stained)",
+          "Nearly empty tankard",
+          "Letter from mother (unread)"
+        ]
+      },
+      
+      "wilhelm": {
+        "name": "Wilhelm - The Homesick One",
+        "title": "Hessian Guard",
+        "description": "Handsome young German man, early 20s, sandy blonde hair, sad blue eyes staring into distance, clean-shaven with melancholic expression. Blue Hessian uniform neat but shoulders slumped. Sitting alone by fireplace, clutching a miniature portrait and letter. Looks like he'd rather be anywhere else. Romantic, distant gaze.",
+        
+        "race": "Human (German)",
+        "class": "Fighter 1",
+        "level": 1,
+        
+        "stats": {
+          "STR": 14, "DEX": 11, "CON": 13, "INT": 10, "WIS": 12, "CHA": 10
+        },
+        
+        "combat": {
+          "AC": 16,
+          "HP": 11,
+          "maxHP": 11,
+          "speed": 30,
+          "initiative": "+0"
+        },
+        
+        "condition": "DRUNK (lightly)",
+        "drunkPenalties": [
+          "Disadvantage on Perception",
+          "-2 AC (currently 14)"
+        ],
+        
+        "attacks": [
+          {
+            "name": "Saber Attack",
+            "bonus": "+3",
+            "damage": "1d6+1 slashing"
+          }
+        ],
+        
+        "personality": "Melancholy, staring at fire. Has sweetheart named Greta waiting back home.",
+        "quote": "\"Greta vaits for me... I hope she still remembers mein face...\"",
+        "tactics": "Hesitant to fight. Can be reasoned with. Might flee to return home.",
+        
+        "location": "Ground Floor - Main Hall, by fireplace",
+        "status": "Lightly drunk, homesick, staring at portrait",
+        
+        "equipment": [
+          "Saber",
+          "Blue Hessian coat",
+          "Miniature portrait of Greta",
+          "Love letter from Greta (worn from re-reading)",
+          "Small locket"
+        ]
+      },
+      
+      "captainKleist": {
+        "name": "Captain Heinrich Kleist",
+        "title": "Hessian Commander",
+        "description": "Tall, distinguished German officer in late 30s, immaculately groomed jet-black hair and elaborate curled mustache (his pride), aristocratic features, sharp nose. Wears ornate blue Hessian officer's coat with gold trim and epaulettes, red sash, polished boots. Currently PASSED OUT drunk in chair, coat unbuttoned, wig askew, mouth open snoring, mustache drooping. Multiple empty wine bottles nearby.",
+        
+        "race": "Human (German)",
+        "class": "Fighter 7",
+        "level": 7,
+        
+        "stats": {
+          "STR": 16, "DEX": 12, "CON": 14, "INT": 13, "WIS": 10, "CHA": 14
+        },
+        
+        "combat": {
+          "AC": 18,
+          "HP": 52,
+          "maxHP": 52,
+          "speed": 30,
+          "initiative": "+1"
+        },
+        
+        "condition": "PASSED OUT DRUNK",
+        "drunkPenalties": [
+          "Unconscious",
+          "Automatically fails STR and DEX saves",
+          "Attacks against him have advantage",
+          "DC 15 CON save to wake if shaken/injured"
+        ],
+        
+        "attacks": [
+          {
+            "name": "Officer's Saber +1",
+            "bonus": "+7",
+            "damage": "1d8+4 slashing"
+          },
+          {
+            "name": "Flintlock Pistol",
+            "bonus": "+5",
+            "damage": "1d10+1 piercing",
+            "range": "30/90"
+          }
+        ],
+        
+        "personality": "Arrogant when sober, competent leader. Currently DRUNK and passed out. Obsessed with mustache.",
+        "quote": "(When conscious) \"Mein mustache is ze finest in ze regiment! Colonel Rall himself envies it!\"",
+        "tactics": "Competent when sober. Commands respect. Uses tactical positioning.",
+        
+        "location": "Upper Floor - Officer Quarters",
+        "status": "Passed out drunk in ornate chair",
+        
+        "equipment": [
+          "Officer's saber +1 (ornate hilt)",
+          "Flintlock pistol (loaded)",
+          "Hessian Officer's Gorget (MAGIC ITEM - +1 AC, Adv. Intimidation, Command 1/day)",
+          "Ornate officer's coat with gold trim",
+          "Silver pocket watch engraved 'H.K.' (25gp)",
+          "Garrison strength report (intelligence)",
+          "Map of Trenton with Hessian positions",
+          "Mustache wax and comb"
+        ]
+      }
+    },
+    
+    "genericHessian": {
+      "name": "Hessian Ground Troop",
+      "title": "Generic Soldier Template",
+      "description": "German soldier, varied ages (18-45), wearing Prussian blue infantry coat with brass buttons and white crossbelts, matching blue breeches, black gaiters. Brass-fronted grenadier mitre cap with regimental insignia. Carries musket with bayonet. Most are drunk from Christmas celebrations - flushed faces, disheveled uniforms, unsteady on feet. Various hair colors (blonde, brown, black), varied builds.",
+      
+      "race": "Human (German)",
+      "class": "Fighter 3",
+      "level": 3,
+      
+      "stats": {
+        "STR": 14, "DEX": 12, "CON": 14, "INT": 10, "WIS": 10, "CHA": 8
+      },
+      
+      "combat": {
+        "AC": 16,
+        "HP": 28,
+        "maxHP": 28,
+        "speed": 30,
+        "initiative": "+1"
+      },
+      
+      "condition": "DRUNK (most)",
+      "drunkPenalties": [
+        "Disadvantage on Perception checks",
+        "Disadvantage on initiative",
+        "-2 to AC (currently 14)",
+        "Want to get back to drinking, not looking for trouble"
+      ],
+      
+      "attacks": [
+        {
+          "name": "Musket with Bayonet (melee)",
+          "bonus": "+4",
+          "damage": "1d8+2 piercing",
+          "reach": 10
+        },
+        {
+          "name": "Musket (ranged)",
+          "bonus": "+3",
+          "damage": "1d12 piercing",
+          "range": "80/240"
+        }
+      ],
+      
+      "equipment": [
+        "Musket with bayonet",
+        "Blue Hessian infantry coat",
+        "Grenadier mitre cap",
+        "Powder horn (20 shots)",
+        "Rations",
+        "Personal effects"
+      ],
+      
+      "variants": {
+        "sleeping": "Passed out in barracks, snoring, uniform disheveled",
+        "patrolling": "Walking rounds halfheartedly, swaying slightly",
+        "eating": "In kitchen with Signora, stuffing face with food",
+        "drinking": "In main hall, celebrating Christmas, singing German songs",
+        "onGuard": "At gate, trying to look professional but clearly drunk"
+      },
+      
+      "count": "Approximately 40 total in barracks during infiltration window"
+    },
+    
+    "specialNPCs": {
+      "signoraBattaglia": {
+        "name": "Signora Maria Battaglia",
+        "title": "Head Cook / Nonna Network Operative",
+        "description": "Plump Italian grandmother, early 60s, silver-gray hair in tight bun under white cap, warm brown eyes that miss nothing, round pleasant face with laugh lines. Wears traditional cook's apron (flour-dusted) over simple brown dress, wooden spoon tucked in apron pocket (secret Nonna Network symbol). Moves with surprising energy, constantly stirring pots or kneading dough. Has that 'don't mess with me' Italian grandmother aura despite kind smile.",
+        
+        "race": "Human (Italian)",
+        "class": "Commoner 5",
+        "level": 5,
+        "alignment": "Neutral Good (secret patriot)",
+        
+        "stats": {
+          "STR": 10, "DEX": 12, "CON": 14, "INT": 14, "WIS": 16, "CHA": 16
+        },
+        
+        "combat": {
+          "AC": 12,
+          "HP": 32,
+          "speed": 30,
+          "initiative": "+1"
+        },
+        
+        "attacks": [
+          {
+            "name": "Rolling Pin (improvised)",
+            "bonus": "+2",
+            "damage": "1d4 bludgeoning",
+            "note": "Can be thrown"
+          },
+          {
+            "name": "Cast Iron Pan",
+            "bonus": "+2",
+            "damage": "1d6 bludgeoning"
+          }
+        ],
+        
+        "abilities": [
+          "Healing Food: Meals restore 2d8+3 HP (1 hour prep)",
+          "Network Contact: Send messages via Nonna Network",
+          "Distraction: Create kitchen 'accidents' to draw guards",
+          "Everybody's Grandmother: Advantage on Persuasion"
+        ],
+        
+        "skills": [
+          "Deception +5",
+          "Insight +5",
+          "Medicine +5 (via cooking)",
+          "Perception +5",
+          "Persuasion +5"
+        ],
+        
+        "personality": "Feeds everyone, takes offense if you refuse food. Secretly gathers intelligence for Continental Army. Treats everyone like her grandchildren - firmly but lovingly.",
+        "quote": "\"You are too skinny! Sit, sit! Mangia! I make you proper meal, not zis Hessian garbage!\"",
+        "tactics": "Non-combatant. Uses kitchen as cover. Will help patriots if they're polite and appreciate food.",
+        
+        "location": "Kitchen - always cooking",
+        "status": "Preparing Christmas feast",
+        
+        "equipment": [
+          "Rolling pin (weapon/symbol)",
+          "Cast iron pans (multiple sizes)",
+          "Chef's knives",
+          "Wooden spoon (Nonna Network symbol)",
+          "Apron with hidden pockets",
+          "Secret lasagna recipe (wakes A.G. Achilles)",
+          "Small vial of sleeping herbs (for 'special' wine)"
+        ],
+        
+        "specialRecipe": {
+          "name": "Signora's Miraculous Lasagna",
+          "effect": "Wakes A.G. Achilles from lasagna coma instantly",
+          "prepTime": "30 minutes",
+          "ingredients": "Love, Italian herbs, proper cheese, tomatoes, prayer"
+        }
+      },
+      
+      "agAchilles": {
+        "name": "A.G. Achilles",
+        "currentForm": "Orange Tabby Cat",
+        "trueIdentity": "Aspect of Cosmic Entity Garfield",
+        "description": "Plump orange tabby cat with distinctive black stripes, white chest and paws. Bright green eyes (currently closed in unconscious state). Pink nose, white whiskers. Soft, fluffy fur. Currently curled up in ball, belly prominently displayed, snoring softly. Smells faintly of lasagna. Has small leather collar with brass tag reading 'A.G.' Looks completely harmless and adorable in sleep.",
+        
+        "trueFormHint": "Occasionally glows faintly orange in moonlight. Shadows sometimes show a much larger cat silhouette. Reality seems slightly... bendable... around him.",
+        
+        "race": "Shapeshifter (ancient cosmic entity)",
+        "class": "Unknown",
+        "level": "???",
+        "alignment": "Chaotic Neutral",
+        
+        "currentState": {
+          "form": "Orange tabby cat",
+          "condition": "Lasagna coma (unconscious)",
+          "location": "Cell #4, basement",
+          "weight": "12 lbs",
+          "canSpeak": false,
+          "canShapeshift": false,
+          "vulnerability": "Completely defenseless"
+        },
+        
+        "stats": {
+          "STR": 3,
+          "DEX": 15,
+          "CON": 10,
+          "INT": 20,
+          "WIS": 16,
+          "CHA": 18,
+          "note": "Cat form only - true stats unknown and terrifying"
+        },
+        
+        "combat": {
+          "AC": 12,
+          "HP": 5,
+          "speed": 40,
+          "initiative": "+2",
+          "note": "Currently unconscious and defenseless"
+        },
+        
+        "recovery": {
+          "naturalWake": "1d4 hours after rescue",
+          "forcedWake": "If fed Signora's lasagna - instant",
+          "afterWaking": "Can shapeshift again, will explain quest for Shield of Infinite Lasagna"
+        },
+        
+        "traits": [
+          "Monday Vulnerability: Hates Mondays, disadvantage on all checks",
+          "Lasagna Obsession: Will do anything for good lasagna",
+          "Nine Lives: Can return from death (mysterious cosmic respawn)",
+          "Cosmic Knowledge: Knows things beyond mortal understanding",
+          "Reality Bender: When conscious, can manipulate probability around food"
+        ],
+        
+        "questRole": "Primary objective - must be rescued to progress campaign",
+        
+        "personality": "Lazy, sarcastic, food-obsessed cosmic trickster. Speaks in dry monotone when conscious. Pretends to be just a cat but clearly isn't. Has cosmic knowledge he shares cryptically between demanding lasagna.",
+        
+        "quote": "(When awake) \"I hate Mondays. And being imprisoned. Mostly I hate being imprisoned on a Monday. Now where's my lasagna?\"",
+        
+        "secrets": [
+          "Is actually an aspect of the cosmic entity Garfield",
+          "Knows location of Shield of Infinite Lasagna",
+          "Has lived multiple lives throughout American Revolution",
+          "Can perceive multiple timelines",
+          "Chose cat form because 'cats are perfect, unlike Mondays'"
+        ]
+      }
+    }
+  },
+  
+  "imagePromptExamples": {
+    "guardGus": "Heavyset tired German soldier in late 40s, gray-streaked brown hair, weary bloodshot eyes, scruffy beard, blue Hessian military coat with brass buttons, grenadier mitre cap askew, holding lantern, exhausted expression, 1776 colonial setting, oil painting style",
+    
+    "klaus": "Lean wiry German soldier, slicked blonde hair, cunning blue eyes, thin mustache, smug grin, blue Hessian coat unbuttoned, holding marked playing cards, drunk and cocky, tankards on table, fireplace background, 1776 style",
+    
+    "signora": "Plump Italian grandmother, 60s, silver hair in bun, warm brown eyes, flour-dusted apron, wooden spoon in hand, kind but fierce expression, colonial kitchen background, realistic historical painting",
+    
+    "agAchilles": "Plump orange tabby cat, distinctive black stripes, white chest and paws, green eyes closed, curled up sleeping, snoring, soft fluffy fur, small leather collar with brass tag 'A.G.', faint mystical glow, adorable, fantasy realism"
+  },
+  
+  "notes": {
+    "language": "Hessians speak German (use Dwarvish as game mechanic)",
+    "morale": "Most Hessians prefer to avoid combat - drunk, homesick, or tired",
+    "reinforcements": "If alarm raised, 2d6 additional troops arrive in 1d4+2 rounds",
+    "historical": "~45 Hessians at Old Barracks during infiltration, rest with Colonel Rall at his HQ",
+    "imageStyle": "Recommend oil painting or realistic historical illustration style for all character portraits"
+  }
+}
